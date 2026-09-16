@@ -758,6 +758,8 @@ export function CourtScheduleBoard({
   const [queueTargetRowIndex, setQueueTargetRowIndex] = useState<number>(0);
   const boardRef = useRef<HTMLDivElement>(null);
   const boardScrollContainerRef = useRef<HTMLDivElement>(null);
+  const topScrollContainerRef = useRef<HTMLDivElement>(null);
+  const isSyncingScrollRef = useRef(false);
   const boardScrollFrameRef = useRef<number | null>(null);
   const boardViewportRef = useRef({ top: 0, height: 0 });
   const [boardViewport, setBoardViewport] = useState({ top: 0, height: 0 });
@@ -766,6 +768,17 @@ export function CourtScheduleBoard({
     if (!boardScrollContainerRef.current) return;
     const offset = direction === 'left' ? -380 : 380;
     boardScrollContainerRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+  };
+
+  const handleTopScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    if (isSyncingScrollRef.current) return;
+    isSyncingScrollRef.current = true;
+    if (boardScrollContainerRef.current) {
+      boardScrollContainerRef.current.scrollLeft = event.currentTarget.scrollLeft;
+    }
+    requestAnimationFrame(() => {
+      isSyncingScrollRef.current = false;
+    });
   };
 
   // Right-Click Context Menu State
@@ -1259,6 +1272,16 @@ export function CourtScheduleBoard({
 
   const handleBoardScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
+
+    // Synchronize horizontal scroll with top scrollbar
+    if (!isSyncingScrollRef.current && topScrollContainerRef.current) {
+      isSyncingScrollRef.current = true;
+      topScrollContainerRef.current.scrollLeft = target.scrollLeft;
+      requestAnimationFrame(() => {
+        isSyncingScrollRef.current = false;
+      });
+    }
+
     boardViewportRef.current = {
       top: target.scrollTop,
       height: target.clientHeight,
@@ -4153,23 +4176,26 @@ export function CourtScheduleBoard({
         <div className="flex shrink-0 items-center gap-1">
           {/* Quick Court Scroll Navigation Buttons (◀ Sân trước | Sân sau ▶) */}
           {courts.length > 1 && (
-            <div className="flex items-center gap-0.5 rounded-lg border border-blue-200 bg-blue-50/80 p-0.5 shadow-2xs">
+            <div className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50/90 px-1.5 py-0.5 shadow-2xs">
+              <span className="text-[10px] font-bold text-blue-700 hidden sm:inline">Cuộn sân:</span>
               <button
                 type="button"
                 onClick={() => handleScrollCourts('left')}
                 aria-label="Cuộn sang các sân trước"
-                className="flex h-7 w-7 items-center justify-center rounded text-blue-800 transition-all hover:bg-blue-600 hover:text-white cursor-pointer"
+                className="flex h-7 px-1.5 items-center justify-center gap-0.5 rounded text-blue-800 transition-all hover:bg-blue-600 hover:text-white cursor-pointer active:scale-95"
                 title="Cuộn ngang sang các sân trước (bên trái)"
               >
                 <ChevronLeft className="h-4 w-4" />
+                <span className="text-[11px] font-bold hidden md:inline">Trước</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleScrollCourts('right')}
                 aria-label="Cuộn sang các sân sau"
-                className="flex h-7 w-7 items-center justify-center rounded text-blue-800 transition-all hover:bg-blue-600 hover:text-white cursor-pointer"
+                className="flex h-7 px-1.5 items-center justify-center gap-0.5 rounded text-blue-800 transition-all hover:bg-blue-600 hover:text-white cursor-pointer active:scale-95"
                 title="Cuộn ngang sang các sân sau (bên phải)"
               >
+                <span className="text-[11px] font-bold hidden md:inline">Sau</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -4216,17 +4242,6 @@ export function CourtScheduleBoard({
                 In lịch
               </button>
               <div className="my-0.5 h-px bg-slate-100" />
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1.5">
-                <span className="font-semibold text-slate-500">Thu phóng</span>
-                <select
-                  aria-label="Mức thu phóng"
-                  value={zoomLevel}
-                  onChange={(event) => setZoomLevel(Number(event.target.value))}
-                  className="h-7 rounded border border-slate-200 bg-white px-1 text-[11px] font-bold text-slate-700 outline-hidden"
-                >
-                  {[0.8, 1.0, 1.25, 1.5].map((z) => <option key={z} value={z}>{Math.round(z * 100)}%</option>)}
-                </select>
-              </div>
               <button
                 type="button"
                 onClick={handleResetAllRowsEvenly}
@@ -4256,34 +4271,64 @@ export function CourtScheduleBoard({
           Chưa có sân nào được thiết lập
         </div>
       ) : (
-        <div
-          ref={boardScrollContainerRef}
-          onScroll={handleBoardScroll}
-          onWheel={(e) => {
-            if (e.shiftKey && boardScrollContainerRef.current) {
-              boardScrollContainerRef.current.scrollLeft += e.deltaY;
-            }
-          }}
-          className={`relative z-10 ${
-            isFullscreen || isLocalFullscreen
-              ? 'flex-1 min-h-0'
-              : 'h-[calc(100vh-210px)] min-h-[500px]'
-          } overflow-x-auto overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1`}
-          data-schedule-selection-surface="true"
-          style={{
-            scrollbarWidth: 'auto',
-            scrollbarColor: '#94a3b8 #f1f5f9',
-          }}
-          role="region"
-          aria-label={t('matchSchedule.court')}
-          tabIndex={0}
-        >
+        <div className="relative flex flex-col flex-1 min-h-0">
+          {/* Top Horizontal Scrollbar (luôn cố định ở đầu bảng để cuộn nhanh các sân mà không cần kéo chuột xuống đáy) */}
+          {courts.length > 2 && (
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/90 border border-slate-200 rounded-t-xl border-b-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0 select-none">
+                Thanh cuộn sân:
+              </span>
+              <div
+                ref={topScrollContainerRef}
+                onScroll={handleTopScroll}
+                className="flex-1 overflow-x-auto overflow-y-hidden py-1"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#94a3b8 #e2e8f0',
+                }}
+                title="Kéo thanh này để cuộn nhanh qua lại giữa các sân thi đấu"
+              >
+                {/* Dummy spacer exactly matching the width of the board's inner columns */}
+                <div
+                  style={{
+                    width: `${72 + courts.length * 310}px`,
+                    height: '1px',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           <div
-            className="grid min-w-[900px]"
-            style={{
-              gridTemplateColumns: `72px repeat(${courts.length}, minmax(310px, 1fr))`,
+            ref={boardScrollContainerRef}
+            onScroll={handleBoardScroll}
+            onWheel={(e) => {
+              if (e.shiftKey && boardScrollContainerRef.current) {
+                boardScrollContainerRef.current.scrollLeft += e.deltaY;
+              }
             }}
+            className={`relative z-10 ${
+              isFullscreen || isLocalFullscreen
+                ? 'flex-1 min-h-0'
+                : 'h-[calc(100vh-210px)] min-h-[500px]'
+            } overflow-x-auto overflow-y-auto ${
+              courts.length > 2 ? 'rounded-b-xl' : 'rounded-xl'
+            } border border-slate-200 bg-white shadow-xs select-none flex-1`}
+            data-schedule-selection-surface="true"
+            style={{
+              scrollbarWidth: 'auto',
+              scrollbarColor: '#94a3b8 #f1f5f9',
+            }}
+            role="region"
+            aria-label={t('matchSchedule.court')}
+            tabIndex={0}
           >
+            <div
+              className="grid min-w-[900px]"
+              style={{
+                gridTemplateColumns: `72px repeat(${courts.length}, minmax(310px, 1fr))`,
+              }}
+            >
             {/* Corner header: Click to Select All */}
             <div
               onClick={() => {
@@ -4552,6 +4597,7 @@ export function CourtScheduleBoard({
               );
             })}
           </div>
+        </div>
         </div>
       )}
 

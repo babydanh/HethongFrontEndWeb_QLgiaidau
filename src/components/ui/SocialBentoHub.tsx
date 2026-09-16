@@ -576,10 +576,10 @@ export function SocialPickupRow({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-blue-200 hover:shadow-xs transition-all flex flex-col gap-2.5 group">
-      {/* 1. TOP ROW: Small Avatar + Gray Club Name (Left) & Standalone Sport Icon + Distance (Right) */}
+      {/* 1. TOP ROW: Small Avatar + Gray Club Name + Giao hữu badge (Left) & Standalone Sport Icon + Distance (Right) */}
       <div className="flex items-center justify-between gap-3">
-        {/* Left: Small Round Avatar (w-6 h-6) + Subdued Gray Club Name */}
-        <div className="flex items-center gap-2 min-w-0">
+        {/* Left: Small Round Avatar (w-6 h-6) + Subdued Gray Club Name + Giao hữu pill */}
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
             {entityAvatar ? (
               <img src={entityAvatar} alt={entityName} className="w-full h-full object-cover" />
@@ -589,6 +589,9 @@ export function SocialPickupRow({
           </div>
           <span className="font-medium text-xs text-slate-500 truncate">
             {entityName}
+          </span>
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-400 text-white leading-none">
+            Giao hữu
           </span>
         </div>
 
@@ -605,16 +608,11 @@ export function SocialPickupRow({
         </div>
       </div>
 
-      {/* 2. MIDDLE ROW: Title & Match Metadata (Clock & Venue & Match Type / Giao hữu) */}
+      {/* 2. MIDDLE ROW: Title & Match Metadata (Clock & Venue) */}
       <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
-            {item.matchType ? `Giao hữu • ${item.matchType}` : 'Giao hữu'}
-          </span>
-          <h4 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-            {item.title || 'Giao lưu Pickleball D-Sport Q7'}
-          </h4>
-        </div>
+        <h4 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+          {item.title || 'Giao lưu Pickleball D-Sport Q7'}
+        </h4>
         <div className="flex items-center gap-3.5 text-xs text-slate-500 font-medium flex-wrap mt-0.5">
           <div className="flex items-center gap-1.5 text-slate-600">
             <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
@@ -629,7 +627,7 @@ export function SocialPickupRow({
 
       {/* 3. BOTTOM ROW: Members Stack + Slot Text (Left) & Price + Action Icon Button (Right) */}
       <div className="flex items-center justify-between pt-1 gap-3">
-        {/* Left: Avatar group + X/Y người */}
+        {/* Left: Avatar group + X/Y */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center -space-x-1.5 shrink-0">
             {item.players.map((p, idx) => (
@@ -652,8 +650,8 @@ export function SocialPickupRow({
               </div>
             )}
           </div>
-          <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
-            {item.currentSlots + (joined ? 1 : 0)}/{item.maxSlots} người
+          <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+            {item.currentSlots + (joined ? 1 : 0)}/{item.maxSlots}
           </span>
         </div>
 

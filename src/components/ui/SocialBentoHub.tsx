@@ -572,39 +572,50 @@ export function SocialPickupRow({
   const entityAvatar = item.isClubHosted ? item.clubLogoUrl : item.hostAvatar;
   const entityInitial = (entityName.trim().slice(0, 2) || 'CL').toUpperCase();
 
+  const sportIcon = getSportLogo(item.sport);
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-blue-200 hover:shadow-xs transition-all flex flex-col gap-3 group">
-      {/* 1. TOP ROW: Club / Host Avatar + Name (Left) & Sport/Distance Icon (Right) */}
+    <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-blue-200 hover:shadow-xs transition-all flex flex-col gap-2.5 group">
+      {/* 1. TOP ROW: Small Avatar + Gray Club Name (Left) & Standalone Sport Icon + Distance (Right) */}
       <div className="flex items-center justify-between gap-3">
-        {/* Left: Round Blue Avatar + Name */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+        {/* Left: Small Round Avatar (w-6 h-6) + Subdued Gray Club Name */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
             {entityAvatar ? (
               <img src={entityAvatar} alt={entityName} className="w-full h-full object-cover" />
             ) : (
               <span>{entityInitial}</span>
             )}
           </div>
-          <span className="font-bold text-sm text-slate-900 truncate">
+          <span className="font-medium text-xs text-slate-500 truncate">
             {entityName}
           </span>
         </div>
 
-        {/* Right: Racket Icon + Distance Pill / Badge */}
-        <div className="flex flex-col items-center justify-center bg-slate-50/80 hover:bg-slate-100/80 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600 shrink-0 transition-colors">
-          <Trophy className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
-          <span className="text-[10px] font-medium text-slate-500 leading-tight">
+        {/* Right: Standalone Sport Logo/Icon & Distance (No card/button wrapper) */}
+        <div className="flex flex-col items-end shrink-0">
+          {sportIcon ? (
+            <img src={sportIcon} alt={item.sport} className="w-4 h-4 object-contain opacity-85" />
+          ) : (
+            <Trophy className="w-4 h-4 text-blue-600 opacity-85" />
+          )}
+          <span className="text-[11px] font-normal text-slate-400 mt-0.5 leading-none">
             {item.distance || '1.2 km'}
           </span>
         </div>
       </div>
 
-      {/* 2. MIDDLE ROW: Title & Match Metadata (Clock & Venue) */}
+      {/* 2. MIDDLE ROW: Title & Match Metadata (Clock & Venue & Match Type / Giao hữu) */}
       <div className="flex flex-col gap-1">
-        <h4 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-          {item.title || 'Giao lưu Pickleball D-Sport Q7'}
-        </h4>
-        <div className="flex items-center gap-4 text-xs text-slate-500 font-medium flex-wrap mt-0.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
+            {item.matchType ? `Giao hữu • ${item.matchType}` : 'Giao hữu'}
+          </span>
+          <h4 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+            {item.title || 'Giao lưu Pickleball D-Sport Q7'}
+          </h4>
+        </div>
+        <div className="flex items-center gap-3.5 text-xs text-slate-500 font-medium flex-wrap mt-0.5">
           <div className="flex items-center gap-1.5 text-slate-600">
             <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
             <span>{item.timeRange}</span>

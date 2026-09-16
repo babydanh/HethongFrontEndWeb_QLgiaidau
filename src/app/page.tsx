@@ -1774,7 +1774,11 @@ export default function HomePage() {
         selectedCategoryId={selectedCategoryId}
         onSelectCategory={setSelectedCategoryId}
         getCategoryLabel={getCategoryLabel}
-        onScrollToPickups={handleScrollToPickups}
+        onShareClick={() => {
+          setActiveShareUrl(typeof window !== 'undefined' ? window.location.href : '');
+          setActiveShareTitle(document?.title || 'SportO - Nền tảng thể thao');
+          setIsShareModalOpen(true);
+        }}
       />
 
       {/* Main Content: 3 Columns with sleek sidebars and expansive center social feed */}

@@ -25,8 +25,7 @@ import { getSportLogo } from '@/constants/sports';
 export type ActivityEventType =
   | 'PICKUP_NEED_PLAYER'   // Kèo giao lưu CLB đang thiếu người
   | 'CLUB_RECRUITING'      // CLB tuyển thêm người sinh hoạt/giao lưu
-  | 'TOURNAMENT_OPENED'    // Giải đấu mới mở đăng ký
-  | 'TOURNAMENT_ONGOING'   // Giải đấu đang diễn ra hôm nay
+  | 'TOURNAMENT_OPENED'    // Giải đấu mới mở đăng ký (chỉ hiện 1 mốc giờ mở cổng)
   | 'TOURNAMENT_COMPLETED' // Giải đấu đã kết thúc (vinh danh kết quả)
   | 'PLAYER_RANK_UP';
 
@@ -55,11 +54,11 @@ export interface ActivityFeedItem {
   };
 
   // Thông tin người host/đại diện CLB
-  host: {
+  host?: {
     id: string;
     name: string;
     avatarUrl?: string | null;
-    roleInClub?: string; // "Chủ nhiệm", "Trưởng ban chuyên môn", "Thành viên"
+    roleInClub?: string;
   };
 
   // Dành riêng cho Kèo giao lưu CLB
@@ -74,28 +73,26 @@ export interface ActivityFeedItem {
   // Dành cho giải đấu
   tournament?: {
     id: string;
-    prize: string;
-    statusBadge: 'MỞ ĐĂNG KÝ' | 'ĐANG DIỄN RA' | 'ĐÃ KẾT THÚC';
+    prize?: string;
+    statusBadge: 'MỞ ĐĂNG KÝ' | 'ĐÃ KẾT THÚC';
     championNames?: string;
     totalTeams?: string;
-    liveCourt?: string; // Tên sân đang live (nếu đang diễn ra)
   };
 }
 
 const MOCK_ACTIVITIES: ActivityFeedItem[] = [
-  // 1. Giải đấu ĐANG DIỄN RA
+  // 1. Mốc 09:00 — GIẢI ĐẤU MỞ ĐĂNG KÝ (Chỉ hiện đúng mốc giờ mở cổng đăng ký, không lặp lại)
   {
-    id: 'act-ongoing-1',
-    type: 'TOURNAMENT_ONGOING',
+    id: 'act-tourn-opened-1',
+    type: 'TOURNAMENT_OPENED',
     sport: 'Pickleball',
-    sportTier: 'Vòng Bán Kết & Chung Kết',
+    sportTier: 'Đôi Nam Nữ Phong Trào',
     playDate: '2026-09-16',
-    timeSlot: 'AFTERNOON',
-    startTime: '14:00',
-    endTime: '18:00',
+    timeSlot: 'MORNING',
+    startTime: '09:00',
     location: 'Cụm Sân Pickleball D-Sport Q7',
-    title: 'Giải Vô Địch Pickleball Tranh Cúp D-Sport Mùa Thu',
-    description: 'Các trận bán kết đôi nam nữ đang bước vào set đấu quyết định tranh vé vào chung kết.',
+    title: 'Mở cổng đăng ký: Giải Pickleball D-Sport Autumn Cup 2026',
+    description: 'Chính thức mở cổng đăng ký cho 32 cặp VĐV phong trào. Cổng sẽ tự động đóng khi đủ số lượng.',
     bannerUrl: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=900&auto=format&fit=crop&q=80',
     club: {
       id: 'c-dsport',
@@ -104,21 +101,15 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
       verified: true,
       memberCount: 180,
     },
-    host: {
-      id: 'org-1',
-      name: 'Ban Trọng Tài D-Sport',
-      roleInClub: 'Ban Tổ Chức',
-    },
     tournament: {
-      id: 'tourn-ongoing',
-      prize: '45 Triệu + Cúp Vàng',
-      statusBadge: 'ĐANG DIỄN RA',
-      totalTeams: '32 Đôi VĐV',
-      liveCourt: 'Sân Trung Tâm (Live Stream)',
+      id: 'tourn-opened-dsport',
+      prize: 'Tổng thưởng 30 Triệu',
+      statusBadge: 'MỞ ĐĂNG KÝ',
+      totalTeams: 'Còn 12/32 suất',
     },
   },
 
-  // 2. Kèo giao lưu thuộc CLB Hà Anh Pickleball (Có CLB đại diện)
+  // 2. Mốc 19:30 — Kèo giao lưu CLB Hà Anh
   {
     id: 'act-1',
     type: 'PICKUP_NEED_PLAYER',
@@ -129,19 +120,14 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     startTime: '19:30',
     endTime: '21:30',
     location: 'Sân D-Sport Q7 (Sân 3)',
-    title: 'CLB Hà Anh mở kèo giao lưu nội bộ mở rộng • Thiếu 1 slot đánh đôi',
-    description: 'Buổi sinh hoạt sân thứ 4 hàng tuần của CLB Hà Anh. Nhóm đã có 3 bạn, cần ghép thêm 1 bạn trình độ 2.5 - 3.0 đánh vui vẻ cọ xát nước non, chia tiền sân nhẹ nhàng.',
+    title: 'CLB Hà Anh giao lưu nội bộ mở rộng • Thiếu 1 slot đánh đôi',
+    description: 'Sinh hoạt định kỳ thứ 4. Đã có 3 người, cần thêm 1 bạn đánh vui vẻ cọ xát nước non, chia tiền sân nhẹ nhàng.',
     club: {
       id: 'c-haanh',
       name: 'CLB Pickleball Hà Anh',
       initials: 'HA',
       verified: true,
       memberCount: 154,
-    },
-    host: {
-      id: 'u-1',
-      name: 'Nguyễn Minh Danh',
-      roleInClub: 'Chủ nhiệm CLB',
     },
     slots: {
       current: 3,
@@ -156,7 +142,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     },
   },
 
-  // 3. Kèo giao lưu sinh hoạt của CLB Quần Vợt Lan Anh
+  // 3. Mốc 20:00 — Kèo sinh hoạt của CLB Lan Anh Tennis
   {
     id: 'act-2',
     type: 'CLUB_RECRUITING',
@@ -166,20 +152,15 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     timeSlot: 'EVENING',
     startTime: '20:00',
     endTime: '22:00',
-    location: 'CLB Quần Vợt Lan Anh, Q.10 (Sân mái che số 2)',
+    location: 'CLB Quần Vợt Lan Anh, Q.10 (Sân số 2)',
     title: 'CLB Lan Anh Tennis tuyển 2 khách giao lưu sinh hoạt tối nay',
-    description: 'Buổi sinh hoạt tuần định kỳ của CLB. Hội viên chính thức đã có 6 bạn (cần 8 bạn đánh 2 sân). Mở rộng 2 slot cho anh em ngoài vào cọ xát thử chân.',
+    description: 'Sinh hoạt định kỳ của CLB. Hội viên chính thức đã có 6 bạn. Mở 2 slot cho anh em ngoài vào cọ xát thử chân.',
     club: {
       id: 'c-lananh',
       name: 'CLB Quần Vợt Lan Anh',
       initials: 'LA',
       verified: true,
       memberCount: 220,
-    },
-    host: {
-      id: 'c-1',
-      name: 'Hoàng Bách',
-      roleInClub: 'Phó Ban Chuyên Môn',
     },
     slots: {
       current: 6,
@@ -194,7 +175,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     },
   },
 
-  // 4. Giải đấu ĐÃ KẾT THÚC (Kết quả vinh danh — không cần mốc giờ đếm lộn xộn)
+  // 4. Giải đấu ĐÃ KẾT THÚC (Vinh danh kết quả ở khu vực riêng dưới cùng)
   {
     id: 'act-comp-1',
     type: 'TOURNAMENT_COMPLETED',
@@ -203,7 +184,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     timeSlot: 'AFTERNOON',
     location: 'Cụm Sân Hà Anh Pickleball Tuy Hòa',
     title: 'Giải Pickleball Tranh Cúp Hà Anh Lần 1 đã khép lại thành công',
-    description: 'Trận chung kết đôi nam đầy kịch tính đã tìm ra Nhà Vô Địch với màn lội ngược dòng 11-9 ở set 3 quyết định.',
+    description: 'Trận chung kết đôi nam kịch tính đã tìm ra Nhà Vô Địch với màn lội ngược dòng 11-9 ở set 3 quyết định.',
     bannerUrl: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=900&auto=format&fit=crop&q=80',
     club: {
       id: 'c-haanh',
@@ -211,11 +192,6 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
       initials: 'HA',
       verified: true,
       memberCount: 154,
-    },
-    host: {
-      id: 'org-haanh',
-      name: 'Ban Tổ Chức Hà Anh Cup',
-      roleInClub: 'BTC Giải',
     },
     tournament: {
       id: 'tourn-1',
@@ -226,7 +202,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     },
   },
 
-  // 5. Giải đấu MỞ ĐĂNG KÝ
+  // 5. Giải đấu ngày hôm sau mở cổng lúc 08:00
   {
     id: 'act-4',
     type: 'TOURNAMENT_OPENED',
@@ -235,7 +211,6 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     playDate: '2026-09-17',
     timeSlot: 'MORNING',
     startTime: '08:00',
-    endTime: '11:30',
     location: 'Sân Cầu Lông Kỳ Hòa Q10',
     title: 'Giải Cầu Lông Mở Rộng Kỳ Hòa Autumn Cup chính thức mở đăng ký!',
     description: 'Quy tụ 32 đôi phong trào tranh tài. Đã có 22/32 đôi đăng ký giữ chỗ. Cổng đăng ký sẽ đóng khi đủ 32 đôi.',
@@ -247,16 +222,11 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
       verified: true,
       memberCount: 95,
     },
-    host: {
-      id: 'org-2',
-      name: 'Văn Phòng CLB Kỳ Hòa',
-      roleInClub: 'BQT CLB',
-    },
     tournament: {
       id: 'tourn-2',
       prize: '20 Triệu + Cúp',
       statusBadge: 'MỞ ĐĂNG KÝ',
-      totalTeams: '32 Đôi Nam Nữ',
+      totalTeams: 'Còn 10/32 suất',
     },
   },
 ];
@@ -391,16 +361,14 @@ export default function HomeSocialFeed() {
             {/* DANH SÁCH SỰ KIỆN TRONG KHUNG GIỜ NÀY */}
             <div className="space-y-3 pl-2 sm:pl-3 border-l border-slate-200 ml-2 sm:ml-2.5">
               {group.items.map((item) => {
-                const isTournament = item.type === 'TOURNAMENT_OPENED' || item.type === 'TOURNAMENT_ONGOING';
+                const isTournament = item.type === 'TOURNAMENT_OPENED';
                 const isPickup = item.type === 'PICKUP_NEED_PLAYER' || item.type === 'CLUB_RECRUITING';
                 const isFull = item.slots && item.slots.current >= item.slots.max;
 
                 /* ==========================================================
-                   DẠNG A: GIẢI ĐẤU (ĐANG DIỄN RA HOẶC MỞ ĐĂNG KÝ) - GỌN GÀNG, ÍT CHỮ
+                   DẠNG A: GIẢI ĐẤU MỞ ĐĂNG KÝ - HIỆN MỐC GIỜ MỞ CỔNG 1 LẦN DUY NHẤT
                    ========================================================== */
                 if (isTournament) {
-                  const isOngoing = item.type === 'TOURNAMENT_ONGOING';
-
                   return (
                     <motion.article
                       key={item.id}
@@ -424,16 +392,9 @@ export default function HomeSocialFeed() {
                         {/* Badges trạng thái tinh gọn trên Banner */}
                         <div className="absolute top-2 left-3 right-3 flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5">
-                            {isOngoing ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-red-600 text-white">
-                                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                                <span>ĐANG ĐẤU</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950">
-                                <span>MỞ ĐĂNG KÝ</span>
-                              </span>
-                            )}
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950">
+                              <span>MỞ ĐĂNG KÝ</span>
+                            </span>
 
                             <span className="px-1.5 py-0.5 rounded text-[11px] font-medium bg-black/50 text-slate-200 border border-white/10">
                               {item.sport}
@@ -453,24 +414,18 @@ export default function HomeSocialFeed() {
                         </div>
                       </div>
 
-                      {/* NỘI DUNG VÀ FOOTER TINH GỌN (Bỏ bớt giải thưởng và quy mô rườm rà) */}
+                      {/* NỘI DUNG VÀ FOOTER TINH GỌN */}
                       <div className="p-3 sm:p-3.5 space-y-2.5">
                         <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-slate-700">{item.startTime} – {item.endTime}</span>
+                            <span className="font-semibold text-slate-700">Mở cổng: {item.startTime}</span>
                             <span className="text-slate-300">•</span>
                             <span className="text-slate-500 truncate max-w-[220px]">{item.location}</span>
                           </div>
 
-                          {isOngoing && item.tournament?.liveCourt && (
-                            <span className="text-[11px] font-medium text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded">
-                              {item.tournament.liveCourt}
-                            </span>
-                          )}
-
-                          {!isOngoing && item.tournament?.prize && (
-                            <span className="text-[11px] font-semibold text-slate-600">
-                              Thưởng: {item.tournament.prize}
+                          {item.tournament?.totalTeams && (
+                            <span className="text-[11px] font-semibold text-blue-600">
+                              {item.tournament.totalTeams}
                             </span>
                           )}
                         </div>
@@ -483,11 +438,9 @@ export default function HomeSocialFeed() {
 
                           <Link
                             href="/tournaments"
-                            className={`px-3 py-1 rounded-lg text-white text-xs font-semibold shrink-0 inline-flex items-center gap-1 transition-all ml-auto ${
-                              isOngoing ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-900 hover:bg-slate-800'
-                            }`}
+                            className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0 inline-flex items-center gap-1 transition-all ml-auto"
                           >
-                            <span>{isOngoing ? 'Xem trực tiếp' : 'Xem giải'}</span>
+                            <span>Xem giải</span>
                             <ArrowRight className="w-3 h-3" />
                           </Link>
                         </div>

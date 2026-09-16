@@ -406,7 +406,12 @@ export function ClubMatchSessionDetailView({
     { id: 'statistics', label: t('statisticsTab'), icon: <BarChart3 className="h-4 w-4" /> },
   ];
 
-  if (session.pairingMode === 'BRACKET' && session.bracketTournamentId) {
+  if (session.pairingMode === 'BRACKET') {
+    const bracketHref = session.bracketTournamentId
+      ? session.capabilities?.canManage
+        ? `/organizer/tournaments/${session.bracketTournamentId}/manage?tab=bracket`
+        : `/tournaments/${session.bracketTournamentId}?tab=bracket`
+      : null;
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl rounded-2xl border border-blue-100 bg-white p-6 shadow-sm sm:p-8">
@@ -421,9 +426,15 @@ export function ClubMatchSessionDetailView({
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href={`/lite/tournaments/${session.bracketTournamentId}/manage`} className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
-              {t('openBracket')}
-            </Link>
+            {bracketHref ? (
+              <Link href={bracketHref} className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
+                {t('openBracket')}
+              </Link>
+            ) : (
+              <span className="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-800">
+                {t('bracketUnavailable')}
+              </span>
+            )}
             <Link href={`/communities/${communityId}`} className="inline-flex items-center rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
               {t('backToClub')}
             </Link>

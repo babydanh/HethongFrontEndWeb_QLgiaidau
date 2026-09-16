@@ -385,9 +385,9 @@ export default function TournamentsTab({
                     <div
                       key={s.id}
                       onClick={() =>
-                        router.push(s.bracketTournamentId
+                        router.push(s.pairingMode === 'BRACKET' && s.bracketTournamentId
                           ? (isOwnerOrMod
-                            ? `/lite/tournaments/${s.bracketTournamentId}/manage`
+                            ? `/organizer/tournaments/${s.bracketTournamentId}/manage?tab=bracket`
                             : `/tournaments/${s.bracketTournamentId}`)
                           : `/communities/${communityId}/match-sessions/${s.id}`)
                       }

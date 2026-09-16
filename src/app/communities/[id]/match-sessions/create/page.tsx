@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, use, useState } from 'react';
+import { FormEvent, use, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
@@ -42,6 +42,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
   const [recurringDayOfWeek, setRecurringDayOfWeek] = useState(6);
   const [recurringTimeOfDay, setRecurringTimeOfDay] = useState('18:00');
   const [recurringAdvanceDays, setRecurringAdvanceDays] = useState(3);
+  const creationIdempotencyKey = useRef<string | null>(null);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -72,6 +73,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
 
     setSubmitting(true);
     try {
+      creationIdempotencyKey.current ??= crypto.randomUUID();
       const response = await clubMatchSessionsApi.create({
         communityId: id,
         name: name.trim() || undefined,
@@ -93,10 +95,10 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
               recurringAdvanceDays,
             }
           : {}),
-      });
+      }, creationIdempotencyKey.current);
       toast.success(t('created'));
       router.replace(pairingMode === 'BRACKET' && response.bracketTournamentId
-        ? `/lite/tournaments/${response.bracketTournamentId}/manage`
+        ? `/organizer/tournaments/${response.bracketTournamentId}/manage?tab=bracket`
         : `/communities/${id}/match-sessions/${response.id}`);
     } catch (error) {
       toast.error(getErrorMessage(error));

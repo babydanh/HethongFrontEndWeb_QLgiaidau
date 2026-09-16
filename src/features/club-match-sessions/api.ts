@@ -54,7 +54,9 @@ export const clubMatchSessionsApi = {
     recurringDaysOfWeek?: number[];
     recurringTimeOfDay?: string;
     recurringAdvanceDays?: number;
-  }) => api.post<ApiResponse<ClubMatchSession>>('/club-match-sessions', payload).then(unwrapClubMatchData),
+  }, idempotencyKey: string) => api.post<ApiResponse<ClubMatchSession>>('/club-match-sessions', payload, {
+    headers: { 'Idempotency-Key': idempotencyKey },
+  }).then(unwrapClubMatchData),
   list: (communityId: string, query: CursorQuery = {}) =>
     api.get<ApiResponse<ClubMatchSession[]>>('/club-match-sessions', {
       params: { communityId, limit: query.limit ?? 10, cursor: query.cursor ?? undefined, status: query.status },

@@ -55,8 +55,10 @@ export function ClubMatchSessionsPanel({ communityId }: { communityId: string })
       {loading && items.length === 0 && <p className="mt-4 text-sm text-slate-500" role="status">{t('loading')}</p>}
       {error && <div className="mt-4 flex items-center gap-3"><p className="text-sm text-rose-700" role="alert">{t('loadFailed')}</p><button type="button" className="text-sm font-bold text-blue-700 underline" onClick={() => void load()}>{t('retry')}</button></div>}
       {!loading && !error && items.length === 0 ? <p className="mt-4 text-sm text-slate-500">{t('empty')}</p> : <div className="mt-4 grid gap-3 sm:grid-cols-2">{items.map((session) => {
-        const href = session.bracketTournamentId
-          ? `/lite/tournaments/${session.bracketTournamentId}/manage`
+        const href = session.pairingMode === 'BRACKET' && session.bracketTournamentId
+          ? session.capabilities?.canManage
+            ? `/organizer/tournaments/${session.bracketTournamentId}/manage?tab=bracket`
+            : `/tournaments/${session.bracketTournamentId}?tab=bracket`
           : `/communities/${communityId}/match-sessions/${session.id}`;
         return <Link key={session.id} href={href} className="rounded-lg border border-violet-200 bg-white p-4 hover:border-violet-400"><div className="flex items-center justify-between gap-2"><div className="font-semibold text-slate-900">{session.resolvedName}</div><span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">{session.pairingMode === 'BRACKET' ? t('bracketMode') : t('freeMode')}</span></div><div className="mt-1 text-xs text-slate-500">{t(`status.${session.status}`)} · {t('counts', { participants: session.participantCount ?? 0, matches: session.matchCount ?? 0 })}</div></Link>;
       })}</div>}

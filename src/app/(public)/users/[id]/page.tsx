@@ -35,7 +35,9 @@ interface UserRank {
   currentStreakCount?: number;
   genderRestriction?: string | null;
   tierName?: string | null;
+  partnerId?: string | null;
   partnerName?: string | null;
+  partnerAvatarUrl?: string | null;
 }
 
 interface PublicProfile {
@@ -215,7 +217,21 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     );
   }
 
-  const getMatchTypeLabel = (matchType: string) => {
+  const getMatchTypeLabel = (matchType: string, genderRestriction?: string | null) => {
+    const gender = (genderRestriction || '').trim().toUpperCase();
+    if (matchType === 'MIXED_DOUBLES' || (matchType === 'DOUBLES' && gender === 'MIXED')) {
+      return translate('mixedDoubles');
+    }
+    if (matchType === 'SINGLES') {
+      if (gender === 'MALE' || gender === 'NAM') return translate('singlesMale');
+      if (gender === 'FEMALE' || gender === 'NU' || gender === 'NỮ') return translate('singlesFemale');
+      return translate('singles');
+    }
+    if (matchType === 'DOUBLES') {
+      if (gender === 'MALE' || gender === 'NAM') return translate('doublesMale');
+      if (gender === 'FEMALE' || gender === 'NU' || gender === 'NỮ') return translate('doublesFemale');
+      return translate('doubles');
+    }
     return translate(matchType === 'SINGLES' ? 'singles' : 'doubles');
   };
 
@@ -657,18 +673,39 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           ? 'fill-rose-500 text-rose-600'
                           : 'text-slate-400';
 
-                      const partnerText = rank.partnerName ? ` • ${translate('withPartner')} ${rank.partnerName}` : '';
                       const rankKey = `${rank.categoryId}-${rank.matchType}-${rank.genderRestriction || ''}-${rank.partnerName || ''}`;
 
                       return (
                       <div key={rankKey} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
-                        <div className="space-y-1.5 flex-1">
-                          <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
-                            {rank.categoryName} • {getMatchTypeLabel(rank.matchType)}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO{partnerText}</h4>
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200">
+                              {rank.categoryName} • {getMatchTypeLabel(rank.matchType, rank.genderRestriction)}
+                            </span>
+                            {rank.partnerName && (
+                              <Link
+                                href={rank.partnerId ? `/users/${rank.partnerId}` : '#'}
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50/80 border border-blue-200/80 text-blue-700 hover:bg-blue-100/80 transition text-xs font-medium"
+                              >
+                                <span className="text-[11px] text-slate-500">{translate('withPartner')}</span>
+                                {rank.partnerAvatarUrl ? (
+                                  <img
+                                    src={rank.partnerAvatarUrl}
+                                    alt={rank.partnerName}
+                                    className="w-4 h-4 rounded-full object-cover ring-1 ring-blue-300"
+                                  />
+                                ) : (
+                                  <span className="w-4 h-4 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center text-[9px] font-bold">
+                                    {rank.partnerName.charAt(0).toUpperCase()}
+                                  </span>
+                                )}
+                                <span className="font-semibold">{rank.partnerName}</span>
+                              </Link>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
+                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO</h4>
                             <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} categoryName={rank.categoryName} size="sm" />
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">

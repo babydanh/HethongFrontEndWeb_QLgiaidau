@@ -18,7 +18,9 @@ export interface PublicProfileRankResponse {
   currentStreakCount?: number;
   adminLeaderboardEligible?: boolean;
   tierName?: string | null;
+  partnerId?: string | null;
   partnerName?: string | null;
+  partnerAvatarUrl?: string | null;
   source?: 'SINGLES' | 'DOUBLES';
 }
 

@@ -23,13 +23,18 @@ const MAX_MEMBER_TAG_LENGTH = 15;
 const MEMBER_TAG_PATTERN = /^[\p{L}\p{N} _-]+$/u;
 
 interface PublicProfileRank {
+  categoryId?: string;
   categoryName?: string | null;
   matchType?: string | null;
+  genderRestriction?: string | null;
   eloPoints: number;
   tierName?: string | null;
   matchesPlayed: number;
   matchesWon: number;
   adminLeaderboardEligible?: boolean;
+  partnerId?: string | null;
+  partnerName?: string | null;
+  partnerAvatarUrl?: string | null;
 }
 
 type PublicProfileHighlightRank = Pick<PublicProfileRank, 'eloPoints' | 'tierName' | 'categoryName'> & {
@@ -148,7 +153,10 @@ export default function UserProfilePopover({
           roles: publicData.roles || prev?.roles,
           isVerified: publicData.isVerified ?? prev?.isVerified ?? user.isVerified,
           allowStrangerMessages: publicData.allowStrangerMessages ?? prev?.allowStrangerMessages ?? user.allowStrangerMessages,
-          ranks: Array.isArray(publicData.ranks) ? (publicData.ranks as unknown as PublicProfileRank[]) : prev?.ranks,
+          ranks: [
+            ...(Array.isArray(publicData.ranks) ? (publicData.ranks as unknown as PublicProfileRank[]) : []),
+            ...(Array.isArray(publicData.pairRanks) ? (publicData.pairRanks as unknown as PublicProfileRank[]) : []),
+          ],
           highlightRank: (publicData.highlightRank as PopoverUserProfile['highlightRank']) ?? prev?.highlightRank ?? user.highlightRank,
           joinedAt: publicData.createdAt || prev?.joinedAt || user.joinedAt,
         }));
@@ -359,7 +367,40 @@ export default function UserProfilePopover({
   };
 
   const sysRoleBadge = getSystemRoleBadge(profileData.systemRole);
-  const eligibleRanks = (profileData.ranks ?? []).filter(isPublicRankingEligible);
+  const getRankTypeLabel = (rank: PublicProfileRank) => {
+    const matchType = rank.matchType;
+    const gender = (rank.genderRestriction || '').trim().toUpperCase();
+    if (matchType === 'MIXED_DOUBLES' || (matchType === 'DOUBLES' && gender === 'MIXED')) {
+      return translate('communityMixedDoubles');
+    }
+    if (matchType === 'SINGLES') {
+      if (gender === 'MALE' || gender === 'NAM') return translate('communitySinglesMale');
+      if (gender === 'FEMALE' || gender === 'NU' || gender === 'NỮ') return translate('communitySinglesFemale');
+      return translate('communitySingles');
+    }
+    if (matchType === 'DOUBLES') {
+      if (gender === 'MALE' || gender === 'NAM') return translate('communityDoublesMale');
+      if (gender === 'FEMALE' || gender === 'NU' || gender === 'NỮ') return translate('communityDoublesFemale');
+      return translate('communityDoubles');
+    }
+    return '';
+  };
+
+  const deduplicatedRanks = (profileData.ranks ?? [])
+    .filter(isPublicRankingEligible)
+    .filter((rank, idx, arr) => {
+      // Remove duplicates having same category and matchType without gender when a specific gender version exists
+      const betterExists = arr.some(
+        (other) =>
+          other.categoryId === rank.categoryId &&
+          other.matchType === rank.matchType &&
+          Boolean(other.genderRestriction) &&
+          !rank.genderRestriction,
+      );
+      return !betterExists;
+    });
+
+  const eligibleRanks = deduplicatedRanks;
   const eligibleHighlightRank = profileData.highlightRank && typeof profileData.highlightRank.matchesPlayed === 'number'
     ? isPublicRankingEligible({
         matchesPlayed: profileData.highlightRank.matchesPlayed,
@@ -767,15 +808,30 @@ export default function UserProfilePopover({
           profileRanks.length > 0 ? (
             <>
               <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-slate-100 bg-slate-50 p-2">
-                {profileRanks.map((rank) => (
-                  <div key={`${rank.categoryName}-${rank.matchType}`} className="min-w-0 text-center">
-                    <div className="truncate text-[9px] font-semibold uppercase text-slate-400">{rank.categoryName || 'ELO'}</div>
-                    <div className="text-xs font-bold text-slate-800">{rank.eloPoints}</div>
-                    {rank.matchesPlayed > 0 && (
-                      <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} {translate('winsShort')}</div>
-                    )}
-                  </div>
-                ))}
+                {profileRanks.map((rank) => {
+                  const typeLabel = getRankTypeLabel(rank);
+                  const rankTitle = `${rank.categoryName || 'ELO'}${typeLabel ? ` (${typeLabel})` : ''}${rank.partnerName ? ` - Đôi với ${rank.partnerName}` : ''}`;
+                  return (
+                    <div
+                      key={`${rank.categoryId || ''}-${rank.categoryName}-${rank.matchType}-${rank.genderRestriction || ''}-${rank.partnerName || ''}`}
+                      className="min-w-0 text-center"
+                      title={rankTitle}
+                    >
+                      <div className="truncate text-[9px] font-semibold uppercase text-slate-500">
+                        {rank.categoryName || 'ELO'}
+                      </div>
+                      {typeLabel && (
+                        <div className="truncate text-[8px] font-medium text-blue-600">
+                          {typeLabel}
+                        </div>
+                      )}
+                      <div className="text-xs font-bold text-slate-800">{rank.eloPoints}</div>
+                      {rank.matchesPlayed > 0 && (
+                        <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} {translate('winsShort')}</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               {totalMatches > 0 && (
                 <p className="mt-1 text-center text-[10px] text-slate-500">

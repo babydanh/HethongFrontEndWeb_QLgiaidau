@@ -179,7 +179,7 @@ export default function LeaderboardPage() {
                         const matchRank = publicRanks.find((r) =>
                             r.categoryId === activeCategoryId &&
                             (!selectedMatchType || r.matchType === selectedMatchType) &&
-                            (!selectedGenderFilter || r.genderRestriction === selectedGenderFilter)
+                            (!selectedGenderFilter || r.genderRestriction === selectedGenderFilter || r.genderRestriction === null)
                         );
                         return {
                             ...u,

@@ -223,7 +223,8 @@ export default function CommunitiesPage() {
             const isOwner = user && (community.creatorId === user.id || community.ownerId === user.id);
             const isJoined = user && myCommunityIds.has(community.id);
             const provinceName = provinces.find(p => p.code === community.provinceCode)?.name || t('vietnam');
-            const communityLogo = community.logoUrl?.trim() || null;
+            const rawLogo = community.logoUrl?.trim() || null;
+            const communityLogo = (rawLogo && !rawLogo.includes('sporto_v1') && !rawLogo.includes('defaultFallback')) ? rawLogo : null;
             const communityBanner = community.bannerUrl?.split(',')[0]?.trim() || null;
 
             return (

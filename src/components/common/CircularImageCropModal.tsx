@@ -131,6 +131,14 @@ export const CircularImageCropModal: React.FC<CircularImageCropModalProps> = ({
       const ratio = OUTPUT_SIZE / VIEWPORT_SIZE;
 
       ctx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+
+      // Clip canvas to circle to guarantee perfectly circular exported image
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+
       ctx.drawImage(
         img,
         imgTopLeftX * ratio,
@@ -138,6 +146,7 @@ export const CircularImageCropModal: React.FC<CircularImageCropModalProps> = ({
         renderedWidth * ratio,
         renderedHeight * ratio
       );
+      ctx.restore();
 
       // Convert canvas to Blob (with toBlob or toDataURL fallback)
       if (canvas.toBlob) {

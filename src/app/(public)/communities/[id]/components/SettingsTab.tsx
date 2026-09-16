@@ -576,7 +576,7 @@ export default function SettingsTab({ community }: { community: Community }) {
                   <div className="flex items-center gap-4">
                     <div className="relative w-16 h-16 rounded-full border-2 border-white shadow-md overflow-hidden bg-white flex items-center justify-center shrink-0">
                       {logoUrl ? (
-                        <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                        <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
                       ) : (
                         <ImageIcon className="w-7 h-7 text-slate-300" />
                       )}

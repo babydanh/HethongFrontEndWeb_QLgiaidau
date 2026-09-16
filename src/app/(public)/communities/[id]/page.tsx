@@ -610,13 +610,17 @@ export default function CommunityDetailPage() {
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 mt-6">
         <div className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full md:w-auto min-w-0">
-            {Boolean(community.logoUrl?.trim()) && (
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1">
+            {Boolean(
+              community.logoUrl?.trim() &&
+              !community.logoUrl.includes('sporto_v1') &&
+              !community.logoUrl.includes('defaultFallback')
+            ) && (
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-slate-200 overflow-hidden bg-white shadow-md relative shrink-0 p-1">
                 <Image
                   src={community.logoUrl!}
                   alt={community.name}
                   fill
-                  className="object-contain rounded-xl p-1.5"
+                  className="object-cover rounded-full"
                 />
               </div>
             )}

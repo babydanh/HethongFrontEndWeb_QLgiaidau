@@ -295,7 +295,7 @@ export function SocialMyClubsCard({
     if (r === 'OWNER') {
       return (
         <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 shrink-0">
-          Chủ nhiệm
+          Chủ CLB
         </span>
       );
     }
@@ -350,21 +350,28 @@ export function SocialMyClubsCard({
         <div className="flex flex-col gap-1.5">
           {displayClubs.slice(0, 4).map((club) => {
             const initials = (club.name.trim().slice(0, 2) || 'CL').toUpperCase();
+            // Ẩn fallback logo SportO mặc định trong CLB (chỉ hiển thị logo thật của CLB)
+            const hasCustomLogo = Boolean(
+              club.logoUrl?.trim() &&
+              !club.logoUrl.includes('sporto_v1') &&
+              !club.logoUrl.includes('defaultFallback')
+            );
+
             return (
               <Link
                 key={club.id || club.name}
                 href={club.id ? `/communities/${club.id}` : '/communities'}
                 className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all group"
               >
-                <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden relative">
-                  {club.logoUrl ? (
+                <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden relative border border-slate-200/60 bg-slate-50">
+                  {hasCustomLogo ? (
                     <img
-                      src={club.logoUrl}
+                      src={club.logoUrl!}
                       alt={club.name}
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
-                    <span>{initials}</span>
+                    <span className="text-blue-700 font-bold text-xs">{initials}</span>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">

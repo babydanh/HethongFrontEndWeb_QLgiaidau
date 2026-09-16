@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl';
 import { getRankBorderColor } from '@/components/ui/RankAvatar';
 import { getRankProgressInfo } from '@/utils/rank-style';
 import { getSportLogo } from '@/constants/sports';
+import { BRAND } from '@/constants/brand';
 
 export interface SocialPickupItem {
   id: string;
@@ -572,26 +573,27 @@ export function SocialPickupRow({
   const entityAvatar = item.isClubHosted ? item.clubLogoUrl : item.hostAvatar;
   const entityInitial = (entityName.trim().slice(0, 2) || 'CL').toUpperCase();
 
+  const [imgError, setImgError] = useState(false);
+  const fallbackLogo = BRAND.assets.logoIcon;
+  const avatarSrc = (!imgError && entityAvatar?.trim()) ? entityAvatar : fallbackLogo;
   const sportIcon = getSportLogo(item.sport);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-blue-200 hover:shadow-xs transition-all flex flex-col gap-2.5 group">
-      {/* 1. TOP ROW: Small Avatar + Gray Club Name + Giao hữu badge (Left) & Standalone Sport Icon + Distance (Right) */}
+      {/* 1. TOP ROW: Small Avatar + Gray Club Name (Left) & Standalone Sport Icon + Distance (Right) */}
       <div className="flex items-center justify-between gap-3">
-        {/* Left: Small Round Avatar (w-6 h-6) + Subdued Gray Club Name + Giao hữu pill */}
-        <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
-            {entityAvatar ? (
-              <img src={entityAvatar} alt={entityName} className="w-full h-full object-cover" />
-            ) : (
-              <span>{entityInitial}</span>
-            )}
+        {/* Left: Small Round Avatar (w-6 h-6) + Subdued Gray Club Name */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+            <img
+              src={avatarSrc}
+              alt={entityName}
+              className={`w-full h-full ${avatarSrc === fallbackLogo ? 'object-contain p-0.5' : 'object-cover'}`}
+              onError={() => setImgError(true)}
+            />
           </div>
           <span className="font-medium text-xs text-slate-500 truncate">
             {entityName}
-          </span>
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-400 text-white leading-none">
-            Giao hữu
           </span>
         </div>
 
@@ -625,10 +627,10 @@ export function SocialPickupRow({
         </div>
       </div>
 
-      {/* 3. BOTTOM ROW: Members Stack + Slot Text (Left) & Price + Action Icon Button (Right) */}
+      {/* 3. BOTTOM ROW: Members Stack + Slot Text + Giao Hữu (Left) & Price + Action Icon Button (Right) */}
       <div className="flex items-center justify-between pt-1 gap-3">
-        {/* Left: Avatar group + X/Y */}
-        <div className="flex items-center gap-2 min-w-0">
+        {/* Left: Avatar group + X/Y + Giao Hữu */}
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
           <div className="flex items-center -space-x-1.5 shrink-0">
             {item.players.map((p, idx) => (
               <div
@@ -652,6 +654,9 @@ export function SocialPickupRow({
           </div>
           <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
             {item.currentSlots + (joined ? 1 : 0)}/{item.maxSlots}
+          </span>
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-400 text-white leading-none whitespace-nowrap">
+            Giao hữu
           </span>
         </div>
 

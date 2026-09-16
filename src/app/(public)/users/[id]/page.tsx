@@ -33,6 +33,7 @@ interface UserRank {
   adminLeaderboardEligible?: boolean;
   currentStreakType?: 'WIN' | 'LOSS' | 'NONE';
   currentStreakCount?: number;
+  genderRestriction?: string | null;
   tierName?: string | null;
   partnerName?: string | null;
 }
@@ -227,7 +228,18 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     return gender;
   };
 
-  const displayedRanks = [...(profile.ranks || []), ...(profile.pairRanks || [])];
+  // Ensure each matchType per category appears only once (prefer gender-specific rank over generic/null)
+  const singleRanks = (profile.ranks || []).filter((rank, idx, arr) => {
+    const betterExists = arr.some(
+      (other) =>
+        other.categoryId === rank.categoryId &&
+        other.matchType === rank.matchType &&
+        Boolean(other.genderRestriction) &&
+        !rank.genderRestriction,
+    );
+    return !betterExists;
+  });
+  const displayedRanks = [...singleRanks, ...(profile.pairRanks || [])];
 
   const getHistoryResult = (item: EloHistoryLog) =>
     item.match?.result ?? (item.changedPoints > 0 ? 'WIN' : item.changedPoints < 0 ? 'LOSS' : 'DRAW');
@@ -645,15 +657,18 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                           ? 'fill-rose-500 text-rose-600'
                           : 'text-slate-400';
 
+                      const partnerText = rank.partnerName ? ` • ${translate('withPartner')} ${rank.partnerName}` : '';
+                      const rankKey = `${rank.categoryId}-${rank.matchType}-${rank.genderRestriction || ''}-${rank.partnerName || ''}`;
+
                       return (
-                      <div key={`${rank.categoryId}-${rank.matchType}`} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
+                      <div key={rankKey} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between group">
                         <div className="space-y-1.5 flex-1">
                           <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
                             {rank.categoryName} • {getMatchTypeLabel(rank.matchType)}
                           </span>
                           <div className="flex items-center gap-2">
                             <Award className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO {rank.partnerName ? `• {translate('withPartner')} ${rank.partnerName}` : ''}</h4>
+                            <h4 className="font-bold text-slate-900 text-base">{rank.eloPoints} ELO{partnerText}</h4>
                             <EloTierBadge elo={rank.eloPoints} tierName={rank.tierName || undefined} categoryName={rank.categoryName} size="sm" />
                           </div>
                           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">

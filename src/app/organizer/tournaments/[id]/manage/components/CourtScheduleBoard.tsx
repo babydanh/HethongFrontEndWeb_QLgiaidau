@@ -933,19 +933,43 @@ export function CourtScheduleBoard({
   const [isLocalFullscreen, setIsLocalFullscreen] = useState(false);
   const [conflictsModalOpen, setConflictsModalOpen] = useState(false);
 
+  const clearScheduleSelection = useCallback(() => {
+    setSelectionRange(null);
+    setDragAnchor(null);
+    setIsSelecting(false);
+    setSelectedPickerMatchIds([]);
+    setQueueSelectedMatchIds([]);
+  }, []);
+
+  const handleScheduleShellClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    if (target.closest('button, [role="button"], a')) {
+      clearScheduleSelection();
+      return;
+    }
+
+    if (target.closest('[data-schedule-selection-surface="true"]')) return;
+    clearScheduleSelection();
+  }, [clearScheduleSelection]);
+
   const handleToggleFullscreen = () => {
     setIsLocalFullscreen((prev) => !prev);
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isLocalFullscreen) {
-        setIsLocalFullscreen(false);
+      if (e.key === 'Escape') {
+        clearScheduleSelection();
+        if (isLocalFullscreen) {
+          setIsLocalFullscreen(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLocalFullscreen]);
+  }, [clearScheduleSelection, isLocalFullscreen]);
 
   // Helper to ignore placeholder / unassigned competitor names
   const isPlaceholderCompetitorName = (name?: string | null) => {
@@ -1705,9 +1729,18 @@ export function CourtScheduleBoard({
 
   // Close Context Menu on Click Outside or Escape
   useEffect(() => {
-    const handleClick = () => setContextMenu(null);
+    const handleClick = (event: MouseEvent) => {
+      setContextMenu(null);
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-schedule-selection-modal="true"]')) return;
+      if (target instanceof Element && target.closest('[data-schedule-selection-surface="true"]')) return;
+      clearScheduleSelection();
+    };
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setContextMenu(null);
+      if (e.key === 'Escape') {
+        setContextMenu(null);
+        clearScheduleSelection();
+      }
     };
     window.addEventListener('click', handleClick);
     window.addEventListener('keydown', handleKey);
@@ -1715,7 +1748,7 @@ export function CourtScheduleBoard({
       window.removeEventListener('click', handleClick);
       window.removeEventListener('keydown', handleKey);
     };
-  }, []);
+  }, [clearScheduleSelection]);
 
   // Set duration of a specific match
   const handleSetMatchDuration = (matchId: string, newDuration: number) => {
@@ -3443,6 +3476,7 @@ export function CourtScheduleBoard({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    clearScheduleSelection();
                     setActiveDurationPickerMatchId((prev) => (prev === item.match.id ? null : item.match.id));
                   }}
                   className="pointer-events-auto text-slate-700 hover:text-blue-700 font-extrabold bg-slate-100 hover:bg-blue-50 px-1.5 py-0.2 rounded border border-slate-200 hover:border-blue-300 transition-colors cursor-pointer flex items-center gap-0.5"
@@ -3456,7 +3490,10 @@ export function CourtScheduleBoard({
                 {activeDurationPickerMatchId === item.match.id && (
                   <div
                     className="absolute right-0 top-full mt-1 z-40 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl pointer-events-auto animate-in fade-in zoom-in-95 duration-100"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearScheduleSelection();
+                    }}
                   >
                     <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-slate-100 text-[11px] font-bold text-slate-700">
                       <span>Đổi thời lượng trận:</span>
@@ -3710,6 +3747,7 @@ export function CourtScheduleBoard({
       }`}
       aria-labelledby="schedule-board-title"
       ref={boardRef}
+      onClick={handleScheduleShellClick}
     >
       {/* Toast Notification */}
       {saveToast && (
@@ -4008,7 +4046,10 @@ export function CourtScheduleBoard({
               {autoScheduleMenuOpen && unscheduledRounds.length > 1 && (
                 <div
                   className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl bg-white p-1.5 shadow-2xl border border-slate-200 text-xs animate-in fade-in zoom-in-95 duration-100 ring-1 ring-slate-900/5"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearScheduleSelection();
+                  }}
                 >
                   <div className="px-2 py-1 border-b border-slate-100 mb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     Tùy chọn tự động xếp
@@ -4228,6 +4269,7 @@ export function CourtScheduleBoard({
               ? 'flex-1 min-h-0'
               : 'h-[calc(100vh-210px)] min-h-[500px]'
           } overflow-x-auto overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xs select-none flex-1`}
+          data-schedule-selection-surface="true"
           style={{
             scrollbarWidth: 'auto',
             scrollbarColor: '#94a3b8 #f1f5f9',
@@ -4520,10 +4562,11 @@ export function CourtScheduleBoard({
           if (!open) {
             setAssignmentPicker(null);
             setSelectedPickerMatchIds([]);
+            clearScheduleSelection();
           }
         }}
       >
-        <ModalContent className="max-w-2xl rounded-xl border border-slate-200">
+        <ModalContent data-schedule-selection-modal="true" className="max-w-2xl rounded-xl border border-slate-200">
           <ModalHeader className="border-b border-slate-100 pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -4714,8 +4757,14 @@ export function CourtScheduleBoard({
       </Modal>
 
       {/* POPUP MODAL: Danh sách trận chưa xếp lịch (Multi-Select & Bulk Assign) */}
-      <Modal open={queueOpen} onOpenChange={setQueueOpen}>
-        <ModalContent className="max-w-3xl rounded-xl border border-slate-200">
+      <Modal
+        open={queueOpen}
+        onOpenChange={(open) => {
+          setQueueOpen(open);
+          if (!open) clearScheduleSelection();
+        }}
+      >
+        <ModalContent data-schedule-selection-modal="true" className="max-w-3xl rounded-xl border border-slate-200">
           <ModalHeader className="border-b border-slate-100 pb-3">
             <div className="flex items-center justify-between">
               <div>
@@ -4910,7 +4959,7 @@ export function CourtScheduleBoard({
 
       {/* POPUP MODAL: Cấu hình khung giờ & thể thức thi đấu riêng biệt */}
       <Modal open={timeSettingsOpen} onOpenChange={setTimeSettingsOpen}>
-        <ModalContent className="max-w-lg rounded-2xl border border-slate-200 p-6 shadow-2xl">
+        <ModalContent data-schedule-selection-modal="true" className="max-w-lg rounded-2xl border border-slate-200 p-6 shadow-2xl">
           <ModalHeader className="border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2.5">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
@@ -5086,7 +5135,7 @@ export function CourtScheduleBoard({
 
       {/* AI VOICE & NATURAL LANGUAGE SCHEDULING MODAL (SportO Brand Theme & Advanced NLP) */}
       <Modal open={aiVoiceModalOpen} onOpenChange={setAiVoiceModalOpen}>
-        <ModalContent className="max-w-xl p-6 bg-white rounded-3xl shadow-2xl border border-slate-200">
+        <ModalContent data-schedule-selection-modal="true" className="max-w-xl p-6 bg-white rounded-3xl shadow-2xl border border-slate-200">
           <ModalHeader className="border-b border-slate-100 pb-3.5">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25">
@@ -5326,7 +5375,10 @@ export function CourtScheduleBoard({
               left: Math.max(10, menuX),
               top: Math.max(10, menuY),
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              clearScheduleSelection();
+            }}
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -5752,8 +5804,14 @@ export function CourtScheduleBoard({
       })()}
 
       {/* POPUP MODAL: Danh sách xung đột trùng giờ VĐV */}
-      <Modal open={conflictsModalOpen} onOpenChange={setConflictsModalOpen}>
-        <ModalContent className="max-w-xl rounded-xl border border-slate-200">
+      <Modal
+        open={conflictsModalOpen}
+        onOpenChange={(open) => {
+          setConflictsModalOpen(open);
+          if (!open) clearScheduleSelection();
+        }}
+      >
+        <ModalContent data-schedule-selection-modal="true" className="max-w-xl rounded-xl border border-slate-200">
           <ModalHeader className="border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-200">

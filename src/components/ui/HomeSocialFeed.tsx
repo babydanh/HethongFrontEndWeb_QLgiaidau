@@ -378,29 +378,25 @@ export default function HomeSocialFeed() {
       <div className="space-y-5">
         {milestoneGroups.map((group) => (
           <div key={group.time} className="relative">
-            {/* MILESTONE HEADER: Mốc giờ bắt đầu rõ ràng */}
-            <div className="flex items-center gap-3 mb-2.5">
-              <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full text-xs">
-                <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span className="font-extrabold text-slate-800 tracking-wide">
-                  {group.time}
-                </span>
-                <span className="text-[11px] text-slate-500 font-medium border-l border-slate-300 pl-2">
-                  {group.items.length} hoạt động
-                </span>
+            {/* MILESTONE HEADER: Giờ tinh giản, không màu mè */}
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
+                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="font-bold text-slate-800 text-sm">{group.time}</span>
+                <span className="text-slate-400 font-normal">({group.items.length})</span>
               </div>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
 
             {/* DANH SÁCH SỰ KIỆN TRONG KHUNG GIỜ NÀY */}
-            <div className="space-y-3.5 pl-2 sm:pl-3 border-l-2 border-slate-200 ml-3 sm:ml-4">
+            <div className="space-y-3 pl-2 sm:pl-3 border-l border-slate-200 ml-2 sm:ml-2.5">
               {group.items.map((item) => {
                 const isTournament = item.type === 'TOURNAMENT_OPENED' || item.type === 'TOURNAMENT_ONGOING';
                 const isPickup = item.type === 'PICKUP_NEED_PLAYER' || item.type === 'CLUB_RECRUITING';
                 const isFull = item.slots && item.slots.current >= item.slots.max;
 
                 /* ==========================================================
-                   DẠNG A: GIẢI ĐẤU (ĐANG DIỄN RA HOẶC MỞ ĐĂNG KÝ)
+                   DẠNG A: GIẢI ĐẤU (ĐANG DIỄN RA HOẶC MỞ ĐĂNG KÝ) - GỌN GÀNG, ÍT CHỮ
                    ========================================================== */
                 if (isTournament) {
                   const isOngoing = item.type === 'TOURNAMENT_ONGOING';
@@ -410,10 +406,10 @@ export default function HomeSocialFeed() {
                       key={item.id}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-white rounded-xl border border-slate-200 shadow-xs hover:border-blue-300 transition-all overflow-hidden relative group"
+                      className="bg-white rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all overflow-hidden relative group"
                     >
                       {/* BANNER GỌN NẰM TRÊN TOP */}
-                      <div className="relative h-28 sm:h-32 w-full bg-slate-900 overflow-hidden">
+                      <div className="relative h-24 sm:h-28 w-full bg-slate-900 overflow-hidden">
                         {item.bannerUrl ? (
                           <img
                             src={item.bannerUrl}
@@ -421,99 +417,78 @@ export default function HomeSocialFeed() {
                             className="w-full h-full object-cover opacity-60 group-hover:scale-102 transition-transform duration-300"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-r from-blue-800 to-slate-900 opacity-90" />
+                          <div className="w-full h-full bg-gradient-to-r from-blue-900 to-slate-900 opacity-90" />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
-                        {/* Badges trạng thái nổi bật trên Banner */}
-                        <div className="absolute top-2.5 left-3 right-3 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
+                        {/* Badges trạng thái tinh gọn trên Banner */}
+                        <div className="absolute top-2 left-3 right-3 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
                             {isOngoing ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-red-600 text-white shadow-xs">
-                                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                                <span>ĐANG DIỄN RA</span>
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-red-600 text-white">
+                                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                <span>ĐANG ĐẤU</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-400 text-slate-950 shadow-xs">
-                                <Sparkles className="w-3 h-3 text-slate-950" />
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950">
                                 <span>MỞ ĐĂNG KÝ</span>
                               </span>
                             )}
 
-                            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-black/50 text-white border border-white/20">
-                              {item.sport} {item.sportTier && `• ${item.sportTier}`}
+                            <span className="px-1.5 py-0.5 rounded text-[11px] font-medium bg-black/50 text-slate-200 border border-white/10">
+                              {item.sport}
                             </span>
                           </div>
 
-                          {/* CLB / Đơn vị tổ chức */}
-                          <div className="flex items-center gap-1.5 bg-black/50 px-2 py-0.5 rounded-md border border-white/10 text-[11px] text-slate-200">
-                            <span className="font-bold text-white">{item.club.name}</span>
-                          </div>
+                          <span className="text-[11px] font-medium text-slate-200 bg-black/40 px-2 py-0.5 rounded border border-white/10 truncate max-w-[180px]">
+                            {item.club.name}
+                          </span>
                         </div>
 
                         {/* Tiêu đề giải đấu trên banner */}
-                        <div className="absolute bottom-2.5 left-3 right-3">
-                          <h3 className="text-sm sm:text-base font-bold text-white leading-snug line-clamp-1 drop-shadow-sm group-hover:text-blue-200 transition-colors">
+                        <div className="absolute bottom-2 left-3 right-3">
+                          <h3 className="text-sm sm:text-base font-bold text-white leading-snug line-clamp-1 drop-shadow-sm">
                             {item.title}
                           </h3>
                         </div>
                       </div>
 
-                      {/* NỘI DUNG VÀ THÔNG TIN GIẢI */}
-                      <div className="p-3.5 sm:p-4 space-y-3">
-                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
-                          {item.description}
-                        </p>
-
-                        {/* Bảng tóm tắt thông số giải */}
-                        {item.tournament && (
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs">
-                            <div>
-                              <span className="text-[10px] text-slate-400 block font-medium uppercase">Giải thưởng</span>
-                              <span className="font-bold text-slate-800 truncate block mt-0.5">
-                                {item.tournament.prize}
-                              </span>
-                            </div>
-
-                            <div>
-                              <span className="text-[10px] text-slate-400 block font-medium uppercase">Quy mô</span>
-                              <span className="font-semibold text-slate-700 block mt-0.5">
-                                {item.tournament.totalTeams || '32 VĐV / Cặp'}
-                              </span>
-                            </div>
-
-                            <div className="col-span-2 sm:col-span-1">
-                              <span className="text-[10px] text-slate-400 block font-medium uppercase">
-                                {isOngoing ? 'Sân phát trực tiếp' : 'Tình trạng'}
-                              </span>
-                              <span className={`font-bold block mt-0.5 ${isOngoing ? 'text-red-600' : 'text-blue-600'}`}>
-                                {isOngoing ? (item.tournament.liveCourt || 'Sân chính') : item.tournament.statusBadge}
-                              </span>
-                            </div>
+                      {/* NỘI DUNG VÀ FOOTER TINH GỌN (Bỏ bớt giải thưởng và quy mô rườm rà) */}
+                      <div className="p-3 sm:p-3.5 space-y-2.5">
+                        <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-slate-700">{item.startTime} – {item.endTime}</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-500 truncate max-w-[220px]">{item.location}</span>
                           </div>
-                        )}
 
-                        {/* Footer card: Khung giờ, Địa điểm & Nút Xem */}
-                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
-                          <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                            <div className="flex items-center gap-1 text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded">
-                              <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                              <span>{item.startTime} – {item.endTime}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-slate-500">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="truncate max-w-[200px]">{item.location}</span>
-                            </div>
-                          </div>
+                          {isOngoing && item.tournament?.liveCourt && (
+                            <span className="text-[11px] font-medium text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded">
+                              {item.tournament.liveCourt}
+                            </span>
+                          )}
+
+                          {!isOngoing && item.tournament?.prize && (
+                            <span className="text-[11px] font-semibold text-slate-600">
+                              Thưởng: {item.tournament.prize}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Hàng hành động */}
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                          <p className="text-xs text-slate-500 line-clamp-1 truncate">
+                            {item.description}
+                          </p>
 
                           <Link
                             href="/tournaments"
-                            className={`px-3.5 py-1.5 rounded-lg text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 transition-all ml-auto ${
-                              isOngoing ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
+                            className={`px-3 py-1 rounded-lg text-white text-xs font-semibold shrink-0 inline-flex items-center gap-1 transition-all ml-auto ${
+                              isOngoing ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-900 hover:bg-slate-800'
                             }`}
                           >
-                            <span>{isOngoing ? 'Xem trực tiếp' : 'Xem giải đấu'}</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <span>{isOngoing ? 'Xem trực tiếp' : 'Xem giải'}</span>
+                            <ArrowRight className="w-3 h-3" />
                           </Link>
                         </div>
                       </div>
@@ -522,125 +497,105 @@ export default function HomeSocialFeed() {
                 }
 
                 /* ==========================================================
-                   DẠNG B: THẺ KÈO GIAO LƯU TRỰC THUỘC CÂU LẠC BỘ
+                   DẠNG B: THẺ KÈO GIAO LƯU CLB - GỌN GÀNG, BỎ DÒNG HOST
                    ========================================================== */
                 return (
                   <motion.article
                     key={item.id}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-xl border border-slate-200 p-4 sm:p-4.5 shadow-xs hover:border-blue-200 transition-all space-y-3 relative group"
+                    className="bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 shadow-xs hover:border-slate-300 transition-all space-y-2.5 relative group"
                   >
-                    {/* TOP HEADER: Avatar CLB + Tên CLB + Badge loại kèo */}
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Avatar Câu Lạc Bộ */}
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+                    {/* TOP: Tên CLB + Badge loại kèo */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded bg-slate-800 text-white font-bold text-[11px] flex items-center justify-center shrink-0">
                           {item.club.initials}
                         </div>
-
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold text-slate-850 truncate hover:text-blue-600">
-                              {item.club.name}
-                            </span>
-                            {item.club.verified && (
-                              <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                            )}
-                          </div>
-                          <div className="text-[11px] text-slate-400 truncate">
-                            Host: <span className="font-semibold text-slate-600">{item.host.name}</span> ({item.host.roleInClub})
-                          </div>
-                        </div>
+                        <span className="text-xs font-bold text-slate-800 truncate">
+                          {item.club.name}
+                        </span>
+                        {item.club.verified && (
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        )}
+                        <span className="text-slate-300 text-xs">•</span>
+                        <span className="text-[11px] text-slate-500 truncate">{item.sport}</span>
                       </div>
 
-                      {/* Badge phân loại kèo */}
-                      <div className="shrink-0 flex items-center gap-1.5">
+                      <div className="shrink-0">
                         {item.type === 'PICKUP_NEED_PLAYER' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-orange-50 text-orange-700 border border-orange-200/80">
                             <Flame className="w-3 h-3 text-orange-500" />
-                            <span>{item.slots?.missingText || 'THIẾU NGƯỜI'}</span>
+                            <span>{item.slots?.missingText || 'Thiếu người'}</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            <Users className="w-3 h-3 text-blue-600" />
-                            <span>CLB SINH HOẠT</span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                            <Users className="w-3 h-3 text-slate-600" />
+                            <span>Sinh hoạt CLB</span>
                           </span>
                         )}
-                        <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
-                          {item.sport}
-                        </span>
                       </div>
                     </div>
 
                     {/* TIÊU ĐỀ KÈO GIAO LƯU */}
-                    <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                       {item.title}
                     </h3>
 
-                    {/* NỘI DUNG MÔ TẢ CHI TIẾT */}
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {/* MÔ TẢ NGẮN GỌN */}
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
 
-                    {/* BOX MỜI GỌI THÀNH VIÊN: AVATAR STACK + SLOT + CHI PHÍ */}
+                    {/* DẢI SLOT VÀ CHI PHÍ GỌN */}
                     {item.slots && (
-                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          {/* Avatars các bạn đã giữ slot */}
+                      <div className="bg-slate-50 rounded-lg p-2 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2">
                           <div className="flex -space-x-1.5 overflow-hidden">
                             {item.slots.joinedPlayers.map((p, idx) => (
                               <div
                                 key={idx}
-                                style={{ backgroundColor: p.initialsBg || '#2563eb' }}
-                                className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold text-white shadow-2xs"
+                                style={{ backgroundColor: p.initialsBg || '#475569' }}
+                                className="w-5 h-5 rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white shadow-2xs"
                                 title={p.name}
                               >
                                 {p.name.charAt(0)}
                               </div>
                             ))}
                           </div>
-                          <span className="text-xs font-semibold text-slate-700">
-                            Đã tham gia {item.slots.current}/{item.slots.max}
+                          <span className="text-slate-600 text-[11px]">
+                            {item.slots.current}/{item.slots.max} người
                           </span>
                         </div>
 
-                        <div className="text-right">
-                          <span className="text-[10px] text-slate-400 block uppercase font-medium">Chi phí chia sân</span>
-                          <span className="text-xs font-bold text-blue-600">{item.slots.feePerSlot}/slot</span>
+                        <div className="text-slate-700 font-semibold text-xs">
+                          {item.slots.feePerSlot}
                         </div>
                       </div>
                     )}
 
-                    {/* FOOTER: KHUNG GIỜ, ĐỊA ĐIỂM SÂN & NÚT VÀO SLOT */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-3 text-xs text-slate-600 font-medium flex-wrap">
-                        <div className="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2 py-0.5 rounded font-bold">
-                          <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          <span>{item.startTime} – {item.endTime}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 text-slate-500">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate max-w-[200px]">{item.location}</span>
-                        </div>
+                    {/* FOOTER: GIỜ ĐƠN GIẢN, KHÔNG TÔ MÀU NỔI VÀ NÚT VÀO SLOT */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap text-xs">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <span className="font-semibold text-slate-800">{item.startTime} – {item.endTime}</span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-slate-500 truncate max-w-[190px]">{item.location}</span>
                       </div>
 
-                      {/* Nút hành động */}
                       {item.slots && (
                         <div className="ml-auto">
                           {isFull ? (
-                            <span className="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 text-xs font-semibold block">
-                              Đã đủ slot
+                            <span className="px-2.5 py-1 rounded bg-slate-100 text-slate-400 text-xs font-medium">
+                              Đã đủ
                             </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleJoinSlot(item)}
-                              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
                             >
-                              <UserPlus className="w-3.5 h-3.5" />
-                              <span>Vào slot ngay</span>
+                              <UserPlus className="w-3 h-3" />
+                              <span>Vào slot</span>
                             </button>
                           )}
                         </div>

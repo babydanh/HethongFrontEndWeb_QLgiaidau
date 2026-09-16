@@ -107,6 +107,7 @@ export function useManageState(id: string) {
 
   // ── Data ──
   const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [isAccessDenied, setIsAccessDenied] = useState(false);
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [bracket, setBracket] = useState<{ stages: BracketStage[] } | null>(null);
@@ -2141,7 +2142,8 @@ export function useManageState(id: string) {
 
   const fetchTournamentData = useCallback(async () => {
     try {
-      const tRes = await tournamentsApi.getTournamentById(id);
+      setIsAccessDenied(false);
+      const tRes = await tournamentsApi.getTournamentById(id, { manage: 'true' });
       if (tRes.data) {
         const t = tRes.data; setTournament(t);
         setName(t.name); setCategoryId(t.categoryId); setDescription(t.description||''); setBannerUrl(t.bannerUrl||''); setLogoUrl(t.logoUrl||'');
@@ -2192,7 +2194,15 @@ export function useManageState(id: string) {
         await fetchTournamentVenues();
       }
       return tRes.data;
-    } catch { toast.error('Không thể tải thông tin giải đấu'); return null; }
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403 || status === 404) {
+        setIsAccessDenied(true);
+      } else {
+        toast.error('Không thể tải thông tin giải đấu');
+      }
+      return null;
+    }
   }, [applyResolvedRuleState, fetchDivisions, fetchVenueCourts, id]);
 
   // ── Init ──
@@ -2534,7 +2544,7 @@ export function useManageState(id: string) {
         schedulePlanPreview, setSchedulePlanPreview, isPreviewingSchedulePlan,
     aiScheduleIntent, setAiScheduleIntent, isPlanningScheduleWithAi,
 
-    isLoading, setIsLoading, activeTab, setActiveTab, validationField, setValidationField, basicSubTab, setBasicSubTab,
+    isLoading, setIsLoading, isAccessDenied, activeTab, setActiveTab, validationField, setValidationField, basicSubTab, setBasicSubTab,
     draftStatus, clearManageDraft,
     referees, setReferees, refereeEmail, setRefereeEmail, isAddingReferee, setIsAddingReferee,
     divisions, setDivisions, selectedDivisionId, setSelectedDivisionId,

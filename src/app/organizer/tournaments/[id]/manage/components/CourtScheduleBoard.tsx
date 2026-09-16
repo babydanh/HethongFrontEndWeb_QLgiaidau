@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   AlertTriangle,
   ArrowRightLeft,
@@ -344,7 +344,23 @@ function getLocalDateString(value?: string | null): string | null {
   return `${year}-${month}-${day}`;
 }
 
-function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
+function getRoundScopeKey(match: ScheduleBoardMatch) {
+  const rawMatch = match as unknown as Record<string, unknown>;
+  const stageName = String(match.stageName || match.stage?.name || rawMatch.stageType || '').trim().toLocaleLowerCase();
+  const bracketCode = String(rawMatch.bracketCode || rawMatch.bracket_code || rawMatch.branch || rawMatch.bracket || '').trim().toLocaleLowerCase();
+  return `${match.divisionId || 'default'}|${stageName}|${bracketCode}|${match.roundNumber || 1}`;
+}
+
+function getKnockoutRoundLabelFromMatchCount(matchCount?: number) {
+  if (!Number.isInteger(matchCount) || !matchCount || matchCount < 1 || matchCount > 64) return null;
+  if ((matchCount & (matchCount - 1)) !== 0) return null;
+  if (matchCount === 1) return 'CHUNG KẾT';
+  if (matchCount === 2) return 'BÁN KẾT';
+  if (matchCount === 4) return 'TỨ KẾT';
+  return `VÒNG 1/${matchCount}`;
+}
+
+function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1, roundMatchCount?: number) {
   const m = match as unknown as Record<string, unknown>;
   const rawRoundName = String(match.roundName || m.stageName || match.stage?.name || m.stageType || '').trim();
   const lowerName = rawRoundName.toLowerCase();
@@ -391,6 +407,8 @@ function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
     bracketCode.includes('wb');
 
   if (isWinners) {
+    const countLabel = getKnockoutRoundLabelFromMatchCount(roundMatchCount);
+    if (countLabel) return `NHÁNH THẮNG • ${countLabel}`;
     const diff = Math.max(0, maxRound - rNum);
     if (diff === 0) return 'CHUNG KẾT NHÁNH THẮNG';
     if (diff === 1) return 'BÁN KẾT NHÁNH THẮNG';
@@ -413,6 +431,8 @@ function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
     bracketCode.includes('lb');
 
   if (isLosers) {
+    const countLabel = getKnockoutRoundLabelFromMatchCount(roundMatchCount);
+    if (countLabel) return `NHÁNH THUA • ${countLabel}`;
     const diff = Math.max(0, maxRound - rNum);
     if (diff === 0) return 'CHUNG KẾT NHÁNH THUA';
     if (diff === 1) return 'BÁN KẾT NHÁNH THUA';
@@ -428,6 +448,12 @@ function getAccurateRoundLabel(match: ScheduleBoardMatch, maxRound = 1) {
     lowerName.includes('elimination');
 
   if (isKnockout && maxRound >= 1) {
+    const countLabel = getKnockoutRoundLabelFromMatchCount(roundMatchCount);
+    if (countLabel) return countLabel;
+    // A known non-power-of-two round count is not enough evidence to infer
+    // a knockout distance. Keep its round number instead of producing a
+    // misleading label such as VÒNG 1/256.
+    if (typeof roundMatchCount === 'number') return `VÒNG ${rNum}`;
     const diff = maxRound - rNum;
     if (diff === 0) return 'CHUNG KẾT';
     if (diff === 1) return 'BÁN KẾT';
@@ -772,6 +798,21 @@ export function CourtScheduleBoard({
     return map;
   }, [matches]);
 
+  const roundMatchCountByScope = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const match of matches) {
+      const key = getRoundScopeKey(match);
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+    return map;
+  }, [matches]);
+
+  const getScheduleRoundLabel = useCallback((match: ScheduleBoardMatch) => {
+    const maxRound = maxRoundByDivision.get(match.divisionId || 'default') || 1;
+    const roundMatchCount = roundMatchCountByScope.get(getRoundScopeKey(match));
+    return getAccurateRoundLabel(match, maxRound, roundMatchCount);
+  }, [maxRoundByDivision, roundMatchCountByScope]);
+
   const previewAssignmentByMatchId = useMemo(
     () => new Map(preview?.assignments.map((assignment) => [assignment.matchId, assignment]) ?? []),
     [preview],
@@ -882,14 +923,13 @@ export function CourtScheduleBoard({
   const unscheduledRounds = useMemo(() => {
     const map = new Map<string, { label: string; count: number }>();
     for (const item of unscheduledMatches) {
-      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-      const label = getAccurateRoundLabel(item.match, maxR);
+      const label = getScheduleRoundLabel(item.match);
       const existing = map.get(label) || { label, count: 0 };
       existing.count += 1;
       map.set(label, existing);
     }
     return Array.from(map.values());
-  }, [unscheduledMatches, maxRoundByDivision]);
+  }, [getScheduleRoundLabel, unscheduledMatches]);
 
   const [isLocalFullscreen, setIsLocalFullscreen] = useState(false);
   const [conflictsModalOpen, setConflictsModalOpen] = useState(false);
@@ -1777,8 +1817,7 @@ export function CourtScheduleBoard({
     let candidateMatches = unscheduledMatches;
     if (filterRoundLabel && filterRoundLabel !== 'all') {
       candidateMatches = candidateMatches.filter((item) => {
-        const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-        return getAccurateRoundLabel(item.match, maxR) === filterRoundLabel;
+        return getScheduleRoundLabel(item.match) === filterRoundLabel;
       });
     }
 
@@ -2158,8 +2197,7 @@ export function CourtScheduleBoard({
     const matched = pool.filter((item) => {
       if (divisionId && item.match.divisionId !== divisionId) return false;
       if (matchedRoundLabels.length > 0) {
-        const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-        const rLabel = getAccurateRoundLabel(item.match, maxR);
+        const rLabel = getScheduleRoundLabel(item.match);
         const matchAny = matchedRoundLabels.some((lbl) => rLabel === lbl || rLabel.toLowerCase().includes(lbl.toLowerCase()));
         if (!matchAny) return false;
       }
@@ -2589,8 +2627,7 @@ export function CourtScheduleBoard({
       if (pickerDivisionFilter !== 'all' && item.match.divisionId !== pickerDivisionFilter) {
         return false;
       }
-      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-      const roundStr = getAccurateRoundLabel(item.match, maxR);
+      const roundStr = getScheduleRoundLabel(item.match);
       if (pickerRoundFilter !== 'all' && roundStr !== pickerRoundFilter) {
         return false;
       }
@@ -2600,7 +2637,7 @@ export function CourtScheduleBoard({
       const orderStr = `#${item.match.matchOrder ?? ''}`.toLocaleLowerCase();
       return p1.includes(query) || p2.includes(query) || roundStr.toLocaleLowerCase().includes(query) || orderStr.includes(query);
     });
-  }, [assignmentSearch, pickerDivisionFilter, pickerRoundFilter, unscheduledMatches, maxRoundByDivision]);
+  }, [assignmentSearch, getScheduleRoundLabel, pickerDivisionFilter, pickerRoundFilter, unscheduledMatches]);
 
   // Filtering for Queue Modal
   const filteredQueueMatches = useMemo(() => {
@@ -2608,14 +2645,13 @@ export function CourtScheduleBoard({
       if (queueDivisionFilter !== 'all' && item.match.divisionId !== queueDivisionFilter) {
         return false;
       }
-      const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-      const roundStr = getAccurateRoundLabel(item.match, maxR);
+      const roundStr = getScheduleRoundLabel(item.match);
       if (queueRoundFilter !== 'all' && roundStr !== queueRoundFilter) {
         return false;
       }
       return true;
     });
-  }, [queueDivisionFilter, queueRoundFilter, unscheduledMatches, maxRoundByDivision]);
+  }, [getScheduleRoundLabel, queueDivisionFilter, queueRoundFilter, unscheduledMatches]);
 
   const openAssignmentPicker = (courtId?: string, scheduledAt?: string, rowIndex?: number) => {
     setAssignmentSearch('');
@@ -3185,9 +3221,7 @@ export function CourtScheduleBoard({
   };
 
   const renderMatchCard = (item: (typeof displayMatches)[number], compact = false) => {
-    const divId = item.match.divisionId || 'default';
-    const maxRound = maxRoundByDivision.get(divId) || 1;
-    const roundLabelStr = getAccurateRoundLabel(item.match, maxRound);
+    const roundLabelStr = getScheduleRoundLabel(item.match);
     const division = divisions.find((d) => d.id === item.match.divisionId) || ((item.match as unknown as Record<string, unknown>).divisionName ? { name: String((item.match as unknown as Record<string, unknown>).divisionName) } : null);
     const { isFootball, isSingles, isDoubles } = detectSportAndFormat(item.match, division);
     const setList = extractSetScores(item.match);
@@ -4520,69 +4554,38 @@ export function CourtScheduleBoard({
             </div>
           </ModalHeader>
 
-          {/* Division filters */}
-          {divisions.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-2 pb-1 hide-scrollbar">
-              <button
-                type="button"
-                onClick={() => setPickerDivisionFilter('all')}
-                className={`rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${
-                  pickerDivisionFilter === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Tất cả nội dung ({unscheduledMatches.length})
-              </button>
-              {divisions.map((d) => {
-                const count = unscheduledMatches.filter((m) => m.match.divisionId === d.id).length;
-                return (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => setPickerDivisionFilter(d.id)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${
-                      pickerDivisionFilter === d.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+          {/* Compact filters: every option is reachable without horizontal scrolling. */}
+          {(divisions.length > 1 || unscheduledRounds.length > 1) && (
+            <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
+              {divisions.length > 1 && (
+                <label className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600">
+                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">Nội dung</span>
+                  <select
+                    value={pickerDivisionFilter}
+                    onChange={(event) => setPickerDivisionFilter(event.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-800 outline-hidden"
                   >
-                    {d.name} ({count})
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Round filters in Assignment Picker */}
-          {unscheduledRounds.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-1 hide-scrollbar">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Vòng:</span>
-              <button
-                type="button"
-                onClick={() => setPickerRoundFilter('all')}
-                className={`rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${
-                  pickerRoundFilter === 'all'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Tất cả vòng
-              </button>
-              {unscheduledRounds.map((r) => (
-                <button
-                  key={r.label}
-                  type="button"
-                  onClick={() => setPickerRoundFilter(r.label)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${
-                    pickerRoundFilter === r.label
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {r.label} ({r.count})
-                </button>
-              ))}
+                    <option value="all">Tất cả nội dung ({unscheduledMatches.length})</option>
+                    {divisions.map((d) => {
+                      const count = unscheduledMatches.filter((m) => m.match.divisionId === d.id).length;
+                      return <option key={d.id} value={d.id}>{d.name} ({count})</option>;
+                    })}
+                  </select>
+                </label>
+              )}
+              {unscheduledRounds.length > 1 && (
+                <label className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600">
+                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">Vòng đấu</span>
+                  <select
+                    value={pickerRoundFilter}
+                    onChange={(event) => setPickerRoundFilter(event.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-800 outline-hidden"
+                  >
+                    <option value="all">Tất cả vòng ({unscheduledMatches.length})</option>
+                    {unscheduledRounds.map((round) => <option key={round.label} value={round.label}>{round.label} ({round.count})</option>)}
+                  </select>
+                </label>
+              )}
             </div>
           )}
           <div className="flex items-center gap-2 pt-1">
@@ -4621,8 +4624,7 @@ export function CourtScheduleBoard({
             <div className="grid max-h-[50vh] gap-2 overflow-y-auto sm:grid-cols-2 pt-1">
               {filteredPickerMatches.map((item) => {
                 const div = divisions.find((d) => d.id === item.match.divisionId);
-                const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-                const roundLabelStr = getAccurateRoundLabel(item.match, maxR);
+                const roundLabelStr = getScheduleRoundLabel(item.match);
                 const p1 = getParticipantName(item.match.participant1);
                 const p2 = getParticipantName(item.match.participant2);
                 const isSelected = selectedPickerMatchIds.includes(item.match.id);
@@ -4753,75 +4755,40 @@ export function CourtScheduleBoard({
               </div>
             </div>
 
-            {/* Filter controls inside Queue */}
-            <div className="space-y-1.5 pt-2">
-              {/* Division filters */}
-              {divisions.length > 1 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 hide-scrollbar">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Nội dung:</span>
-                  <button
-                    type="button"
-                    onClick={() => setQueueDivisionFilter('all')}
-                    className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                      queueDivisionFilter === 'all'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    Tất cả ({unscheduledMatches.length})
-                  </button>
-                  {divisions.map((d) => {
-                    const count = unscheduledMatches.filter((m) => m.match.divisionId === d.id).length;
-                    return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => setQueueDivisionFilter(d.id)}
-                        className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                          queueDivisionFilter === d.id
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                      >
-                        {d.name} ({count})
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Round filters */}
-              {unscheduledRounds.length > 1 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 hide-scrollbar">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Vòng:</span>
-                  <button
-                    type="button"
-                    onClick={() => setQueueRoundFilter('all')}
-                    className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                      queueRoundFilter === 'all'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    Tất cả vòng
-                  </button>
-                  {unscheduledRounds.map((r) => (
-                    <button
-                      key={r.label}
-                      type="button"
-                      onClick={() => setQueueRoundFilter(r.label)}
-                      className={`rounded-lg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                        queueRoundFilter === r.label
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
+            {/* Compact filters: every option is reachable without horizontal scrolling. */}
+            {(divisions.length > 1 || unscheduledRounds.length > 1) && (
+              <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
+                {divisions.length > 1 && (
+                  <label className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600">
+                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">Nội dung</span>
+                    <select
+                      value={queueDivisionFilter}
+                      onChange={(event) => setQueueDivisionFilter(event.target.value)}
+                      className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-800 outline-hidden"
                     >
-                      {r.label} ({r.count})
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                      <option value="all">Tất cả nội dung ({unscheduledMatches.length})</option>
+                      {divisions.map((d) => {
+                        const count = unscheduledMatches.filter((m) => m.match.divisionId === d.id).length;
+                        return <option key={d.id} value={d.id}>{d.name} ({count})</option>;
+                      })}
+                    </select>
+                  </label>
+                )}
+                {unscheduledRounds.length > 1 && (
+                  <label className="flex min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600">
+                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">Vòng đấu</span>
+                    <select
+                      value={queueRoundFilter}
+                      onChange={(event) => setQueueRoundFilter(event.target.value)}
+                      className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-800 outline-hidden"
+                    >
+                      <option value="all">Tất cả vòng ({unscheduledMatches.length})</option>
+                      {unscheduledRounds.map((round) => <option key={round.label} value={round.label}>{round.label} ({round.count})</option>)}
+                    </select>
+                  </label>
+                )}
+              </div>
+            )}
           </ModalHeader>
 
           {filteredQueueMatches.length > 0 ? (
@@ -4829,8 +4796,7 @@ export function CourtScheduleBoard({
               {filteredQueueMatches.map((item) => {
                 const isSelected = queueSelectedMatchIds.includes(item.match.id);
                 const div = divisions.find((d) => d.id === item.match.divisionId);
-                const maxR = maxRoundByDivision.get(item.match.divisionId || 'default') || 1;
-                const roundLabelStr = getAccurateRoundLabel(item.match, maxR);
+                const roundLabelStr = getScheduleRoundLabel(item.match);
                 const p1 = getParticipantName(item.match.participant1);
                 const p2 = getParticipantName(item.match.participant2);
 

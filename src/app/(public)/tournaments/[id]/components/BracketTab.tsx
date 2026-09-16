@@ -42,6 +42,82 @@ function slotOverrideKey(matchId: string, slot: 'participant1' | 'participant2')
   return `${matchId}:${slot}`;
 }
 
+type GroupRankSlot = {
+  participant1Placeholder?: string;
+  participant2Placeholder?: string;
+};
+
+function buildGroupRankPlaceholders(
+  stage: BracketStage | undefined,
+  groupNames: string[],
+): Map<string, GroupRankSlot> {
+  const result = new Map<string, GroupRankSlot>();
+  if (stage?.type !== 'SINGLE_ELIMINATION') return result;
+
+  const mapping = stage.roundConfig?.advanceMapping;
+  const numGroups = Number(mapping?.numGroups);
+  const teamsAdvancing = Number(mapping?.teamsAdvancing);
+  if (!Number.isInteger(numGroups) || numGroups < 2 || !Number.isInteger(teamsAdvancing) || teamsAdvancing < 1) {
+    return result;
+  }
+
+  const matches = stage.groups.flatMap((group) => group.matches ?? []);
+  const firstRound = Math.min(...matches.map((match) => match.roundNumber));
+  const firstRoundMatches = matches
+    .filter((match) => match.roundNumber === firstRound)
+    .sort((a, b) => a.matchOrder - b.matchOrder);
+  if (!firstRoundMatches.length) return result;
+
+  const labelFor = (groupIndex: number, rank: number) => {
+    const name = groupNames[groupIndex] || `Bảng ${String.fromCharCode(65 + groupIndex)}`;
+    return `${rank === 1 ? 'Nhất' : rank === 2 ? 'Nhì' : `Hạng ${rank}`} ${name}`;
+  };
+
+  const slots: string[] = [];
+  if (teamsAdvancing === 1 || teamsAdvancing === 2) {
+    for (let groupIndex = 0; groupIndex < numGroups; groupIndex += 2) {
+      const nextGroupIndex = groupIndex + 1;
+      if (nextGroupIndex >= numGroups) {
+        slots.push(...Array.from({ length: teamsAdvancing }, (_, rank) => labelFor(groupIndex, rank + 1)));
+        continue;
+      }
+      if (teamsAdvancing === 1) {
+        slots.push(labelFor(groupIndex, 1), labelFor(nextGroupIndex, 1));
+      } else {
+        slots.push(
+          labelFor(groupIndex, 1),
+          labelFor(nextGroupIndex, 2),
+          labelFor(nextGroupIndex, 1),
+          labelFor(groupIndex, 2),
+        );
+      }
+    }
+  } else {
+    for (let groupIndex = 0; groupIndex < numGroups; groupIndex += 1) {
+      for (let rank = 1; rank <= teamsAdvancing; rank += 1) {
+        slots.push(labelFor(groupIndex, rank));
+      }
+    }
+  }
+
+  const wildcardCount = mapping?.allowWildcard ? Number(mapping.wildcardTeams ?? 0) : 0;
+  if (Number.isInteger(wildcardCount) && wildcardCount > 0) {
+    slots.push(...Array.from({ length: wildcardCount }, () => 'Đội wildcard'));
+  }
+
+  firstRoundMatches.forEach((match, index) => {
+    const p1 = slots[index * 2];
+    const p2 = slots[index * 2 + 1];
+    if (!p1 && !p2) return;
+    result.set(match.id, {
+      ...(match.participant1 ? {} : p1 ? { participant1Placeholder: p1 } : {}),
+      ...(match.participant2 ? {} : p2 ? { participant2Placeholder: p2 } : {}),
+    });
+  });
+
+  return result;
+}
+
 function TrayParticipant({
   participant,
   translate,
@@ -196,6 +272,7 @@ function GroupView({
   fallbackSportRuleKind,
   roundConfig,
   viewMode = 'paged',
+  showZoomControls = true,
   translate,
   dragHandlers,
   compact = false,
@@ -212,6 +289,7 @@ function GroupView({
   fallbackSportRuleKind?: BracketTabProps['fallbackSportRuleKind'];
   roundConfig?: BracketStage['roundConfig'];
   viewMode?: 'paged' | 'full';
+  showZoomControls?: boolean;
   translate: TranslationFn;
   dragHandlers?: BracketDragHandlers;
   compact?: boolean;
@@ -309,6 +387,7 @@ function GroupView({
           onDoubleClickMatch={onDoubleClickMatch}
           fallbackSportRuleKind={fallbackSportRuleKind}
           panEnabled={viewMode === 'full'}
+          showZoomControls={showZoomControls}
           dragHandlers={dragHandlers}
           compact={compact}
         />
@@ -336,6 +415,7 @@ function GroupView({
       onDoubleClickMatch={onDoubleClickMatch}
       fallbackSportRuleKind={fallbackSportRuleKind}
       panEnabled={viewMode === 'full'}
+      showZoomControls={showZoomControls}
       dragHandlers={dragHandlers}
       compact={compact}
     />
@@ -361,6 +441,10 @@ export default function BracketTab({
   bracketSnapshot,
   refreshKey,
   compact = false,
+  viewModeOverride,
+  hideViewModeToggle = false,
+  hideZoomControls = false,
+  showGroupRankPlaceholders = false,
   isOwner = false,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
@@ -497,7 +581,24 @@ export default function BracketTab({
 
   const activeStage = renderedStages.find((s) => s.id === activeStageId);
   const activeStageSupportsFullView = Boolean(activeStage && isKnockoutStage(activeStage) && !compact);
-  const effectiveViewMode = compact ? 'paged' : (activeStageSupportsFullView ? viewMode : 'paged');
+  const effectiveViewMode = compact
+    ? 'paged'
+    : (viewModeOverride ?? (activeStageSupportsFullView ? viewMode : 'paged'));
+  const groupStageNames = useMemo(() => {
+    const sourceStages = bracketSnapshot?.stages ?? renderedStages;
+    const sourceGroupStage = sourceStages.find((stage) =>
+      stage.type === 'ROUND_ROBIN' || stage.type === 'GROUP_STAGE' || stage.type === 'GROUP',
+    );
+    return sourceGroupStage?.groups.map((group, index) =>
+      group.name || `Bảng ${String.fromCharCode(65 + index)}`,
+    ) ?? [];
+  }, [bracketSnapshot, renderedStages]);
+  const groupRankPlaceholders = useMemo(
+    () => showGroupRankPlaceholders
+      ? buildGroupRankPlaceholders(activeStage, groupStageNames)
+      : new Map<string, GroupRankSlot>(),
+    [activeStage, groupStageNames, showGroupRankPlaceholders],
+  );
   const shouldShowStageTabs =
     !knockoutOnly &&
     renderedStages.length > 1 &&
@@ -639,7 +740,7 @@ export default function BracketTab({
                 </p>
               </div>
 
-              {activeStageSupportsFullView && (
+              {activeStageSupportsFullView && !hideViewModeToggle && !viewModeOverride && (
                 <div className="inline-flex items-center gap-1 rounded-xl bg-slate-100/90 p-1 self-start sm:self-auto">
                   <button
                     onClick={() => setViewMode('paged')}
@@ -719,6 +820,7 @@ export default function BracketTab({
                     onDoubleClickMatch={onDoubleClickMatch}
                     fallbackSportRuleKind={effectiveSportRuleKind}
                     panEnabled={effectiveViewMode === 'full'}
+                    showZoomControls={!hideZoomControls}
                     dragHandlers={dragHandlers}
                     compact={compact}
                   />
@@ -726,7 +828,15 @@ export default function BracketTab({
               })()}
             </div>
           ) : (
-            activeStage.groups.map((group, groupIndex) => (
+            activeStage.groups.map((group, groupIndex) => {
+              const displayGroup = {
+                ...group,
+                matches: group.matches.map((match) => ({
+                  ...match,
+                  ...(groupRankPlaceholders.get(match.id) ?? {}),
+                })),
+              };
+              return (
               <div key={group.id}>
                 {activeStage.groups.length > 1 && !['ROUND_ROBIN', 'GROUP_STAGE', 'GROUP'].includes(activeStage.type) && (
                   <h4 className="font-bold text-slate-700 text-sm border-l-4 border-blue-500 pl-3 mb-4">
@@ -734,7 +844,7 @@ export default function BracketTab({
                   </h4>
                 )}
                 <GroupView
-                  group={group}
+                  group={displayGroup}
                   stageType={activeStage.type}
                   onScheduleMatch={onScheduleMatch}
                   tiebreakerMode={tiebreakerMode}
@@ -746,12 +856,14 @@ export default function BracketTab({
                   fallbackSportRuleKind={effectiveSportRuleKind}
                   roundConfig={activeStage?.roundConfig}
                   viewMode={effectiveViewMode}
+                  showZoomControls={!hideZoomControls}
                   translate={translate}
                   dragHandlers={dragHandlers}
                   compact={compact}
                 />
               </div>
-            ))
+              );
+            })
           )}
         </div>
       )}

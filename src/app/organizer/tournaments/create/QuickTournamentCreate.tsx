@@ -973,10 +973,10 @@ export default function QuickTournamentCreate() {
                             setValue('sport', value, { shouldValidate: true, shouldDirty: true });
                             handleSportChange(value);
                           }}
-                          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition cursor-pointer ${
+                          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-left transition cursor-pointer bg-white ${
                             isSelected
-                              ? 'border-blue-600 bg-blue-50/80 text-blue-900 ring-1 ring-blue-600 shadow-2xs font-bold'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                              ? 'border-blue-600 text-blue-900 ring-1 ring-blue-600 shadow-2xs font-bold'
+                              : 'border-slate-200 text-slate-700 hover:border-slate-400 hover:text-slate-900'
                           }`}
                         >
                           {sportIcon ? (
@@ -1012,19 +1012,19 @@ export default function QuickTournamentCreate() {
 
                 {/* Ngày thi đấu là thông tin chính; đăng ký chỉ là tùy chọn */}
                 <div className="grid items-start gap-2.5 sm:grid-cols-2">
-                  <div className="rounded-lg bg-blue-50/55 p-2.5 ring-1 ring-blue-100/80">
+                  <div className="rounded-lg bg-white p-2.5 border border-slate-200">
                     <DateTimePicker
                       name="startDate"
                       label={<>{translate('startDateLabel')} <span className="text-rose-500">*</span></>}
                       value={startDate || ''}
                       onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
                       error={errors.startDate?.message}
-                      className="border-blue-300 bg-white shadow-xs"
+                      className="border-slate-300 bg-white shadow-xs focus:border-blue-500"
                       placeholder={translate('startDatePlaceholder')}
                       defaultTimeOnEmptySelection="00:00"
                       roundToHour
                     />
-                    <p className="mt-1 text-[11px] font-medium text-blue-700/75">
+                    <p className="mt-1 text-[11px] font-medium text-slate-500">
                       {translate('startDatePriorityHint')}
                     </p>
                   </div>
@@ -1218,23 +1218,23 @@ export default function QuickTournamentCreate() {
                         key={opt.id}
                         type="button"
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex items-center gap-2 rounded-lg border p-2 text-left transition cursor-pointer ${
+                        className={`group flex items-center gap-2 rounded-lg border p-2 text-left transition cursor-pointer bg-white ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-50/80 shadow-2xs ring-1 ring-blue-500/30'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                            ? 'border-blue-600 shadow-2xs ring-1 ring-blue-600/30'
+                            : 'border-slate-200 hover:border-slate-400'
                         }`}
                       >
                         <div
                           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition ${
                             isSelected
                               ? 'border-blue-600 bg-blue-600 text-white'
-                              : 'border-slate-200 bg-slate-50 text-slate-600 group-hover:text-blue-600'
+                              : 'border-slate-200 bg-slate-50 text-slate-500 group-hover:text-slate-800'
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className={`block text-xs font-bold truncate transition ${isSelected ? 'text-blue-950' : 'text-slate-800'}`}>
+                          <span className={`block text-xs font-bold truncate transition ${isSelected ? 'text-blue-900' : 'text-slate-700 group-hover:text-slate-900'}`}>
                             {translate(opt.labelKey)}
                           </span>
                         </div>
@@ -1384,10 +1384,10 @@ export default function QuickTournamentCreate() {
                       return (
                         <div
                           key={formatId}
-                          className={`group flex items-center justify-between rounded-lg border px-3 py-1.5 transition-all ${
+                          className={`group flex items-center justify-between rounded-lg border px-3 py-1.5 transition-all bg-white ${
                             isSelected
-                              ? 'border-blue-500 bg-blue-50/75 text-blue-950 shadow-2xs'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50/70'
+                              ? 'border-blue-600 text-slate-900 shadow-2xs ring-1 ring-blue-600/20'
+                              : 'border-slate-200 text-slate-700 hover:border-slate-400'
                           }`}
                         >
                           <button

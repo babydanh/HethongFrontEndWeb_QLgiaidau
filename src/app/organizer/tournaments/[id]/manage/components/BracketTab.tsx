@@ -16,7 +16,7 @@ import { RefreshCw, Settings, Trophy, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { getErrorMessage } from '@/utils/error';
-import { tournamentsApi, type BracketSlotMutation, type Division } from '@/features/tournaments/api';
+import { divisionsApi, tournamentsApi, type BracketSlotMutation, type Division } from '@/features/tournaments/api';
 
 import { ScheduleGridView } from './ScheduleGridView';
 import type { CourtSetupItem } from './CourtSetup';
@@ -33,6 +33,7 @@ import type {
   BracketDragSource,
   BracketParticipant,
   BracketSlot,
+  RoundRobinGroupDragHandlers,
 } from '@/app/(public)/tournaments/[id]/components/bracket/types';
 import { isBracketMatchDragLocked } from '@/app/(public)/tournaments/[id]/components/bracket/match-status';
 import { buildBracketSetupViewModel } from './bracket-setup-view-model';
@@ -50,7 +51,7 @@ interface BracketTabProps {
   defaultDate?: string;
   onRefetchData?: () => Promise<unknown> | void;
   isGeneratingBracket: boolean;
-  handleGenerateBracket: () => void;
+  handleGenerateBracket: () => Promise<void> | void;
   handleOpenScheduling: (match: BracketMatch) => void;
   handleOpenRoundModal?: (stage: BracketStage, roundNumber: number) => void;
   refetchDivisionData?: () => Promise<unknown> | void;
@@ -133,6 +134,16 @@ interface BracketTabProps {
   divisionRoundConfig?: StageRoundConfig | null;
 }
 
+type GroupAssignment = {
+  name: string;
+  participantIds: string[];
+  roundConfig?: Record<string, unknown>;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => (
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+);
+
 export function BracketTab({
   tournament,
   bracket,
@@ -201,6 +212,7 @@ export function BracketTab({
   divisionRoundConfig,
   isAdvancingStandings = false,
   bracketType,
+  isLocked = false,
 }: BracketTabProps) {
   const translate = useTranslations('TournamentDetail');
 
@@ -299,6 +311,7 @@ export function BracketTab({
   const [participantOverrides, setParticipantOverrides] = useState<Record<string, BracketParticipant | null>>({});
   const [activeDragSource, setActiveDragSource] = useState<BracketDragSource | null>(null);
   const [isSavingBracketSlots, setIsSavingBracketSlots] = useState(false);
+  const [isSavingGroupAssignments, setIsSavingGroupAssignments] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const hasBracket = Boolean(bracket?.stages && bracket.stages.length > 0);
 
@@ -529,6 +542,167 @@ export function BracketTab({
   const gskConfigurableRounds = knockoutRounds.length > 0 ? knockoutRounds : plannedKnockoutRounds;
   
   const groupStage = bracket?.stages?.find(s => s.type === 'ROUND_ROBIN') || gskDraftGroupStage;
+
+  const getGroupParticipantIds = (group: BracketStage['groups'][number]): string[] => {
+    const participantIds: string[] = [];
+    const seen = new Set<string>();
+    for (const match of group.matches ?? []) {
+      for (const participantId of [
+        match.participant1Id ?? match.participant1?.id,
+        match.participant2Id ?? match.participant2?.id,
+      ]) {
+        if (participantId && !seen.has(participantId)) {
+          seen.add(participantId);
+          participantIds.push(participantId);
+        }
+      }
+    }
+    return participantIds;
+  };
+
+  const groupMatchStatusesBeforeStart = new Set(['SCHEDULED', 'PENDING', 'NOT_STARTED', 'UPCOMING']);
+  const groupMatches = (bracket?.stages?.find((stage) => stage.type === 'ROUND_ROBIN')?.groups ?? [])
+    .flatMap((group) => group.matches ?? []);
+  const tournamentStatus = String(tournament.status ?? '').trim().toUpperCase();
+  const groupAssignmentLocked = isLocked
+    || isGeneratingBracket
+    || isSavingGroupAssignments
+    || ['IN_PROGRESS', 'ONGOING', 'LIVE', 'ACTIVE', 'COMPLETED', 'FINISHED', 'DONE', 'ENDED', 'CANCELLED', 'CANCELED'].includes(tournamentStatus)
+    || groupMatches.some((match) => {
+      const status = String(match.status ?? '').trim().toUpperCase();
+      return !groupMatchStatusesBeforeStart.has(status)
+        || Boolean(match.scheduledAt || match.winnerId || match.completedAt);
+    });
+
+  const persistGroupAssignments = async (groups: GroupAssignment[]): Promise<void> => {
+    if (!selectedDivisionId || !selectedDivision) {
+      throw new Error('Vui lòng chọn nội dung thi đấu');
+    }
+
+    const currentRoundConfig = isRecord(selectedDivision.roundConfig)
+      ? selectedDivision.roundConfig
+      : {};
+    const currentGroupsConfig = isRecord(currentRoundConfig.groupsConfig)
+      ? currentRoundConfig.groupsConfig
+      : {};
+    const configuredTeamsPerGroup = Number(currentGroupsConfig.teamsPerGroup ?? teamsPerGroup);
+    const effectiveTeamsPerGroup = Number.isFinite(configuredTeamsPerGroup)
+      ? Math.max(2, Math.trunc(configuredTeamsPerGroup))
+      : Math.max(2, teamsPerGroup);
+
+    await divisionsApi.updateDivisionConfig(tournament.id, selectedDivisionId, {
+      isConfigOverride: true,
+      roundConfig: {
+        ...currentRoundConfig,
+        groupsConfig: {
+          ...currentGroupsConfig,
+          numGroups: groups.length,
+          teamsPerGroup: effectiveTeamsPerGroup,
+          groups: groups.map((group) => ({
+            name: group.name,
+            participantIds: group.participantIds,
+            ...(group.roundConfig ? { roundConfig: group.roundConfig } : {}),
+          })),
+        },
+      },
+    });
+
+    // Reuse the existing generator so group standings, matches and downstream
+    // knockout links are rebuilt from the persisted configuration together.
+    await handleGenerateBracket();
+  };
+
+  const handleGroupParticipantDrop = async (
+    source: { participantId: string; groupId: string },
+    targetGroupId: string,
+    targetParticipantId?: string,
+  ): Promise<void> => {
+    if (groupAssignmentLocked || source.groupId === targetGroupId) return;
+
+    const currentGroupStage = bracket?.stages?.find((stage) => stage.type === 'ROUND_ROBIN');
+    const currentGroups = currentGroupStage?.groups ?? [];
+    const sourceGroup = currentGroups.find((group) => group.id === source.groupId);
+    const targetGroup = currentGroups.find((group) => group.id === targetGroupId);
+    if (!sourceGroup || !targetGroup) return;
+
+    const sourceParticipantIds = getGroupParticipantIds(sourceGroup);
+    const targetParticipantIds = getGroupParticipantIds(targetGroup);
+    const sourceIndex = sourceParticipantIds.indexOf(source.participantId);
+    if (sourceIndex < 0) return;
+
+    const nextSourceParticipantIds = [...sourceParticipantIds];
+    const nextTargetParticipantIds = [...targetParticipantIds];
+
+    if (targetParticipantId) {
+      const targetIndex = nextTargetParticipantIds.indexOf(targetParticipantId);
+      if (targetIndex < 0) return;
+      nextSourceParticipantIds[sourceIndex] = targetParticipantId;
+      nextTargetParticipantIds[targetIndex] = source.participantId;
+    } else {
+      const configuredTeamsPerGroup = Number(
+        (isRecord(selectedDivision?.roundConfig?.groupsConfig)
+          ? selectedDivision?.roundConfig?.groupsConfig.teamsPerGroup
+          : undefined) ?? teamsPerGroup,
+      );
+      const capacity = Number.isFinite(configuredTeamsPerGroup)
+        ? Math.max(2, Math.trunc(configuredTeamsPerGroup))
+        : Math.max(2, teamsPerGroup);
+      if (nextTargetParticipantIds.length >= capacity) {
+        toast.error(translate('bracketGroupAssignmentCapacity'));
+        return;
+      }
+      nextSourceParticipantIds.splice(sourceIndex, 1);
+      nextTargetParticipantIds.push(source.participantId);
+    }
+
+    const nextGroups: GroupAssignment[] = currentGroups.map((group) => ({
+      name: group.name,
+      participantIds: group.id === sourceGroup.id
+        ? nextSourceParticipantIds
+        : group.id === targetGroup.id
+          ? nextTargetParticipantIds
+          : getGroupParticipantIds(group),
+    }));
+
+    setIsSavingGroupAssignments(true);
+    try {
+      await persistGroupAssignments(nextGroups);
+      toast.success(translate('bracketGroupAssignmentsSaved'), { id: 'group-assignments-autosave' });
+    } catch (error) {
+      toast.error(getErrorMessage(error) || translate('bracketGroupAssignmentsSaveFailed'), { id: 'group-assignments-autosave' });
+    } finally {
+      setIsSavingGroupAssignments(false);
+    }
+  };
+
+  const groupDragHandlers: RoundRobinGroupDragHandlers = {
+    enabled: Boolean(bracket?.stages?.some((stage) => stage.type === 'ROUND_ROBIN')) && !groupAssignmentLocked,
+    onParticipantDrop: handleGroupParticipantDrop,
+  };
+
+  const mapAssignmentsToGroups = (assignments: Record<number, { id: string }[]>): GroupAssignment[] => (
+    Array.from({ length: Math.max(0, numGroups) }, (_, groupIndex) => ({
+      name: String.fromCharCode(65 + groupIndex),
+      participantIds: (assignments[groupIndex] ?? []).map((participant) => participant.id),
+    }))
+  );
+
+  const handleSaveGroupAssignments = async (
+    assignments: Record<number, { id: string }[]>,
+    closeModal = false,
+  ): Promise<void> => {
+    if (groupAssignmentLocked) return;
+    setIsSavingGroupAssignments(true);
+    try {
+      await persistGroupAssignments(mapAssignmentsToGroups(assignments));
+      toast.success(translate('bracketGroupAssignmentsSaved'), { id: 'group-assignments-autosave' });
+      if (closeModal) setIsPoolArrangementModalOpen(false);
+    } catch (error) {
+      toast.error(getErrorMessage(error) || translate('bracketGroupAssignmentsSaveFailed'), { id: 'group-assignments-autosave' });
+    } finally {
+      setIsSavingGroupAssignments(false);
+    }
+  };
   // Determine if group stage has overrides
   // We consider it has an override if its roundConfig has fields like max_sets or scoring_type
   // that means it's not just an empty object or null.
@@ -588,8 +762,8 @@ export function BracketTab({
             <Button
               type="button"
               onClick={() => setIsPoolArrangementModalOpen(true)}
-              disabled={participants.length < 2 || isGeneratingBracket}
-              title={participants.length < 2 ? translate('minimumParticipants', { count: 2 }) : undefined}
+              disabled={participants.length < 2 || groupAssignmentLocked}
+              title={participants.length < 2 ? translate('minimumParticipants', { count: 2 }) : groupAssignmentLocked ? translate('bracketGroupAssignmentsSaveFailed') : undefined}
               className="bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-2xs hover:bg-blue-700 disabled:cursor-not-allowed"
             >
               <Settings className="mr-1.5 h-3.5 w-3.5" />
@@ -660,6 +834,8 @@ export function BracketTab({
                               tournamentId={tournament.id}
                               stageId={stage.id}
                               roundConfig={stage.roundConfig}
+                              groupId={group.id}
+                              groupDragHandlers={groupDragHandlers}
                             />
                           </div>
                         );
@@ -692,6 +868,10 @@ export function BracketTab({
                 dragHandlers={bracketDragHandlers}
                 bracketSnapshot={bracket}
                 hideHonors
+                viewModeOverride="full"
+                hideViewModeToggle
+                hideZoomControls
+                showGroupRankPlaceholders
               />
               <DragOverlay dropAnimation={null}>
                 {activeDragSource ? (
@@ -720,11 +900,9 @@ export function BracketTab({
           setTeamsPerGroup={setTeamsPerGroup}
           teamsAdvancing={teamsAdvancing}
           bracket={bracket}
-          isSubmitting={isGeneratingBracket}
-          onConfirm={async () => {
-            setIsPoolArrangementModalOpen(false);
-            handleGenerateBracket();
-          }}
+          isSubmitting={isGeneratingBracket || isSavingGroupAssignments}
+          onAssignmentsChange={(assignments) => handleSaveGroupAssignments(assignments)}
+          onConfirm={(assignments) => handleSaveGroupAssignments(assignments, true)}
         />
       )}
     </div>

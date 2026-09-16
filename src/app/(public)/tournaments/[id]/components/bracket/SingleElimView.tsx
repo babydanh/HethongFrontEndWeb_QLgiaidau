@@ -31,6 +31,7 @@ interface Props {
   onDoubleClickMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   panEnabled?: boolean;
+  showZoomControls?: boolean;
   dragHandlers?: BracketDragHandlers;
   compact?: boolean;
 }
@@ -43,6 +44,7 @@ export function SingleElimView({
   onDoubleClickMatch,
   fallbackSportRuleKind,
   panEnabled = true,
+  showZoomControls = true,
   dragHandlers,
   compact = false,
 }: Props) {
@@ -68,8 +70,8 @@ export function SingleElimView({
     { enabled: panEnabled, minZoom: 0.2, maxZoom: 2.5 },
     (delta) => {
       if (delta === 0) {
-        // Double tap toggle: toggle between auto-fit and 100%
-        handleAutoFit();
+        // Double tap keeps the existing readable reset gesture when controls are hidden.
+        setZoom(1);
       } else {
         setZoom((current) => Math.min(2.5, Math.max(0.2, current + delta)));
       }
@@ -80,9 +82,7 @@ export function SingleElimView({
   const rounds = Object.keys(byRound)
     .map(Number)
     .sort((a, b) => a - b);
-  if (!rounds.length) return null;
-
-  const maxRound = Math.max(...rounds);
+  const maxRound = rounds.length > 0 ? Math.max(...rounds) : 0;
   let firstRoundCount = 1;
   rounds.forEach((r) => {
     const count = byRound[r]?.length || 0;
@@ -123,12 +123,17 @@ export function SingleElimView({
     }
   }, [svgW, resetPan]);
 
-  // Initial Auto-fit on mobile screens
+  // Fit the full tree by default and keep it responsive when the manager panel changes size.
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      handleAutoFit();
-    }
-  }, [handleAutoFit]);
+    handleAutoFit();
+    const element = containerRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => handleAutoFit());
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [handleAutoFit, isFullscreen]);
+
+  if (!rounds.length) return null;
 
   return (
     <div
@@ -139,7 +144,7 @@ export function SingleElimView({
       }
     >
       {/* Zoom & Fit Controls */}
-      {!compact && (
+      {!compact && showZoomControls && (
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
           <button
             onClick={() => setZoom((z) => Math.max(z - 0.1, 0.2))}

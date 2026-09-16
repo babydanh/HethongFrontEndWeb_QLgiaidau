@@ -33,6 +33,7 @@ interface Props {
   onDoubleClickMatch?: OnSelectBracketMatch;
   fallbackSportRuleKind?: SportRuleKind;
   panEnabled?: boolean;
+  showZoomControls?: boolean;
   dragHandlers?: BracketDragHandlers;
   compact?: boolean;
 }
@@ -47,6 +48,7 @@ export function DoubleElimView({
   onDoubleClickMatch,
   fallbackSportRuleKind,
   panEnabled = true,
+  showZoomControls = true,
   dragHandlers,
   compact = false,
 }: Props) {
@@ -61,7 +63,7 @@ export function DoubleElimView({
     { enabled: panEnabled, minZoom: 0.2, maxZoom: 2.5 },
     (delta) => {
       if (delta === 0) {
-        handleAutoFit();
+        setZoom(1);
       } else {
         setZoom((current) => Math.min(2.5, Math.max(0.2, current + delta)));
       }
@@ -187,12 +189,15 @@ export function DoubleElimView({
     }
   }, [totalWidth, resetPan]);
 
-  // Initial Auto-fit on mobile screens
+  // Fit the full tree by default and keep it responsive when the manager panel changes size.
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      handleAutoFit();
-    }
-  }, [handleAutoFit]);
+    handleAutoFit();
+    const element = containerRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => handleAutoFit());
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [handleAutoFit, isFullscreen]);
 
   const allMatches = [...upperMatches, ...lowerMatches, ...gfMatches];
   const allMatchesForLogic = allMatches;
@@ -228,7 +233,7 @@ export function DoubleElimView({
       }
     >
       {/* Zoom Controls */}
-      {!compact && (
+      {!compact && showZoomControls && (
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex items-center gap-1 sm:gap-1.5 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-sm rounded-lg p-1 text-xs font-bold text-slate-600">
           <button
             onClick={() => setZoom((z) => Math.max(z - 0.1, 0.2))}

@@ -14,7 +14,7 @@ import {
   X,
   UserCheck,
 } from 'lucide-react';
-import { Modal, ModalContent } from '@/components/ui/Modal';
+import { Modal, ModalContent, ModalTitle, ModalDescription } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { Division } from '@/features/tournaments/api';
 import type { BracketStage } from '@/types/tournament';
@@ -47,7 +47,8 @@ export interface BracketSetupModalProps {
 
   // Submission
   isSubmitting: boolean;
-  onConfirm: () => Promise<void> | void;
+  onConfirm: (assignments: Record<number, ParticipantItem[]>) => Promise<void> | void;
+  onAssignmentsChange?: (assignments: Record<number, ParticipantItem[]>) => Promise<void> | void;
   bracket?: { stages: BracketStage[] } | null;
 }
 
@@ -150,6 +151,7 @@ export function BracketSetupModal({
   teamsAdvancing = 2,
   isSubmitting,
   onConfirm,
+  onAssignmentsChange,
   bracket,
 }: BracketSetupModalProps) {
   const translate = useTranslations('TournamentDetail');
@@ -296,42 +298,40 @@ export function BracketSetupModal({
     participant: ParticipantItem,
     targetGroupIndex: number,
     targetSlotIndex?: number,
-  ) => {
+  ): Record<number, ParticipantItem[]> => {
     setUnassignedTeams((prev) => prev.filter((p) => p.id !== participant.id));
 
-    setGroupAssignments((prev) => {
-      const updated: Record<number, ParticipantItem[]> = {};
-      for (let i = 0; i < numGroups; i++) {
-        const filtered = (prev[i] || []).filter((p) => p.id !== participant.id);
-        if (i === targetGroupIndex) {
-          if (typeof targetSlotIndex === 'number' && targetSlotIndex >= 0 && targetSlotIndex <= filtered.length) {
-            const nextList = [...filtered];
-            nextList.splice(targetSlotIndex, 0, participant);
-            updated[i] = nextList;
-          } else {
-            updated[i] = [...filtered, participant];
-          }
+    const updated: Record<number, ParticipantItem[]> = {};
+    for (let i = 0; i < numGroups; i++) {
+      const filtered = (groupAssignments[i] || []).filter((p) => p.id !== participant.id);
+      if (i === targetGroupIndex) {
+        if (typeof targetSlotIndex === 'number' && targetSlotIndex >= 0 && targetSlotIndex <= filtered.length) {
+          const nextList = [...filtered];
+          nextList.splice(targetSlotIndex, 0, participant);
+          updated[i] = nextList;
         } else {
-          updated[i] = filtered;
+          updated[i] = [...filtered, participant];
         }
+      } else {
+        updated[i] = filtered;
       }
-      return updated;
-    });
+    }
+    setGroupAssignments(updated);
+    return updated;
   };
 
   // Move a team back to unassigned from a group
-  const removeTeamFromGroup = (participant: ParticipantItem) => {
-    setGroupAssignments((prev) => {
-      const updated: Record<number, ParticipantItem[]> = {};
-      for (let i = 0; i < numGroups; i++) {
-        updated[i] = (prev[i] || []).filter((p) => p.id !== participant.id);
-      }
-      return updated;
-    });
+  const removeTeamFromGroup = (participant: ParticipantItem): Record<number, ParticipantItem[]> => {
+    const updated: Record<number, ParticipantItem[]> = {};
+    for (let i = 0; i < numGroups; i++) {
+      updated[i] = (groupAssignments[i] || []).filter((p) => p.id !== participant.id);
+    }
+    setGroupAssignments(updated);
     setUnassignedTeams((prev) => {
       if (prev.some((p) => p.id === participant.id)) return prev;
       return [...prev, participant];
     });
+    return updated;
   };
 
   // Drag & Drop handlers
@@ -356,7 +356,8 @@ export function BracketSetupModal({
 
     const participant = eligibleParticipants.find((p) => p.id === pId);
     if (participant) {
-      assignTeamToGroup(participant, groupIndex, targetSlotIndex);
+      const nextAssignments = assignTeamToGroup(participant, groupIndex, targetSlotIndex);
+      void onAssignmentsChange?.(nextAssignments);
     }
     setDraggedParticipantId(null);
   };
@@ -369,7 +370,8 @@ export function BracketSetupModal({
 
     const participant = eligibleParticipants.find((p) => p.id === pId);
     if (participant) {
-      removeTeamFromGroup(participant);
+      const nextAssignments = removeTeamFromGroup(participant);
+      void onAssignmentsChange?.(nextAssignments);
     }
     setDraggedParticipantId(null);
   };
@@ -398,16 +400,16 @@ export function BracketSetupModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                <ModalTitle className="text-lg font-bold text-slate-900 tracking-tight">
                   {translate('setupBracketModalTitle')}
-                </h2>
+                </ModalTitle>
                 {selectedDivision?.name && (
                   <span className="rounded-md bg-blue-100/80 px-2 py-0.5 text-xs font-bold text-blue-700">
                     {selectedDivision.name}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-0.5 font-normal">{modalSummary}</p>
+              <ModalDescription className="text-xs text-slate-500 mt-0.5 font-normal">{modalSummary}</ModalDescription>
             </div>
           </div>
           <button
@@ -601,7 +603,10 @@ export function BracketSetupModal({
                               <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 shrink-0" />
                               <button
                                 type="button"
-                                onClick={() => removeTeamFromGroup(team)}
+                                onClick={() => {
+                                  const nextAssignments = removeTeamFromGroup(team);
+                                  void onAssignmentsChange?.(nextAssignments);
+                                }}
                                 className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                                 title={translate('moveToUnassigned')}
                               >
@@ -643,7 +648,7 @@ export function BracketSetupModal({
 
           <Button
             type="button"
-            onClick={onConfirm}
+            onClick={() => onConfirm(groupAssignments)}
             disabled={isSubmitting || !selectedDivision}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 cursor-pointer"
           >

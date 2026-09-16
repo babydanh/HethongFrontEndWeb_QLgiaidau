@@ -19,6 +19,7 @@ import {
   HelpCircle,
   X,
   CheckCircle2,
+  GripVertical,
 } from 'lucide-react';
 import type { BracketMatch } from '@/features/tournaments/api';
 import type { SportRuleKind, StageRoundConfig } from '@/types/tournament';
@@ -27,13 +28,19 @@ import { formatDateTime } from '@/utils/format';
 import { getMatchCourtLabel } from '@/utils/tournament-location';
 import { getErrorMessage } from '@/utils/error';
 import { calculateStandings, getConfiguredStandingsScoring, getFootballForm } from './helpers';
-import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
+import type {
+  OnScheduleMatch,
+  OnSelectBracketMatch,
+  RoundRobinGroupDragHandlers,
+} from './types';
 import { getBracketStatLabels, resolveBracketMatchRules } from './sportRuleDisplay';
 import ParticipantIdentity from '@/components/ui/ParticipantIdentity';
 import toast from 'react-hot-toast';
 
 interface Props {
   matches: BracketMatch[];
+  /** Optional full group dataset used for the overall standings table. */
+  standingsMatches?: BracketMatch[];
   groupName?: string;
   tiebreakerMode?: 'split' | 'playoff';
   onScheduleMatch?: OnScheduleMatch;
@@ -49,10 +56,13 @@ interface Props {
   headerAction?: React.ReactNode;
   /** The selected leg. Internal scheduler rounds are intentionally not exposed here. */
   activeLeg?: number;
+  groupId?: string;
+  groupDragHandlers?: RoundRobinGroupDragHandlers;
 }
 
 export function RoundRobinView({
   matches,
+  standingsMatches,
   groupName,
   tiebreakerMode = 'split',
   onScheduleMatch,
@@ -67,22 +77,30 @@ export function RoundRobinView({
   hideSchedule = false,
   headerAction,
   activeLeg = 1,
+  groupId,
+  groupDragHandlers,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
-  const sampleMatch = matches.find((match) => !match.isBye) ?? matches[0];
+  // `matches` is the selected-leg schedule. Standings must be calculated from
+  // the complete group so changing the leg never replaces or duplicates teams.
+  const standingsSource = standingsMatches ?? matches;
+  const sampleMatch = standingsSource.find((match) => !match.isBye)
+    ?? matches.find((match) => !match.isBye)
+    ?? standingsSource[0]
+    ?? matches[0];
   const effectiveRuleKind = sampleMatch
     ? resolveBracketMatchRules(sampleMatch, fallbackSportRuleKind).kind
     : (fallbackSportRuleKind ?? 'BADMINTON');
   const statLabels = getBracketStatLabels(effectiveRuleKind, translate);
   const isFootball = effectiveRuleKind === 'FOOTBALL' || Boolean(sampleMatch?.scoreDetails?.football);
   const configuredScoring = getConfiguredStandingsScoring(roundConfig as Record<string, unknown> | null | undefined);
-  const { standings, ties } = calculateStandings(matches, {
+  const { standings, ties } = calculateStandings(standingsSource, {
     tiebreakerMode,
     football: isFootball,
     scoring: configuredScoring,
   });
   const tieSet = new Set(ties.flatMap((g) => g.map((r) => r.participantId)));
-  const allDone = matches.length > 0 && matches.filter((m) => !m.isBye).every((m) => m.status === 'COMPLETED');
+  const allDone = standingsSource.length > 0 && standingsSource.filter((m) => !m.isBye).every((m) => m.status === 'COMPLETED');
   const hasTies = ties.length > 0;
   const [showInfo, setShowInfo] = useState(false);
 
@@ -96,10 +114,44 @@ export function RoundRobinView({
   })();
 
   const scheduleMatches = matches.filter((match) => !match.isBye);
+  const canDragGroupParticipant = Boolean(groupId && groupDragHandlers?.enabled && groupDragHandlers.onParticipantDrop);
+
+  const readGroupDragSource = (event: React.DragEvent): { participantId: string; groupId: string } | null => {
+    const raw = event.dataTransfer.getData('application/json');
+    if (!raw) return null;
+    try {
+      const source = JSON.parse(raw) as { participantId?: unknown; groupId?: unknown };
+      if (typeof source.participantId !== 'string' || typeof source.groupId !== 'string') return null;
+      return { participantId: source.participantId, groupId: source.groupId };
+    } catch {
+      return null;
+    }
+  };
+
+  const handleGroupDragOver = (event: React.DragEvent) => {
+    if (!canDragGroupParticipant) return;
+    const source = readGroupDragSource(event);
+    if (!source || source.groupId === groupId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleGroupDrop = (event: React.DragEvent, targetParticipantId?: string) => {
+    if (!canDragGroupParticipant || !groupId) return;
+    const source = readGroupDragSource(event);
+    if (!source || source.groupId === groupId || source.participantId === targetParticipantId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void groupDragHandlers?.onParticipantDrop?.(source, groupId, targetParticipantId);
+  };
 
 
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      className="flex flex-col gap-6"
+      onDragOver={handleGroupDragOver}
+      onDrop={(event) => handleGroupDrop(event)}
+    >
       {!hideStandings && (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
           <div className="bg-slate-50/70 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
@@ -193,8 +245,20 @@ export function RoundRobinView({
                 return (
                   <tr
                     key={row.participantId}
+                    draggable={canDragGroupParticipant}
+                    onDragStart={(event) => {
+                      if (!canDragGroupParticipant || !groupId) return;
+                      event.dataTransfer.effectAllowed = 'move';
+                      event.dataTransfer.setData('application/json', JSON.stringify({
+                        participantId: row.participantId,
+                        groupId,
+                      }));
+                    }}
+                    onDragOver={handleGroupDragOver}
+                    onDrop={(event) => handleGroupDrop(event, row.participantId)}
                     className={
                       'border-b border-slate-100 last:border-0 transition-colors ' +
+                      (canDragGroupParticipant ? 'cursor-grab active:cursor-grabbing ' : '') +
                       (isTied
                         ? 'bg-amber-50/60 hover:bg-amber-50'
                         : idx === 0 && allDone && !hasTies
@@ -221,6 +285,7 @@ export function RoundRobinView({
                     </td>
                     <td className="px-3 py-3 font-semibold text-slate-800">
                       <span className="flex items-center gap-1.5">
+                        {canDragGroupParticipant && <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-300" />}
                         {row.teamName}
                         {teamsAdvancing > 0 && idx < teamsAdvancing && (
                           <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
@@ -246,7 +311,7 @@ export function RoundRobinView({
                         <td className="px-3 py-3 text-center font-bold text-blue-700 bg-blue-50/20">{row.points}</td>
                         <td className="px-3 py-3">
                           <span className="inline-flex items-center justify-center gap-1">
-                            {getFootballForm(matches, row.participantId).map((result, formIndex) => (
+                            {getFootballForm(standingsSource, row.participantId).map((result, formIndex) => (
                               <span
                                 key={`${row.participantId}-${formIndex}`}
                                 title={result === 'W' ? translate('win') : result === 'D' ? translate('draw') : translate('loss')}

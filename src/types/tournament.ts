@@ -85,6 +85,13 @@ export interface StageRoundConfig extends SportRuleScoringConfig {
   time_limit_minutes?: number;
   custom_notes?: string | null;
   rounds?: Record<string, StageRoundRuleConfig>;
+  advanceMapping?: {
+    numGroups?: number;
+    teamsAdvancing?: number;
+    allowWildcard?: boolean;
+    wildcardTeams?: number;
+    totalAdvancing?: number;
+  };
 }
 
 export interface ParentTournament {
@@ -398,6 +405,9 @@ export interface BracketMatch {
   } | null;
   participant1Id?: string | null;
   participant2Id?: string | null;
+  /** Display-only source labels for unresolved group-stage knockout slots. */
+  participant1Placeholder?: string;
+  participant2Placeholder?: string;
   winnerId: string | null;
   tournamentId?: string;
   scoreDetails?: Record<string, unknown>;

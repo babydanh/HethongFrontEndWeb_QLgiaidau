@@ -50,6 +50,20 @@ export interface BracketDragHandlers {
   ) => void | Promise<void>;
 }
 
+export interface RoundRobinGroupDragSource {
+  participantId: string;
+  groupId: string;
+}
+
+export interface RoundRobinGroupDragHandlers {
+  enabled?: boolean;
+  onParticipantDrop?: (
+    source: RoundRobinGroupDragSource,
+    targetGroupId: string,
+    targetParticipantId?: string,
+  ) => void | Promise<void>;
+}
+
 export interface BracketTabProps {
   tournament: { id: string; name: string; genderRestriction?: string | null };
   tournamentId?: string;
@@ -67,6 +81,14 @@ export interface BracketTabProps {
   refreshKey?: string | number;
   /** Compact/lite mode for embedded post widgets (hides redundant toolbars & zoom controls) */
   compact?: boolean;
+  /** Organizer-scoped view override; does not alter public bracket defaults. */
+  viewModeOverride?: 'paged' | 'full';
+  /** Hide the paged/full switch when the owner has fixed the bracket presentation. */
+  hideViewModeToggle?: boolean;
+  /** Hide manual zoom/fullscreen controls while retaining pan/gesture support. */
+  hideZoomControls?: boolean;
+  /** Organizer-only display of group-rank sources for unresolved knockout slots. */
+  showGroupRankPlaceholders?: boolean;
   /** Hide honors / official result podium banner (e.g. in organizer editor view) */
   hideHonors?: boolean;
   /** Whether the current viewer is the tournament owner/organizer */

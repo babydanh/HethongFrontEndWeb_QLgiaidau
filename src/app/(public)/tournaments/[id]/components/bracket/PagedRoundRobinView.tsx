@@ -5,7 +5,11 @@ import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, TableProperties } from 'lucide-react';
 import type { BracketMatch, BracketStage } from '@/features/tournaments/api';
 import type { SportRuleKind } from '@/types/tournament';
-import type { OnScheduleMatch, OnSelectBracketMatch } from './types';
+import type {
+  OnScheduleMatch,
+  OnSelectBracketMatch,
+  RoundRobinGroupDragHandlers,
+} from './types';
 import { RoundRobinView } from './RoundRobinView';
 import { GroupCrossMatrixView } from './GroupCrossMatrixView';
 import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
@@ -22,6 +26,8 @@ interface Props {
   fallbackSportRuleKind?: SportRuleKind;
   roundConfig?: BracketStage['roundConfig'];
   tiebreakerMode?: 'split' | 'playoff';
+  groupId?: string;
+  groupDragHandlers?: RoundRobinGroupDragHandlers;
 }
 
 export function PagedRoundRobinView({
@@ -36,6 +42,8 @@ export function PagedRoundRobinView({
   fallbackSportRuleKind,
   roundConfig,
   tiebreakerMode,
+  groupId,
+  groupDragHandlers,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const [subView, setSubView] = useState<'matrix' | 'table'>('matrix');
@@ -129,10 +137,16 @@ export function PagedRoundRobinView({
     </div>
   ) : null;
 
-  const headerActions = (type: 'matrix' | 'table') => (
+  const matrixHeaderActions = (
     <div className="flex items-center gap-2">
       {legSelector}
-      {viewButtons(type)}
+      {viewButtons('matrix')}
+    </div>
+  );
+
+  const tableHeaderActions = (
+    <div className="flex items-center gap-2">
+      {viewButtons('table')}
     </div>
   );
 
@@ -147,7 +161,9 @@ export function PagedRoundRobinView({
           throughRound={null}
           roundConfig={roundConfig as Record<string, unknown> | null | undefined}
           roundInfoMatches={matches}
-          headerAction={headerActions('matrix')}
+          headerAction={matrixHeaderActions}
+          groupId={groupId}
+          groupDragHandlers={groupDragHandlers}
         />
       </div>
     );
@@ -157,6 +173,7 @@ export function PagedRoundRobinView({
     <div className="animate-in fade-in duration-200">
       <RoundRobinView
         matches={legMatches}
+        standingsMatches={matches}
         groupName={groupName}
         activeLeg={currentLeg}
         onScheduleMatch={onScheduleMatch}
@@ -169,7 +186,9 @@ export function PagedRoundRobinView({
         roundConfig={roundConfig}
         tiebreakerMode={tiebreakerMode}
         hideSchedule={true}
-        headerAction={headerActions('table')}
+        headerAction={tableHeaderActions}
+        groupId={groupId}
+        groupDragHandlers={groupDragHandlers}
       />
     </div>
   );

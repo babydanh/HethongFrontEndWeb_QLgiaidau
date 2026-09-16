@@ -329,8 +329,8 @@ export function Header() {
                 className={cn(
                   'flex h-full items-center border-b-2 text-sm transition-colors',
                   isActive(link.path)
-                    ? 'border-blue-600 font-bold text-blue-600'
-                    : 'border-transparent font-semibold text-slate-700 hover:text-blue-600',
+                    ? 'border-blue-600 font-black text-blue-600'
+                    : 'border-transparent font-bold text-slate-900 hover:text-blue-600',
                 )}
               >
                 {link.name}

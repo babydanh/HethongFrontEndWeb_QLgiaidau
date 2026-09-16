@@ -1662,12 +1662,12 @@ export default function HomePage() {
   return (
     <div className="bg-slate-50/50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
 
-      {/* Main Content: 3 Columns matching exact SportO Bento Social UI */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+      {/* Main Content: 3 Columns with sleek sidebars and expansive center social feed */}
+      <main className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 py-4 flex flex-col lg:flex-row items-start gap-3.5">
         <h1 className="sr-only">{translate('seoH1')}</h1>
 
-        {/* 1. LEFT COLUMN (3/12): Athlete Profile Card, Match Filters, My Clubs */}
-        <aside className="lg:col-span-3 flex flex-col gap-4.5 order-2 lg:order-1">
+        {/* 1. LEFT COLUMN: Athlete Profile Card, Match Filters, My Clubs (sleek width ~260px) */}
+        <aside className="w-full lg:w-[260px] xl:w-[270px] shrink-0 flex flex-col gap-3 order-2 lg:order-1">
           {/* Athlete Profile Card */}
           <AthleteProfileCard
             user={user}
@@ -1700,10 +1700,15 @@ export default function HomePage() {
           />
         </aside>
 
-        {/* 2. CENTER COLUMN (6/12): Featured Tournaments, Day Selector, Tonight Matches, Upcoming Schedule */}
-        <section className="lg:col-span-6 flex flex-col gap-5 order-1 lg:order-2">
-          {/* Community: Featured Tournaments Strip */}
-          <SocialFeaturedTournaments tournaments={socialTournaments} />
+        {/* 2. CENTER COLUMN: Featured Tournaments Banner, Day Selector, Tonight Matches, Upcoming Schedule (flex-1 expansive) */}
+        <section className="flex-1 min-w-0 w-full flex flex-col gap-3.5 order-1 lg:order-2">
+          {/* Featured Tournament Hero Banner (Logic cũ: 1 Banner lớn thay thế 4 ảnh card) */}
+          <div className="rounded-xl overflow-hidden border border-slate-200/80 shadow-2xs bg-white">
+            <TournamentHeroBanner
+              tournaments={activeTournaments.length > 0 ? activeTournaments : tournaments}
+              heightClass="h-[180px] sm:h-[220px] md:h-[260px] lg:h-[280px]"
+            />
+          </div>
 
           {/* Day Selector Pill Strip */}
           <SocialDaySelectorStrip
@@ -1713,7 +1718,7 @@ export default function HomePage() {
           />
 
           {/* Tonight Matches Header & Pickup Rows */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
@@ -1730,7 +1735,7 @@ export default function HomePage() {
             </div>
 
             {/* List of pickup rows */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {pickupMatches.map((item) => (
                 <SocialPickupRow
                   key={item.id}
@@ -1745,8 +1750,8 @@ export default function HomePage() {
 
           {/* Upcoming Matches Schedule */}
           {(isLoading || upcomingMatches.length > 0) && (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5 sm:p-4">
+              <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                   <h3 className="text-xs sm:text-sm font-bold text-slate-850 tracking-tight">
@@ -1762,14 +1767,14 @@ export default function HomePage() {
               </div>
 
               {/* Tournament tag badge */}
-              <div className="mb-3.5 flex items-center gap-1.5">
-                <span className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-[10px]">
+              <div className="mb-3 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-[9px]">
                   SP
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-600 text-white">
+                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-600 text-white">
                   {translate('communityBadge')}
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
+                <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
                   PICKLEBALL
                 </span>
                 <span className="text-xs font-semibold text-slate-700 truncate ml-1">
@@ -1778,11 +1783,11 @@ export default function HomePage() {
               </div>
 
               {/* 2x2 Matches Matrix */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {upcomingMatches.slice(0, 4).map((m) => renderUpcomingMatchRow(m, upcomingMatches, null))}
               </div>
 
-              <div className="pt-4 text-center">
+              <div className="pt-3 text-center">
                 <Link
                   href="/matches"
                   className="text-xs font-bold text-slate-700 hover:text-blue-600 inline-flex items-center gap-1.5 hover:underline transition-all"
@@ -1795,8 +1800,8 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* 3. RIGHT COLUMN (3/12): Your Schedule & Nearby Available Courts */}
-        <aside className="lg:col-span-3 flex flex-col gap-4.5 order-3">
+        {/* 3. RIGHT COLUMN: Your Schedule & Nearby Available Courts (sleek width ~280px) */}
+        <aside className="w-full lg:w-[280px] xl:w-[290px] shrink-0 flex flex-col gap-3 order-3">
           <SocialScheduleAndCourtsWidgets upcomingItem={upcomingWidgetData} />
 
           {/* Ad Banner Card */}

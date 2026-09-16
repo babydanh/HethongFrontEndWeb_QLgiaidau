@@ -7,7 +7,8 @@ import { extractMatchScores } from '@/features/matches/score-display';
 import { calculateStandings, getConfiguredStandingsScoring } from './helpers';
 import { getRoundRobinRoundInfo } from '@/utils/match-round-label';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
+import type { RoundRobinGroupDragHandlers } from './types';
 
 interface Props {
   matches: BracketMatch[];
@@ -19,6 +20,8 @@ interface Props {
   roundConfig?: Record<string, unknown> | null;
   roundInfoMatches?: BracketMatch[];
   headerAction?: React.ReactNode;
+  groupId?: string;
+  groupDragHandlers?: RoundRobinGroupDragHandlers;
 }
 
 export function GroupCrossMatrixView({ 
@@ -31,6 +34,8 @@ export function GroupCrossMatrixView({
   roundConfig = null,
   roundInfoMatches,
   headerAction,
+  groupId,
+  groupDragHandlers,
 }: Props) {
   const translate = useTranslations('TournamentDetail');
   const displayGroupName = groupName ?? translate('defaultGroupName');
@@ -49,6 +54,36 @@ export function GroupCrossMatrixView({
   const currentMatrixPage = Math.min(matrixPage, matrixPageCount - 1);
   const matrixStart = currentMatrixPage * matrixPageSize;
   const visibleColumns = standings.slice(matrixStart, matrixStart + matrixPageSize);
+  const canDragGroupParticipant = Boolean(groupId && groupDragHandlers?.enabled && groupDragHandlers.onParticipantDrop);
+
+  const readGroupDragSource = (event: React.DragEvent): { participantId: string; groupId: string } | null => {
+    const raw = event.dataTransfer.getData('application/json');
+    if (!raw) return null;
+    try {
+      const source = JSON.parse(raw) as { participantId?: unknown; groupId?: unknown };
+      if (typeof source.participantId !== 'string' || typeof source.groupId !== 'string') return null;
+      return { participantId: source.participantId, groupId: source.groupId };
+    } catch {
+      return null;
+    }
+  };
+
+  const handleGroupDragOver = (event: React.DragEvent) => {
+    if (!canDragGroupParticipant) return;
+    const source = readGroupDragSource(event);
+    if (!source || source.groupId === groupId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleGroupDrop = (event: React.DragEvent, targetParticipantId?: string) => {
+    if (!canDragGroupParticipant || !groupId) return;
+    const source = readGroupDragSource(event);
+    if (!source || source.groupId === groupId || source.participantId === targetParticipantId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void groupDragHandlers?.onParticipantDrop?.(source, groupId, targetParticipantId);
+  };
 
   const matrixPager = matrixPageCount > 1 ? (
     <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5" aria-label={translate('matrixColumnNavigation')}>
@@ -123,7 +158,11 @@ export function GroupCrossMatrixView({
   });
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+    <div
+      className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs"
+      onDragOver={handleGroupDragOver}
+      onDrop={(event) => handleGroupDrop(event)}
+    >
       <div className="bg-slate-50/70 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
         <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
           <span className="w-1.5 h-4 bg-blue-600 rounded-full inline-block" />
@@ -178,11 +217,26 @@ export function GroupCrossMatrixView({
             {standings.map((row, idx) => {
               const currentNum = idx + 1;
               return (
-                <tr key={row.participantId} className="hover:bg-slate-50/50 transition-colors">
+                <tr
+                  key={row.participantId}
+                  draggable={canDragGroupParticipant}
+                  onDragStart={(event) => {
+                    if (!canDragGroupParticipant || !groupId) return;
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('application/json', JSON.stringify({
+                      participantId: row.participantId,
+                      groupId,
+                    }));
+                  }}
+                  onDragOver={handleGroupDragOver}
+                  onDrop={(event) => handleGroupDrop(event, row.participantId)}
+                  className={`${canDragGroupParticipant ? 'cursor-grab active:cursor-grabbing ' : ''}hover:bg-slate-50/50 transition-colors`}
+                >
                   <td className="px-3 py-3 text-center text-slate-400 font-medium">
                     {currentNum}
                   </td>
                   <td className="px-4 py-3 font-semibold text-slate-800">
+                    {canDragGroupParticipant && <GripVertical className="mr-1 inline h-3.5 w-3.5 text-slate-300" />}
                     {row.teamName}
                   </td>
                   {visibleColumns.map((otherRow) => {

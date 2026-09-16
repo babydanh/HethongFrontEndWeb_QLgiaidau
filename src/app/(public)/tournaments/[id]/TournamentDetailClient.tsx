@@ -1114,8 +1114,8 @@ const commonTranslate = useTranslations('Common');
       <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-[13px]">
         {/* Dates */}
         <div className="flex items-start gap-2.5">
-          <Calendar className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-          <p className="font-semibold text-slate-800 leading-snug">
+          <Calendar className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
+          <p className="font-bold text-slate-950 leading-snug">
             {activeTournament.startDate ? (
               <>
                 {formatDate(activeTournament.startDate)}
@@ -1127,26 +1127,26 @@ const commonTranslate = useTranslations('Common');
 
         {/* Location */}
         <div className="flex items-start gap-2.5">
-          <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-          <p className="font-medium text-slate-600 leading-relaxed break-words" title={getTournamentLocationLabel(activeTournament)}>
+          <MapPin className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
+          <p className="font-bold text-slate-900 leading-relaxed break-words" title={getTournamentLocationLabel(activeTournament)}>
             {getTournamentLocationLabel(activeTournament) || translate('venueNotUpdated')}
           </p>
         </div>
 
         {/* Divisions Count */}
         <div className="flex items-center gap-2.5">
-          <Trophy className="w-4 h-4 text-slate-400 shrink-0" />
-          <p className="text-slate-600">
-            <span className="font-bold text-slate-800">{divisionsList.length || 1}</span>{' '}
+          <Trophy className="w-4 h-4 text-slate-700 shrink-0" />
+          <p className="font-bold text-slate-900">
+            <span className="font-black text-black">{divisionsList.length || 1}</span>{' '}
             <span>{translate('competitionContentTitle') || 'Nội dung thi đấu'}</span>
           </p>
         </div>
 
         {/* Participants / Teams Count */}
         <div className="flex items-center gap-2.5">
-          <Users className="w-4 h-4 text-slate-400 shrink-0" />
-          <p className="text-slate-600">
-            <span className="font-bold text-slate-800">
+          <Users className="w-4 h-4 text-slate-700 shrink-0" />
+          <p className="font-bold text-slate-900">
+            <span className="font-black text-black">
               {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}
             </span>{' '}
             <span>{translate('participantsCount') || 'Số lượng hồ sơ'}</span>
@@ -1843,18 +1843,18 @@ const commonTranslate = useTranslations('Common');
                   <button
                     key={tab.id}
                     onClick={() => handleTabSelect(tab.id)}
-                    className={`px-3 py-2.5 sm:px-4 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
+                    className={`px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
                       tab.isLive
                         ? isActive
-                          ? 'border-rose-600 text-rose-600'
-                          : 'border-transparent text-rose-600/80 hover:text-rose-700 hover:border-rose-300'
+                          ? 'border-rose-600 text-rose-600 font-black'
+                          : 'border-transparent text-rose-700 font-bold hover:text-rose-900 hover:border-rose-300'
                         : tab.isGolden
                           ? isActive
-                            ? 'border-amber-500 text-amber-600 font-extrabold'
-                            : 'border-transparent text-amber-700 hover:text-amber-800 hover:border-amber-300'
+                            ? 'border-amber-500 text-amber-600 font-black'
+                            : 'border-transparent text-amber-800 font-bold hover:text-amber-950 hover:border-amber-300'
                           : isActive
-                            ? 'border-blue-600 text-blue-600'
-                            : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                            ? 'border-blue-600 text-blue-600 font-black'
+                            : 'border-transparent text-slate-800 font-bold hover:text-black hover:border-slate-400'
                     }`}
                   >
                     {tab.isLive && (

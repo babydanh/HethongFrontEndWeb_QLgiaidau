@@ -713,6 +713,19 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
       </div>
     </div>
   );
+  if (s.isAccessDenied) return (
+    <section className="flex min-h-[calc(100vh-9rem)] items-center justify-center bg-slate-50 px-4 py-12">
+      <div className="w-full max-w-lg rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+          <ShieldCheck className="h-7 w-7" aria-hidden="true" />
+        </div>
+        <h1 className="mt-4 text-xl font-bold text-slate-900">Không có quyền quản lý giải này</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Giải đấu không thuộc phạm vi quản lý của tài khoản hiện tại.</p>
+        <Button className="mt-6" onClick={() => router.push('/organizer/tournaments')}>Quay lại giải đấu của tôi</Button>
+      </div>
+    </section>
+  );
+
   const pendingRefereeCount = s.referees.filter((ref) => ref.status === 'INVITED').length;
   const sportPresentation = getSportRulePresentation(s.sportRuleKind, ruleTranslate);
   const supportsTiebreakInput = s.sportRuleKind === 'TENNIS' || s.sportRuleKind === 'PICKLEBALL_SIDE_OUT';

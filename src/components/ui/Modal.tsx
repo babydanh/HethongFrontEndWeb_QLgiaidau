@@ -40,6 +40,7 @@ const ModalContent = React.forwardRef<
     <ModalOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      aria-describedby={props['aria-describedby'] === undefined ? undefined : props['aria-describedby']}
       className={cn(
         "t-modal fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card p-6 shadow-2xl sm:rounded-lg max-h-[85vh] overflow-y-auto overscroll-contain",
         className

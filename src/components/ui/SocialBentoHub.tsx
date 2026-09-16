@@ -63,10 +63,10 @@ export function AthleteProfileCard({
   const translate = useTranslations('Home');
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden text-center p-5">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden text-center p-4">
       {/* Avatar with subtle brand tier tag */}
-      <div className="relative inline-block mx-auto mb-2.5">
-        <div className="w-16 h-16 rounded-full border-2 border-blue-100 overflow-hidden shadow-xs bg-slate-50 mx-auto">
+      <div className="relative inline-block mx-auto mb-2">
+        <div className="w-14 h-14 rounded-full border-2 border-blue-100 overflow-hidden shadow-2xs bg-slate-50 mx-auto">
           {user?.avatarUrl ? (
             <img
               src={user.avatarUrl}
@@ -74,20 +74,20 @@ export function AthleteProfileCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg">
+            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-base">
               {(user?.fullName?.trim().charAt(0) || 'U').toUpperCase()}
             </div>
           )}
         </div>
-        <span className="absolute -bottom-0.5 right-0 w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center border-2 border-white shadow-2xs">
+        <span className="absolute -bottom-0.5 right-0 w-4.5 h-4.5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center border-2 border-white shadow-2xs">
           B
         </span>
       </div>
 
-      <h3 className="text-slate-900 font-bold text-base tracking-tight truncate">
+      <h3 className="text-slate-900 font-bold text-sm tracking-tight truncate">
         {user?.fullName || 'Nguyễn Minh Danh'}
       </h3>
-      <div className="flex items-center justify-center gap-1.5 mt-1">
+      <div className="flex items-center justify-center gap-1.5 mt-0.5">
         <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold">
           ELO {elo || 1511}
         </span>
@@ -95,9 +95,9 @@ export function AthleteProfileCard({
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 my-4">
+      <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-slate-100 my-3">
         <div>
-          <div className="text-base font-bold text-slate-800 leading-none">
+          <div className="text-sm font-bold text-slate-800 leading-none">
             {matchesPlayed || 46}
           </div>
           <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
@@ -105,7 +105,7 @@ export function AthleteProfileCard({
           </div>
         </div>
         <div className="border-x border-slate-100">
-          <div className="text-base font-bold text-blue-600 leading-none">
+          <div className="text-sm font-bold text-blue-600 leading-none">
             {winRate || 68}%
           </div>
           <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
@@ -113,7 +113,7 @@ export function AthleteProfileCard({
           </div>
         </div>
         <div>
-          <div className="text-base font-bold text-emerald-600 leading-none">
+          <div className="text-sm font-bold text-emerald-600 leading-none">
             {credibility || 98}%
           </div>
           <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
@@ -125,7 +125,7 @@ export function AthleteProfileCard({
       <Link
         href="/profile"
         onClick={onViewProfile}
-        className="w-full py-2 px-3 rounded-xl border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-200 font-medium text-xs inline-flex items-center justify-center gap-1.5 hover:underline transition-all"
+        className="w-full py-1.5 px-3 rounded-lg border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-200 font-medium text-xs inline-flex items-center justify-center gap-1.5 hover:underline transition-all"
       >
         <span>{translate('viewProfile')}</span>
       </Link>
@@ -151,8 +151,8 @@ export function SocialMatchFilters({
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4.5">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5">
+      <div className="flex items-center justify-between mb-2">
         <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
           {translate('filterKicker')}
         </h4>
@@ -166,7 +166,7 @@ export function SocialMatchFilters({
         </button>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {filters.map((f) => {
           const isSelected = activeFilter === f.id;
           return (
@@ -174,10 +174,10 @@ export function SocialMatchFilters({
               key={f.id}
               onClick={() => onSelectFilter(f.id)}
               type="button"
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
                 isSelected
                   ? 'bg-blue-50/70 text-blue-700 font-bold'
-                  : 'text-slate-600 hover:text-blue-600 font-medium'
+                  : 'text-slate-600 hover:text-blue-600 font-medium hover:bg-slate-50/60'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -214,8 +214,8 @@ export function SocialMyClubsCard({
   const translate = useTranslations('Home');
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4.5">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5">
+      <div className="flex items-center justify-between mb-2.5">
         <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
           {translate('myClubs')}
         </h4>
@@ -229,9 +229,9 @@ export function SocialMyClubsCard({
 
       <Link
         href={clubId ? `/communities/${clubId}` : '/communities'}
-        className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all block"
+        className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all block"
       >
-        <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
+        <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
           {(clubName.trim().slice(0, 2) || 'CL').toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
@@ -287,13 +287,13 @@ export function SocialFeaturedTournaments({
   const items = tournaments.length > 0 ? tournaments : defaultList;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between">
         <div>
           <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">
             {translate('communityKicker')}
           </span>
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
             {translate('featuredTournaments')}
           </h3>
         </div>
@@ -306,12 +306,12 @@ export function SocialFeaturedTournaments({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map((item) => (
           <Link
             key={item.id}
             href={`/tournaments/${item.id}`}
-            className="relative h-40 rounded-2xl overflow-hidden shadow-xs border border-slate-200/70 block group"
+            className="relative h-36 rounded-xl overflow-hidden shadow-2xs border border-slate-200/70 block group"
           >
             {/* Background Image */}
             <img
@@ -323,23 +323,23 @@ export function SocialFeaturedTournaments({
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/20" />
 
             {/* Top Badges */}
-            <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-600 text-white shadow-xs">
+            <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-600 text-white shadow-xs">
                 {item.sportBadge}
               </span>
-              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-black/60 text-white backdrop-blur-xs border border-white/20">
+              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-black/60 text-white backdrop-blur-xs border border-white/20">
                 {item.prize}
               </span>
             </div>
 
             {/* Bottom Content */}
-            <div className="absolute bottom-3 left-3 right-3 z-10">
-              <h4 className="text-sm font-bold text-white group-hover:underline line-clamp-1 mb-1">
+            <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
+              <h4 className="text-xs sm:text-sm font-bold text-white group-hover:underline line-clamp-1 mb-1">
                 {item.name}
               </h4>
               <div className="flex items-center justify-between text-[11px] text-white/80 font-normal">
                 <span>{item.date}</span>
-                <span className="px-2 py-0.5 rounded-md bg-white/20 text-white font-medium backdrop-blur-xs text-[10px]">
+                <span className="px-2 py-0.5 rounded bg-white/20 text-white font-medium backdrop-blur-xs text-[10px]">
                   {item.teamSlots}
                 </span>
               </div>
@@ -370,7 +370,7 @@ export function SocialDaySelectorStrip({
             key={day.id}
             onClick={() => onSelect(day.id)}
             type="button"
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-all shrink-0 cursor-pointer relative ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all shrink-0 cursor-pointer relative ${
               isSelected
                 ? 'text-blue-600 font-bold'
                 : 'text-slate-600 hover:text-blue-600'
@@ -408,18 +408,18 @@ export function SocialPickupRow({
   const remaining = Math.max(0, item.maxSlots - (item.currentSlots + (joined ? 1 : 0)));
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-col gap-3">
+    <div className="bg-white rounded-xl border border-slate-200/80 p-3.5 shadow-2xs flex flex-col gap-2.5">
       {/* Badges & Slots status */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
             {item.sport}
           </span>
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
+          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
             {item.sportTier}
           </span>
         </div>
-        <span className="text-[11px] font-medium text-amber-700 bg-amber-50/70 border border-amber-200/60 px-2 py-0.5 rounded-md">
+        <span className="text-[11px] font-medium text-amber-700 bg-amber-50/70 border border-amber-200/60 px-2 py-0.5 rounded">
           {item.urgentText || `Còn ${remaining} slot`}
         </span>
       </div>
@@ -441,11 +441,11 @@ export function SocialPickupRow({
       {/* Players avatars & Text-only Vào slot button in primary brand color */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
         <div className="flex items-center gap-2">
-          <div className="flex items-center -space-x-2">
+          <div className="flex items-center -space-x-1.5">
             {item.players.map((p, idx) => (
               <div
                 key={p.id || idx}
-                className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center text-[10px] font-bold text-slate-700"
+                className="w-6.5 h-6.5 rounded-full border-2 border-white bg-slate-100 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center text-[9px] font-bold text-slate-700"
                 style={{ backgroundColor: p.initialsBg || '#e2e8f0' }}
               >
                 {p.avatarUrl ? (
@@ -460,12 +460,12 @@ export function SocialPickupRow({
               </div>
             ))}
             {remaining > 0 && (
-              <div className="w-7 h-7 rounded-full border border-dashed border-blue-300 bg-blue-50/50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0">
+              <div className="w-6.5 h-6.5 rounded-full border border-dashed border-blue-300 bg-blue-50/50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0">
                 +
               </div>
             )}
           </div>
-          <span className="text-xs font-medium text-slate-500 tabular-nums">
+          <span className="text-[11px] font-medium text-slate-500 tabular-nums">
             {item.currentSlots + (joined ? 1 : 0)}/{item.maxSlots}
           </span>
         </div>
@@ -482,7 +482,7 @@ export function SocialPickupRow({
               onJoin?.(item);
             }}
             type="button"
-            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer py-1 px-2"
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer py-1 px-1.5"
           >
             {translate('joinSlot')}
           </button>
@@ -506,10 +506,10 @@ export function SocialScheduleAndCourtsWidgets({
   const translate = useTranslations('Home');
 
   return (
-    <div className="flex flex-col gap-4.5">
+    <div className="flex flex-col gap-3">
       {/* Widget A: Lịch đấu của bạn */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4.5">
-        <div className="flex items-center justify-between mb-3.5">
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5">
+        <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-1.5">
             <Calendar className="w-4 h-4 text-blue-600" />
             <h4 className="text-xs font-bold text-slate-700 tracking-wider">
@@ -525,12 +525,12 @@ export function SocialScheduleAndCourtsWidgets({
         </div>
 
         {/* Schedule Item 1 */}
-        <div className="rounded-xl p-3 border border-blue-100 mb-3 bg-blue-50/30">
-          <div className="flex items-center justify-between mb-1.5">
+        <div className="rounded-lg p-2.5 border border-blue-100 mb-2 bg-blue-50/30">
+          <div className="flex items-center justify-between mb-1">
             <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-blue-600 text-white">
               {upcomingItem?.time || `19:30 ${translate('tonight')}`}
             </span>
-            <span className="text-[10px] font-medium text-blue-600 bg-white px-2 py-0.5 rounded-md border border-blue-100">
+            <span className="text-[10px] font-medium text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-100">
               {translate('createdTag')}
             </span>
           </div>
@@ -538,11 +538,11 @@ export function SocialScheduleAndCourtsWidgets({
           <h5 className="text-xs font-semibold text-slate-800 line-clamp-1 mb-0.5">
             {upcomingItem?.title || 'Giao lưu Pickleball Hạng B'}
           </h5>
-          <p className="text-[11px] text-slate-500 mb-2.5">
+          <p className="text-[11px] text-slate-500 mb-2">
             {upcomingItem?.location || 'D-Sport Q7 • Sân 03'}
           </p>
 
-          <div className="flex items-center justify-between pt-2 border-t border-blue-100/70">
+          <div className="flex items-center justify-between pt-1.5 border-t border-blue-100/70">
             <span className="text-xs font-semibold text-slate-700">
               {upcomingItem?.slotsText || '3/4'} <span className="text-[10px] text-slate-400 font-normal">{translate('playerShort')}</span>
             </span>
@@ -556,8 +556,8 @@ export function SocialScheduleAndCourtsWidgets({
         </div>
 
         {/* Schedule Item 2 */}
-        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 flex flex-col items-center justify-center shrink-0">
+        <div className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+          <div className="w-9 h-9 rounded-lg bg-slate-100 flex flex-col items-center justify-center shrink-0">
             <span className="text-[10px] font-medium text-slate-400 leading-none">20/9</span>
             <span className="text-xs font-bold text-slate-700 leading-none mt-0.5">18h</span>
           </div>
@@ -573,8 +573,8 @@ export function SocialScheduleAndCourtsWidgets({
       </div>
 
       {/* Widget B: Sân Trống Gần Bạn */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4.5">
-        <div className="flex items-center justify-between mb-3.5">
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5">
+        <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <h4 className="text-xs font-bold text-slate-700 tracking-wider">
@@ -586,19 +586,19 @@ export function SocialScheduleAndCourtsWidgets({
           </span>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {/* Court 1 */}
-          <div className="p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-all">
-            <div className="flex items-center justify-between mb-1">
+          <div className="p-2.5 rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-all">
+            <div className="flex items-center justify-between mb-0.5">
               <span className="font-semibold text-slate-800 text-xs">D-Sport Q7</span>
               <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                 Còn 2 sân
               </span>
             </div>
-            <div className="text-[11px] text-slate-500 mb-2">
+            <div className="text-[11px] text-slate-500 mb-1.5">
               20:00 - 22:00 • 1.2 km
             </div>
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
               <span className="text-xs font-bold text-slate-800">
                 160k<span className="text-[10px] text-slate-400 font-normal">{translate('perHour')}</span>
               </span>
@@ -612,17 +612,17 @@ export function SocialScheduleAndCourtsWidgets({
           </div>
 
           {/* Court 2 */}
-          <div className="p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-all">
-            <div className="flex items-center justify-between mb-1">
+          <div className="p-2.5 rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-all">
+            <div className="flex items-center justify-between mb-0.5">
               <span className="font-semibold text-slate-800 text-xs">Khánh Hội Court</span>
               <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                 Còn 1 sân
               </span>
             </div>
-            <div className="text-[11px] text-slate-500 mb-2">
+            <div className="text-[11px] text-slate-500 mb-1.5">
               21:00 - 22:30 • 2.4 km
             </div>
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
               <span className="text-xs font-bold text-slate-800">
                 140k<span className="text-[10px] text-slate-400 font-normal">{translate('perHour')}</span>
               </span>

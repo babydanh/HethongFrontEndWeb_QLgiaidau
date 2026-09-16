@@ -138,6 +138,7 @@ export const MatchCard = memo(function MatchCard({
           maxCols={maxCols}
           matchId={match.id}
           slot="participant1"
+          placeholder={match.participant1Placeholder}
           dragHandlers={dragHandlers}
           locked={live}
         />
@@ -151,6 +152,7 @@ export const MatchCard = memo(function MatchCard({
           maxCols={maxCols}
           matchId={match.id}
           slot="participant2"
+          placeholder={match.participant2Placeholder}
           dragHandlers={dragHandlers}
           locked={live}
         />
@@ -247,6 +249,7 @@ const RowSide = memo(function RowSide({
   maxCols,
   matchId,
   slot,
+  placeholder,
   dragHandlers,
   locked,
 }: {
@@ -258,6 +261,7 @@ const RowSide = memo(function RowSide({
   maxCols: number;
   matchId: string;
   slot: BracketSlot;
+  placeholder?: string;
   dragHandlers?: BracketDragHandlers;
   locked: boolean;
 }) {
@@ -325,7 +329,7 @@ const RowSide = memo(function RowSide({
           }
           title={p?.teamName ?? undefined}
         >
-          {p?.teamName ?? (isByeSlot ? translate('bye') : translate('pendingParticipant'))}
+          {p?.teamName ?? (isByeSlot ? translate('bye') : placeholder ?? translate('pendingParticipant'))}
         </span>
       </div>
 

@@ -10,6 +10,7 @@ import {
   MapPin,
   Users,
   Plus,
+  ChevronRight,
 } from "lucide-react";
 import { ClubTournamentsSkeleton } from "@/components/skeletons/ClubTabSkeletons";
 
@@ -391,7 +392,7 @@ export default function TournamentsTab({
                             : `/tournaments/${s.bracketTournamentId}`)
                           : `/communities/${communityId}/match-sessions/${s.id}`)
                       }
-                      className="group cursor-pointer bg-white border border-slate-200/90 hover:border-teal-500/80 rounded-lg shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                      className="group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
                     >
                       {/* Banner / Header Area */}
                       <div className="relative h-32 w-full bg-slate-800 overflow-hidden shrink-0">
@@ -405,7 +406,7 @@ export default function TournamentsTab({
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {getSessionStatusBadge(s.status)}
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-teal-600 text-white shadow-2xs">
-                                GIAO LƯU
+                                {sessionTranslate("sessionType")}
                               </span>
                             </div>
                           </div>
@@ -431,7 +432,7 @@ export default function TournamentsTab({
                       {/* Body Info */}
                       <div className="p-3.5 flex flex-col justify-between flex-1 gap-2.5">
                         <div>
-                          <h4 className="font-bold text-slate-900 group-hover:text-teal-700 transition-colors text-sm sm:text-base line-clamp-1">
+                          <h4 className="line-clamp-1 text-sm font-bold text-slate-900 transition-colors group-hover:text-blue-700 sm:text-base">
                             {s.resolvedName}
                           </h4>
 
@@ -454,8 +455,8 @@ export default function TournamentsTab({
                             </span>
 
                             {s.isRecurring && (
-                              <span className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded text-[10px] font-semibold border border-teal-200">
-                                Lặp định kỳ
+                              <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                {sessionTranslate("recurringShort")}
                               </span>
                             )}
                           </div>
@@ -490,8 +491,9 @@ export default function TournamentsTab({
                             </span>
                           ) : <span />}
 
-                          <span className="text-xs font-bold text-teal-700 group-hover:text-teal-800 group-hover:translate-x-0.5 transition-all flex items-center gap-1">
-                            Vào buổi giao lưu →
+                          <span className="flex items-center gap-1 text-xs font-bold text-blue-700 transition-all group-hover:translate-x-0.5 group-hover:text-blue-800">
+                            {sessionTranslate("openSession")}
+                            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                           </span>
                         </div>
                       </div>

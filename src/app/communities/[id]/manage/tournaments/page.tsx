@@ -12,7 +12,7 @@ import { tournamentsApi, Tournament } from '@/features/tournaments/api';
 import { isClubSuperLiteTournament, isLiteTournament } from '@/features/tournaments/lite-qr';
 import { categoriesApi, Category } from '@/features/categories/api';
 import { getSportLogo } from '@/constants/sports';
-import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck, Lock, Clock, RotateCw, Play, Pause, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Trophy, Calendar, Users, Plus, Settings, Eye, ChevronLeft, ShieldCheck, Lock, Clock, RotateCw, Play, Pause, Trash2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -389,7 +389,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
             {canCreateClubLite && (
               <Button
                 onClick={() => router.push(`/communities/${community.id}/match-sessions/create`)}
-                className="bg-violet-600 hover:bg-violet-700 font-bold flex items-center gap-2 shadow-sm"
+                className="bg-blue-600 hover:bg-blue-700 font-bold flex items-center gap-2 shadow-sm"
               >
                 <Plus className="w-4 h-4" /> {translate('communitySocialMatchCreateButton')}
               </Button>
@@ -421,7 +421,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
         {/* Recurring Schedules Management (Cron) */}
         {(() => {
           const recurringTemplates = tournaments.filter((t) =>
-            Boolean((t.tournamentConfig as Record<string, any>)?.recurring)
+            Boolean(t.tournamentConfig?.recurring)
           );
 
           return (
@@ -471,12 +471,15 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
               ) : (
                 <div className="space-y-3">
                   {recurringTemplates.map((t) => {
-                    const rec = (t.tournamentConfig as Record<string, any>)?.recurring;
+                    const rec = t.tournamentConfig?.recurring;
                     const isEnabled = Boolean(rec?.enabled);
-                    const days = Array.isArray(rec?.daysOfWeek) ? rec.daysOfWeek : [rec?.dayOfWeek ?? 6];
-                    const timeOfDay = rec?.timeOfDay || '18:00';
-                    const advanceDays = rec?.advanceDays ?? 0;
-                    const nextRunAt = rec?.nextRunAt ? new Date(rec.nextRunAt) : null;
+                    const daysOfWeek = rec?.daysOfWeek;
+                    const days = Array.isArray(daysOfWeek)
+                      ? daysOfWeek.filter((day): day is number => typeof day === 'number')
+                      : typeof rec?.dayOfWeek === 'number' ? [rec.dayOfWeek] : [6];
+                    const timeOfDay = typeof rec?.timeOfDay === 'string' ? rec.timeOfDay : '18:00';
+                    const nextRunValue = typeof rec?.nextRunAt === 'string' ? rec.nextRunAt : null;
+                    const nextRunAt = nextRunValue ? new Date(nextRunValue) : null;
                     const dayLabels: Record<number, string> = {
                       1: 'T2',
                       2: 'T3',
@@ -663,7 +666,7 @@ export default function ClubTournamentsPage({ params }: { params: Promise<{ id: 
                           {translate('communityTournamentAdvancedLabel')}
                         </span>
                       )}
-                      {Boolean((t.tournamentConfig as Record<string, any>)?.recurring?.enabled || (t.tournamentConfig as Record<string, any>)?.recurring?.frequency) && (
+                      {Boolean(t.tournamentConfig?.recurring?.enabled || t.tournamentConfig?.recurring?.frequency) && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                           <RotateCw className="w-2.5 h-2.5" /> {translate('communityTournamentRecurringBadge')}
                         </span>

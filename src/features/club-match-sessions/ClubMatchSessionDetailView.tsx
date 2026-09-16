@@ -273,7 +273,7 @@ function MatchCard({ match, isTennis, t, onOpenScoring }: { match: ClubSessionMa
         event.preventDefault();
         onOpenScoring(match);
       }}
-      className={`group block overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md ${isLive ? 'border-rose-200' : 'border-slate-200'}`}
+      className={`group block overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md ${isLive ? 'border-rose-200' : 'border-slate-200'}`}
     >
       <div className={`flex items-center justify-between border-b px-4 py-2.5 ${isLive ? 'border-rose-100 bg-rose-50/70' : 'border-slate-100 bg-slate-50/70'}`}>
         <div className="flex items-center gap-2">
@@ -414,7 +414,7 @@ export function ClubMatchSessionDetailView({
       : null;
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-blue-100 bg-white p-6 shadow-sm sm:p-8">
+        <div className="mx-auto max-w-3xl rounded-xl border border-blue-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
               <Trophy className="h-6 w-6" aria-hidden="true" />
@@ -453,7 +453,7 @@ export function ClubMatchSessionDetailView({
         </Link>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-7 lg:col-start-1">
+        <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-7 lg:col-start-1">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0">
               <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -480,7 +480,7 @@ export function ClubMatchSessionDetailView({
           </div>
         </section>
 
-        <aside className="self-start rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-1">
+        <aside className="self-start rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-1">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
           <div className="mt-4 flex items-center gap-3">
             <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-12 w-12" />
@@ -500,7 +500,7 @@ export function ClubMatchSessionDetailView({
         <div className="space-y-4">
 
         {activeTab === 'overview' && <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{t('overviewTitle')}</h2></div>
               <span className="text-sm font-medium text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
@@ -516,7 +516,7 @@ export function ClubMatchSessionDetailView({
               <p className="mt-1 leading-6">{t('registrationOpensImmediately')} {t('pairingDerivedHint')}.</p>
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
             <h2 className="text-lg font-bold text-slate-900">{t('basicInfoTitle')}</h2>
             <div className="mt-5 space-y-4 text-sm">
               {session.startAt && <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, '')} />}
@@ -527,7 +527,7 @@ export function ClubMatchSessionDetailView({
         </section>}
 
         {activeTab === 'participants' && <section className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div><h2 className="text-lg font-bold text-slate-900">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantsOnlyHint')}</p></div>
             <span className="text-sm font-medium text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
@@ -562,7 +562,7 @@ export function ClubMatchSessionDetailView({
           )}
           </div>
 
-          {session.viewerParticipant?.status === 'ACTIVE' && <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          {session.viewerParticipant?.status === 'ACTIVE' && <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
           <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div><div><h2 className="text-lg font-bold text-slate-900">{t('preferences')}</h2><p className="mt-1 text-sm text-slate-500">{t('preferencesHint')}</p></div></div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {[
@@ -577,7 +577,7 @@ export function ClubMatchSessionDetailView({
 
         {activeTab === 'matches' && <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold text-slate-900">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><div className="flex flex-wrap items-center gap-2">{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => setPairingOpen(true)}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}<select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div></div>
-           {matches.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} onOpenScoring={setScoreMatch} />)}</div>}
+           {matches.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} onOpenScoring={setScoreMatch} />)}</div>}
           {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
         </section>}
 
@@ -631,7 +631,7 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   const currentPage = Math.min(page, pageCount - 1);
   const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  return <aside className="self-start rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-2">
+  return <aside className="self-start rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-2">
     <div className="flex items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">{t('registrationTitle')}</h2><span className="text-sm font-medium text-slate-500">{activeCount}/{maxParticipants}</span></div>
     <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-5">
       {visibleSlots.map((item, index) => {
@@ -807,7 +807,7 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
 function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; completedMatches: number; t: (key: string, values?: Record<string, string | number>) => string }) {
   const rankedStats = stats.filter((stat) => stat.played > 0);
   return <section className="space-y-4">
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{t('statisticsTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('statisticsHint')}</p></div><BarChart3 className="h-6 w-6 text-blue-600" /></div>
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(completedMatches)} label={t('completedMatches')} />
@@ -816,7 +816,7 @@ function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; 
         <SummaryMetric icon={<Flame className="h-4 w-4" />} value={rankedStats[0]?.streak ? `${rankedStats[0].streak}` : '—'} label={t('currentStreak')} />
       </div>
     </div>
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
       <div className="flex items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">{t('playerStatistics')}</h2><span className="text-xs font-medium text-slate-500">{t('completedMatchesOnly')}</span></div>
       {stats.length === 0 ? <p className="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">{t('noParticipants')}</p> : <div className="mt-4 overflow-x-auto"><div className="min-w-[620px] space-y-2">
         {stats.map((stat, index) => <div key={stat.id} className="grid grid-cols-[auto_minmax(0,1fr)_72px_92px_92px_90px] items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">

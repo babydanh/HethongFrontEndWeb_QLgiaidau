@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { clubMatchSessionsApi } from './api';
+import {
+  ClubMatchSessionCard,
+  ClubMatchSessionCardSkeleton,
+  ClubMatchSessionListHeader,
+} from './ClubMatchSessionList';
 import type { ClubMatchSession } from '@/types/club-match-session';
 
 export function ClubMatchSessionsPanel({ communityId }: { communityId: string }) {
@@ -47,22 +52,40 @@ export function ClubMatchSessionsPanel({ communityId }: { communityId: string })
   }, [communityId]);
 
   return (
-    <section className="mb-8 rounded-xl border border-violet-200 bg-violet-50/50 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="font-bold text-slate-950">{t('listTitle')}</h2><p className="mt-1 text-xs text-slate-600">{t('listDescription')}</p></div>
-        <Link className="text-sm font-bold text-violet-700 hover:underline" href={`/communities/${communityId}/match-sessions/create`}>{t('create')}</Link>
-      </div>
-      {loading && items.length === 0 && <p className="mt-4 text-sm text-slate-500" role="status">{t('loading')}</p>}
-      {error && <div className="mt-4 flex items-center gap-3"><p className="text-sm text-rose-700" role="alert">{t('loadFailed')}</p><button type="button" className="text-sm font-bold text-blue-700 underline" onClick={() => void load()}>{t('retry')}</button></div>}
-      {!loading && !error && items.length === 0 ? <p className="mt-4 text-sm text-slate-500">{t('empty')}</p> : <div className="mt-4 grid gap-3 sm:grid-cols-2">{items.map((session) => {
-        const href = session.pairingMode === 'BRACKET' && session.bracketTournamentId
-          ? session.capabilities?.canManage
-            ? `/organizer/tournaments/${session.bracketTournamentId}/manage?tab=bracket`
-            : `/tournaments/${session.bracketTournamentId}?tab=bracket`
-          : `/communities/${communityId}/match-sessions/${session.id}`;
-        return <Link key={session.id} href={href} className="rounded-lg border border-violet-200 bg-white p-4 hover:border-violet-400"><div className="flex items-center justify-between gap-2"><div className="font-semibold text-slate-900">{session.resolvedName}</div><span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">{session.pairingMode === 'BRACKET' ? t('bracketMode') : t('freeMode')}</span></div><div className="mt-1 text-xs text-slate-500">{t(`status.${session.status}`)} · {t('counts', { participants: session.participantCount ?? 0, matches: session.matchCount ?? 0 })}</div></Link>;
-      })}</div>}
-      {nextCursor && !error && <button type="button" disabled={loading} className="mt-4 text-sm font-bold text-blue-700 disabled:text-slate-400" onClick={() => void load(nextCursor)}>{t('loadMore')}</button>}
+    <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="club-match-sessions-title">
+      <ClubMatchSessionListHeader communityId={communityId} />
+      {loading && items.length === 0 && (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2" role="status" aria-label={t('loading')}>
+          <ClubMatchSessionCardSkeleton />
+          <ClubMatchSessionCardSkeleton />
+        </div>
+      )}
+      {error && (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3" role="alert">
+          <p className="text-sm font-semibold text-rose-700">{t('loadFailed')}</p>
+          <button type="button" className="text-sm font-bold text-rose-800 underline underline-offset-2" onClick={() => void load()}>
+            {t('retry')}
+          </button>
+        </div>
+      )}
+      {!loading && !error && items.length === 0 && (
+        <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center">
+          <p className="text-sm font-semibold text-slate-700">{t('empty')}</p>
+          <Link href={`/communities/${communityId}/match-sessions/create`} className="mt-3 inline-flex text-sm font-bold text-blue-700 underline underline-offset-2">
+            {t('create')}
+          </Link>
+        </div>
+      )}
+      {items.length > 0 && (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {items.map((session) => <ClubMatchSessionCard key={session.id} session={session} communityId={communityId} />)}
+        </div>
+      )}
+      {nextCursor && !error && (
+        <button type="button" disabled={loading} className="mt-5 inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => void load(nextCursor)}>
+          {t('loadMore')}
+        </button>
+      )}
     </section>
   );
 }

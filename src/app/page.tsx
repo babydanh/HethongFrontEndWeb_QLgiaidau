@@ -1825,15 +1825,6 @@ export default function HomePage() {
           {mainView === 'FEED' ? (
             /* VIEW B: BẢNG TIN CỘNG ĐỒNG & HOẠT ĐỘNG PLAYER */
             <div className="space-y-3">
-              <div className="flex items-center justify-between pb-1 border-b border-slate-200/80">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Bảng Tin &amp; Hoạt Động Vận Động Viên
-                  </h2>
-                </div>
-                <span className="text-xs text-slate-500 font-medium">Cập nhật trực tiếp</span>
-              </div>
               <HomeSocialFeed />
             </div>
           ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -26,7 +26,6 @@ export type ActivityEventType =
   | 'PICKUP_NEED_PLAYER'   // Kèo giao lưu CLB đang thiếu người
   | 'CLUB_RECRUITING'      // CLB tuyển thêm người sinh hoạt/giao lưu
   | 'TOURNAMENT_OPENED'    // Giải đấu mới mở đăng ký (chỉ hiện 1 mốc giờ mở cổng)
-  | 'TOURNAMENT_COMPLETED' // Giải đấu đã kết thúc (vinh danh kết quả)
   | 'PLAYER_RANK_UP';
 
 export interface ActivityFeedItem {
@@ -74,7 +73,7 @@ export interface ActivityFeedItem {
   tournament?: {
     id: string;
     prize?: string;
-    statusBadge: 'MỞ ĐĂNG KÝ' | 'ĐÃ KẾT THÚC';
+    statusBadge: 'MỞ ĐĂNG KÝ';
     championNames?: string;
     totalTeams?: string;
   };
@@ -175,34 +174,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     },
   },
 
-  // 4. Giải đấu ĐÃ KẾT THÚC (Vinh danh kết quả ở khu vực riêng dưới cùng)
-  {
-    id: 'act-comp-1',
-    type: 'TOURNAMENT_COMPLETED',
-    sport: 'Pickleball',
-    playDate: '2026-09-16',
-    timeSlot: 'AFTERNOON',
-    location: 'Cụm Sân Hà Anh Pickleball Tuy Hòa',
-    title: 'Giải Pickleball Tranh Cúp Hà Anh Lần 1 đã khép lại thành công',
-    description: 'Trận chung kết đôi nam kịch tính đã tìm ra Nhà Vô Địch với màn lội ngược dòng 11-9 ở set 3 quyết định.',
-    bannerUrl: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=900&auto=format&fit=crop&q=80',
-    club: {
-      id: 'c-haanh',
-      name: 'CLB Pickleball Hà Anh',
-      initials: 'HA',
-      verified: true,
-      memberCount: 154,
-    },
-    tournament: {
-      id: 'tourn-1',
-      prize: 'Tổng thưởng 30 Triệu',
-      statusBadge: 'ĐÃ KẾT THÚC',
-      championNames: 'Nguyễn Minh Danh & Lê Tuấn Hùng',
-      totalTeams: '32 Đôi VĐV',
-    },
-  },
-
-  // 5. Giải đấu ngày hôm sau mở cổng lúc 08:00
+  // 4. Giải đấu ngày hôm sau mở cổng lúc 08:00
   {
     id: 'act-4',
     type: 'TOURNAMENT_OPENED',
@@ -235,24 +207,54 @@ export default function HomeSocialFeed() {
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [activities, setActivities] = useState<ActivityFeedItem[]>(MOCK_ACTIVITIES);
 
-  // Sinh 5 ngày để lọc: Format "T2 16/09", "T3 17/09",...
+  // Sinh 30 ngày (1 tháng) để lọc: Format "T2 16/09", "T3 17/09",...
   const dateTabs = useMemo(() => {
     const today = new Date();
     const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-    return Array.from({ length: 5 }, (_, i) => {
+    return Array.from({ length: 30 }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const dayOfWeek = dayNames[d.getDay()];
       const dayMonth = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
       return {
         index: i,
-        dayOfWeek,
+        dayOfWeek: i === 0 ? 'Hôm nay' : dayOfWeek,
         dayMonth,
         label: `${dayOfWeek}, ${dayMonth}`,
         rawDate: d.toISOString().split('T')[0],
       };
     });
   }, []);
+
+  // Kéo chuột vuốt ngang danh sách ngày (Mouse drag-to-scroll)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [hasMoved, setHasMoved] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setHasMoved(false);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // Tốc độ trượt
+    if (Math.abs(walk) > 4) {
+      setHasMoved(true);
+    }
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsDragging(false);
+  };
 
   // Lọc hoạt động theo ngày chọn
   const activeTab = dateTabs[selectedDayIndex] || dateTabs[0];
@@ -262,16 +264,10 @@ export default function HomeSocialFeed() {
     return list.length > 0 ? list : activities;
   }, [activities, activeTab]);
 
-  // Phân chia: Giải đấu đã kết thúc (không phụ thuộc mốc giờ) vs Các sự kiện diễn ra theo mốc giờ hôm nay
-  const completedTournaments = useMemo(() => {
-    return filteredActivities.filter((act) => act.type === 'TOURNAMENT_COMPLETED');
-  }, [filteredActivities]);
-
-  // Gom nhóm các sự kiện có khung giờ (Ongoing, Opened, Pickup) theo mốc giờ bắt đầu
+  // Gom nhóm các sự kiện có khung giờ theo mốc giờ bắt đầu
   const milestoneGroups = useMemo(() => {
-    const activeTimelineItems = filteredActivities.filter((act) => act.type !== 'TOURNAMENT_COMPLETED');
     const groups: { [time: string]: ActivityFeedItem[] } = {};
-    activeTimelineItems.forEach((act) => {
+    filteredActivities.forEach((act) => {
       const key = act.startTime || 'Lịch trong ngày';
       if (!groups[key]) {
         groups[key] = [];
@@ -312,31 +308,45 @@ export default function HomeSocialFeed() {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      {/* 1. THANH BỘ LỌC NGÀY FULL WIDTH — Thiết kế sạch, viền nhẹ, gạch chân tinh tế */}
-      <div className="w-full bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="grid grid-cols-5 w-full divide-x divide-slate-100">
+      {/* 1. THANH BỘ LỌC CẢ 1 THÁNG (30 NGÀY) — KÉO CHUỘT TRƯỢT MƯỢT, ẨN HOÀN TOÀN THANH CUỘN */}
+      <div className="w-full bg-white rounded-xl border border-slate-200 shadow-xs p-1">
+        <div
+          ref={scrollRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          className={`flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 px-1 select-none ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
+        >
           {dateTabs.map((tab) => {
             const isSelected = selectedDayIndex === tab.index;
             return (
               <button
                 key={tab.index}
                 type="button"
-                onClick={() => setSelectedDayIndex(tab.index)}
-                className={`group relative py-2.5 px-1 text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                onClick={() => {
+                  if (!hasMoved) {
+                    setSelectedDayIndex(tab.index);
+                  }
+                }}
+                className={`group relative shrink-0 min-w-[76px] py-2 px-2.5 rounded-lg text-center transition-all flex flex-col items-center justify-center ${
                   isSelected
-                    ? 'bg-blue-50/50 text-blue-700 font-bold'
-                    : 'bg-white hover:bg-slate-50 text-slate-600 font-medium'
+                    ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-xs'
+                    : 'bg-white hover:bg-slate-50 text-slate-600 border border-transparent'
                 }`}
               >
-                <span className={`text-xs sm:text-sm tracking-tight transition-colors ${isSelected ? 'text-blue-700 font-extrabold' : 'group-hover:text-slate-900'}`}>
+                <span className={`text-xs tracking-tight transition-colors whitespace-nowrap ${isSelected ? 'text-blue-700 font-extrabold' : 'group-hover:text-slate-900 font-semibold'}`}>
                   {tab.dayOfWeek}
                 </span>
-                <span className={`text-[11px] sm:text-xs mt-0.5 font-normal transition-colors ${isSelected ? 'text-blue-600 font-semibold' : 'text-slate-400 group-hover:text-slate-600'}`}>
+                <span className={`text-[11px] mt-0.5 transition-colors ${isSelected ? 'text-blue-600 font-bold' : 'text-slate-400 group-hover:text-slate-600'}`}>
                   {tab.dayMonth}
                 </span>
 
                 {isSelected && (
-                  <span className="absolute bottom-0 inset-x-3 sm:inset-x-6 h-[2.5px] bg-blue-600 rounded-t-full shadow-xs" />
+                  <span className="absolute bottom-0.5 inset-x-3 h-[2px] bg-blue-600 rounded-full" />
                 )}
               </button>
             );
@@ -450,102 +460,119 @@ export default function HomeSocialFeed() {
                 }
 
                 /* ==========================================================
-                   DẠNG B: THẺ KÈO GIAO LƯU CLB - GỌN GÀNG, BỎ DÒNG HOST
+                   DẠNG B: KÈO GIAO LƯU CLB CẦN THÊM NGƯỜI
                    ========================================================== */
                 return (
                   <motion.article
                     key={item.id}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 shadow-xs hover:border-slate-300 transition-all space-y-2.5 relative group"
+                    className="bg-white rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all p-3 sm:p-3.5 space-y-3"
                   >
-                    {/* TOP: Tên CLB + Badge loại kèo */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded bg-slate-800 text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                    {/* Header: CLB TỔ CHỨC LÀ TRỌNG TÂM */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs shrink-0">
                           {item.club.initials}
                         </div>
-                        <span className="text-xs font-bold text-slate-800 truncate">
-                          {item.club.name}
-                        </span>
-                        {item.club.verified && (
-                          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        )}
-                        <span className="text-slate-300 text-xs">•</span>
-                        <span className="text-[11px] text-slate-500 truncate">{item.sport}</span>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs sm:text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer truncate">
+                              {item.club.name}
+                            </span>
+                            {item.club.verified && (
+                              <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                            <span>{item.sport}</span>
+                            {item.sportTier && (
+                              <>
+                                <span>•</span>
+                                <span className="font-medium text-slate-600">{item.sportTier}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="shrink-0">
-                        {item.type === 'PICKUP_NEED_PLAYER' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-orange-50 text-orange-700 border border-orange-200/80">
-                            <Flame className="w-3 h-3 text-orange-500" />
-                            <span>{item.slots?.missingText || 'Thiếu người'}</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                            <Users className="w-3 h-3 text-slate-600" />
-                            <span>Sinh hoạt CLB</span>
-                          </span>
+                      {/* Tag trạng thái slot */}
+                      {item.slots && (
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                            isFull
+                              ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}
+                        >
+                          {item.slots.missingText}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Tiêu đề & Thông tin sân */}
+                    <div className="space-y-1">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                        {item.title}
+                      </h4>
+                      <div className="flex items-center gap-2 text-xs text-slate-600 flex-wrap">
+                        <span className="font-semibold text-slate-700">
+                          {item.startTime} - {item.endTime}
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-slate-500 truncate">{item.location}</span>
+                        {item.slots?.feePerSlot && (
+                          <>
+                            <span className="text-slate-300">•</span>
+                            <span className="font-bold text-slate-800">{item.slots.feePerSlot}/người</span>
+                          </>
                         )}
                       </div>
                     </div>
 
-                    {/* TIÊU ĐỀ KÈO GIAO LƯU */}
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
-                      {item.title}
-                    </h3>
-
-                    {/* MÔ TẢ NGẮN GỌN */}
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
                       {item.description}
                     </p>
 
-                    {/* DẢI SLOT VÀ CHI PHÍ GỌN */}
-                    {item.slots && (
-                      <div className="bg-slate-50 rounded-lg p-2 flex items-center justify-between gap-2 text-xs">
+                    {/* Danh sách người đã tham gia & Nút Join slot */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                      {item.slots && (
                         <div className="flex items-center gap-2">
                           <div className="flex -space-x-1.5 overflow-hidden">
                             {item.slots.joinedPlayers.map((p, idx) => (
                               <div
                                 key={idx}
-                                style={{ backgroundColor: p.initialsBg || '#475569' }}
-                                className="w-5 h-5 rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white shadow-2xs"
+                                style={{ backgroundColor: p.initialsBg || '#3b82f6' }}
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold ring-2 ring-white"
                                 title={p.name}
                               >
                                 {p.name.charAt(0)}
                               </div>
                             ))}
                           </div>
-                          <span className="text-slate-600 text-[11px]">
-                            {item.slots.current}/{item.slots.max} người
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            {item.slots.current}/{item.slots.max} đã vào
                           </span>
                         </div>
+                      )}
 
-                        <div className="text-slate-700 font-semibold text-xs">
-                          {item.slots.feePerSlot}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* FOOTER: GIỜ ĐƠN GIẢN, KHÔNG TÔ MÀU NỔI VÀ NÚT VÀO SLOT */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap text-xs">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <span className="font-semibold text-slate-800">{item.startTime} – {item.endTime}</span>
-                        <span className="text-slate-300">•</span>
-                        <span className="text-slate-500 truncate max-w-[190px]">{item.location}</span>
-                      </div>
-
-                      {item.slots && (
+                      {/* Nút hành động gọn gàng */}
+                      {isPickup && (
                         <div className="ml-auto">
                           {isFull ? (
-                            <span className="px-2.5 py-1 rounded bg-slate-100 text-slate-400 text-xs font-medium">
+                            <button
+                              type="button"
+                              disabled
+                              className="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed"
+                            >
                               Đã đủ
-                            </span>
+                            </button>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleJoinSlot(item)}
-                              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                              className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
                             >
                               <UserPlus className="w-3 h-3" />
                               <span>Vào slot</span>
@@ -561,78 +588,6 @@ export default function HomeSocialFeed() {
           </div>
         ))}
       </div>
-
-      {/* 3. KHU VỰC KẾT QUẢ GIẢI ĐẤU ĐÃ KẾT THÚC (Vinh danh vô địch — không nhồi vào mốc giờ đếm) */}
-      {completedTournaments.length > 0 && (
-        <div className="space-y-3 pt-4 border-t border-slate-200">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-emerald-600" />
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Kết quả giải đấu đã khép lại
-            </h4>
-          </div>
-
-          <div className="space-y-3">
-            {completedTournaments.map((item) => (
-              <motion.article
-                key={item.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-emerald-200 transition-all space-y-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <Trophy className="w-3 h-3 text-emerald-600" />
-                      <span>ĐÃ KẾT THÚC</span>
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">
-                      {item.sport} • {item.club.name}
-                    </span>
-                  </div>
-
-                  <span className="text-[11px] text-slate-400">
-                    Địa điểm: {item.location}
-                  </span>
-                </div>
-
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
-                  {item.title}
-                </h3>
-
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  {item.description}
-                </p>
-
-                {/* Box vinh danh vô địch */}
-                {item.tournament?.championNames && (
-                  <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-lg p-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
-                        <Award className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-emerald-700 block font-bold uppercase">Nhà Vô Địch</span>
-                        <span className="text-xs sm:text-sm font-extrabold text-emerald-950">
-                          {item.tournament.championNames}
-                        </span>
-                      </div>
-                    </div>
-
-                    <Link
-                      href="/tournaments"
-                      className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1"
-                    >
-                      <span>Xem bảng đấu</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-                )}
-              </motion.article>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -375,7 +375,7 @@ export function SocialMyClubsCard({
                 href={club.id ? `/communities/${club.id}` : '/communities'}
                 className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all group"
               >
-                <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden relative border border-slate-200/60 bg-slate-50">
+                <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-200/80">
                   {hasCustomLogo ? (
                     <img
                       src={club.logoUrl!}
@@ -383,7 +383,7 @@ export function SocialMyClubsCard({
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
-                    <span className="text-blue-700 font-bold text-xs">{initials}</span>
+                    <span className="text-slate-700 font-bold text-xs">{initials}</span>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -564,6 +564,7 @@ export function SocialPickupRow({
   onJoin?: (item: SocialPickupItem) => void;
 }) {
   const [joined, setJoined] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const remaining = Math.max(0, item.maxSlots - (item.currentSlots + (joined ? 1 : 0)));
 
   // Display Name: Club Name if Club Hosted, else Host Name
@@ -573,9 +574,14 @@ export function SocialPickupRow({
   const entityAvatar = item.isClubHosted ? item.clubLogoUrl : item.hostAvatar;
   const entityInitial = (entityName.trim().slice(0, 2) || 'CL').toUpperCase();
 
-  const [imgError, setImgError] = useState(false);
-  const fallbackLogo = BRAND.assets.logoIcon;
-  const avatarSrc = (!imgError && entityAvatar?.trim()) ? entityAvatar : fallbackLogo;
+  // Kiểm tra logo hợp lệ, nếu không có hoặc là fallback sporto thì ẩn và dùng chữ viết tắt (initials)
+  const hasCustomLogo = Boolean(
+    !imgError &&
+    entityAvatar?.trim() &&
+    !entityAvatar.includes('sporto_v1') &&
+    !entityAvatar.includes('defaultFallback')
+  );
+
   const sportIcon = getSportLogo(item.sport);
 
   return (
@@ -584,13 +590,17 @@ export function SocialPickupRow({
       <div className="flex items-center justify-between gap-3">
         {/* Left: Small Round Avatar (w-6 h-6) + Subdued Gray Club Name */}
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
-            <img
-              src={avatarSrc}
-              alt={entityName}
-              className={`w-full h-full ${avatarSrc === fallbackLogo ? 'object-contain p-0.5' : 'object-cover'}`}
-              onError={() => setImgError(true)}
-            />
+          <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+            {hasCustomLogo ? (
+              <img
+                src={entityAvatar!}
+                alt={entityName}
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <span>{entityInitial}</span>
+            )}
           </div>
           <span className="font-medium text-xs text-slate-500 truncate">
             {entityName}

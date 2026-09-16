@@ -29,6 +29,7 @@ export type ActivityEventType =
   | 'TOURNAMENT_COMPLETED' // Giải đấu hoàn thành (vinh danh vô địch)
   | 'PLAYER_RANK_UP';      // Player thăng hạng thành tích
 
+// Interface mở rộng cho banner ảnh và poster của giải đấu
 export interface ActivityFeedItem {
   id: string;
   type: ActivityEventType;
@@ -41,6 +42,7 @@ export interface ActivityFeedItem {
   location: string;
   title: string;
   description: string;
+  bannerUrl?: string; // Banner giải đấu nếu có
   
   // Thông tin chủ thể (Host hoặc CLB hoặc Ban tổ chức)
   host: {
@@ -66,6 +68,7 @@ export interface ActivityFeedItem {
     prize: string;
     statusBadge: string;
     championNames?: string;
+    totalTeams?: string;
   };
 }
 
@@ -81,6 +84,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     location: 'Cụm Sân Hà Anh Pickleball Tuy Hòa',
     title: 'Chung kết Giải Pickleball Tranh Cúp Hà Anh Lần 1',
     description: 'Trận chung kết đôi nam đầy kịch tính đã tìm ra Nhà Vô Địch với màn lội ngược dòng 11-9 ở set 3 quyết định.',
+    bannerUrl: 'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=900&auto=format&fit=crop&q=80',
     host: {
       id: 'org-1',
       name: 'Ban Tổ Chức Hà Anh Cup',
@@ -92,6 +96,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
       prize: 'Tổng thưởng 30 Triệu',
       statusBadge: 'ĐÃ HOÀN THÀNH',
       championNames: 'Nguyễn Minh Danh & Lê Tuấn Hùng',
+      totalTeams: '32 Đôi VĐV',
     },
   },
   {
@@ -120,7 +125,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
       joinedPlayers: [
         { name: 'Minh Danh', initialsBg: '#2563eb' },
         { name: 'Tuấn Hùng', initialsBg: '#4f46e5' },
-        { name: 'Hải Nam', initialsBg: '#2563eb' },
+        { name: 'Hải Nam', initialsBg: '#059669' },
       ],
     },
   },
@@ -167,6 +172,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     location: 'Sân Cầu Lông Kỳ Hòa Q10',
     title: 'Giải Cầu Lông Mở Rộng Kỳ Hòa Autumn Cup chính thức mở đăng ký!',
     description: 'Quy tụ 32 đôi phong trào tranh tài. Đã có 22/32 đôi đăng ký giữ chỗ. Cổng đăng ký sẽ đóng khi đủ 32 đôi.',
+    bannerUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=900&auto=format&fit=crop&q=80',
     host: {
       id: 'org-2',
       name: 'CLB Cầu Lông Kỳ Hòa',
@@ -177,6 +183,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
       id: 'tourn-2',
       prize: '20 Triệu + Cúp',
       statusBadge: 'CÒN 10 SUẤT',
+      totalTeams: '32 Đôi Nam Nữ',
     },
   },
   {
@@ -191,6 +198,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
     location: 'Sân bóng Chảo Lửa, Tân Bình',
     title: 'Giải Bóng Đá Mini Cup Mùa Thu 2026 Khởi Tranh',
     description: 'Bảng A & B chính thức bắt đầu tranh tài các trận vòng bảng lượt đầu.',
+    bannerUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=900&auto=format&fit=crop&q=80',
     host: {
       id: 'org-3',
       name: 'BTC Chảo Lửa League',
@@ -201,6 +209,7 @@ const MOCK_ACTIVITIES: ActivityFeedItem[] = [
       id: 'tourn-3',
       prize: '15 Triệu Đồng',
       statusBadge: 'VÒNG BẢNG',
+      totalTeams: '16 Đội bóng',
     },
   },
 ];
@@ -282,9 +291,9 @@ export default function HomeSocialFeed() {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      {/* 1. THANH BỘ LỌC NGÀY FULL WIDTH DÀN ĐỀU (Định dạng: T ngày tháng) */}
-      <div className="w-full bg-white rounded-2xl border border-slate-200/90 p-2 sm:p-2.5 shadow-2xs">
-        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 w-full">
+      {/* 1. THANH BỘ LỌC NGÀY FULL WIDTH DÀN ĐỀU — Gạch chân tinh tế (Underline Tab), không tô màu chói cả ô */}
+      <div className="w-full bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div className="grid grid-cols-5 w-full divide-x divide-slate-100">
           {dateTabs.map((tab) => {
             const isSelected = selectedDayIndex === tab.index;
             return (
@@ -292,47 +301,177 @@ export default function HomeSocialFeed() {
                 key={tab.index}
                 type="button"
                 onClick={() => setSelectedDayIndex(tab.index)}
-                className={`py-2 px-1 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                className={`group relative py-2.5 px-1 text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
                   isSelected
-                    ? 'bg-blue-600 text-white shadow-xs font-bold ring-2 ring-blue-600/30'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200/60'
+                    ? 'bg-blue-50/40 text-blue-650 font-bold'
+                    : 'bg-white hover:bg-slate-50/70 text-slate-600 font-medium'
                 }`}
               >
-                <span className="text-xs sm:text-sm leading-tight">{tab.dayOfWeek}</span>
-                <span className={`text-[11px] sm:text-xs mt-0.5 leading-none ${isSelected ? 'text-blue-100' : 'text-slate-500'}`}>
+                <span className={`text-xs sm:text-sm tracking-tight transition-colors ${isSelected ? 'text-blue-700 font-extrabold' : 'group-hover:text-slate-900'}`}>
+                  {tab.dayOfWeek}
+                </span>
+                <span className={`text-[11px] sm:text-xs mt-0.5 font-normal transition-colors ${isSelected ? 'text-blue-600 font-semibold' : 'text-slate-400 group-hover:text-slate-600'}`}>
                   {tab.dayMonth}
                 </span>
+
+                {/* Gạch chân Active tinh tế dưới tab */}
+                {isSelected ? (
+                  <span className="absolute bottom-0 inset-x-2 sm:inset-x-4 h-[2.5px] bg-blue-600 rounded-t-full shadow-xs" />
+                ) : (
+                  <span className="absolute bottom-0 inset-x-4 h-[2px] bg-transparent group-hover:bg-slate-200 rounded-t-full transition-colors" />
+                )}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* 2. MILESTONES TIMELINE: CÁC MỐC GIỜ VÀ DANH SÁCH GIẢI / SỰ KIỆN Ở DƯỚI */}
+      {/* 2. MILESTONES TIMELINE: CÁC MỐC GIỜ VÀ DANH SÁCH GIẢI / KÈO GIAO LƯU */}
       <div className="space-y-6">
-        {milestoneGroups.map((group, groupIdx) => (
+        {milestoneGroups.map((group) => (
           <div key={group.time} className="relative">
             {/* MILESTONE HEADER: Giờ bắt đầu trong ngày */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200/80 px-3 py-1.5 rounded-full shadow-2xs">
-                <Clock className="w-4 h-4 text-blue-600 shrink-0" />
-                <span className="text-xs sm:text-sm font-extrabold text-blue-900 tracking-wide">
+              <div className="flex items-center gap-2 bg-slate-100/90 border border-slate-200/90 px-3 py-1 rounded-full shadow-2xs">
+                <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span className="text-xs sm:text-sm font-extrabold text-slate-800 tracking-wide">
                   {group.time}
                 </span>
-                <span className="text-[11px] text-blue-600 font-medium border-l border-blue-200 pl-2">
+                <span className="text-[11px] text-slate-500 font-medium border-l border-slate-200 pl-2">
                   {group.items.length} sự kiện
                 </span>
               </div>
-              <div className="flex-1 h-px bg-slate-200" />
+              <div className="flex-1 h-px bg-slate-200/80" />
             </div>
 
             {/* DANH SÁCH CÁC GIẢI / KÈO ĐẤU DƯỚI MỐC GIỜ NÀY */}
-            <div className="space-y-3 pl-2 sm:pl-3 border-l-2 border-blue-100 ml-3 sm:ml-4">
+            <div className="space-y-3.5 pl-2 sm:pl-3 border-l-2 border-slate-200/90 ml-3 sm:ml-4">
               {group.items.map((item) => {
                 const sportLogo = getSportLogo(item.sport);
+                const isTournament = item.type === 'TOURNAMENT_OPENED' || item.type === 'TOURNAMENT_COMPLETED';
                 const isPickup = item.type === 'PICKUP_NEED_PLAYER' || item.type === 'CLUB_RECRUITING';
                 const isFull = item.slots && item.slots.current >= item.slots.max;
 
+                /* ==========================================================
+                   DẠNG 1: THẺ BẢNG TIN GIẢI ĐẤU (Có Banner nhỏ, info nổi bật, nút Xem giải)
+                   ========================================================== */
+                if (isTournament) {
+                  return (
+                    <motion.article
+                      key={item.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-blue-300 hover:shadow-xs transition-all overflow-hidden relative group"
+                    >
+                      {/* BANNER NHỎ NẰM TRÊN TOP */}
+                      <div className="relative h-28 sm:h-36 w-full bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 overflow-hidden">
+                        {item.bannerUrl ? (
+                          <img
+                            src={item.bannerUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-r from-blue-700 to-indigo-800 opacity-80" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+
+                        {/* Badges trên Banner */}
+                        <div className="absolute top-2.5 left-3 right-3 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            {item.type === 'TOURNAMENT_OPENED' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400 text-slate-950 shadow-xs">
+                                <Sparkles className="w-3 h-3 text-slate-950" />
+                                <span>MỞ ĐĂNG KÝ</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400 text-slate-950 shadow-xs">
+                                <Trophy className="w-3 h-3 text-slate-950" />
+                                <span>KẾT QUẢ GIẢI</span>
+                              </span>
+                            )}
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-black/40 backdrop-blur-md text-white border border-white/20">
+                              {item.sport} {item.sportTier && `• ${item.sportTier}`}
+                            </span>
+                          </div>
+
+                          {/* Host BTC */}
+                          <span className="text-[11px] font-semibold text-slate-200 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10 truncate max-w-[160px]">
+                            {item.host.name}
+                          </span>
+                        </div>
+
+                        {/* Tiêu đề giải nằm nổi trên banner */}
+                        <div className="absolute bottom-2.5 left-3 right-3">
+                          <h3 className="text-sm sm:text-base font-bold text-white leading-snug line-clamp-1 drop-shadow-sm group-hover:text-blue-200 transition-colors">
+                            {item.title}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* THÔNG TIN CHI TIẾT DƯỚI BANNER */}
+                      <div className="p-3.5 sm:p-4 space-y-3">
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-2">
+                          {item.description}
+                        </p>
+
+                        {/* Dải thông số giải: Giải thưởng, Quy mô, Vô địch */}
+                        {item.tournament && (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 border border-slate-200/70 rounded-xl p-2.5 text-xs">
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium uppercase">
+                                {item.tournament.championNames ? 'Vô địch' : 'Giải thưởng'}
+                              </span>
+                              <span className="font-bold text-slate-850 truncate block mt-0.5">
+                                {item.tournament.championNames || item.tournament.prize}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-[10px] text-slate-400 block font-medium uppercase">Quy mô</span>
+                              <span className="font-semibold text-slate-700 block mt-0.5">
+                                {item.tournament.totalTeams || '32 VĐV / Cặp'}
+                              </span>
+                            </div>
+
+                            <div className="col-span-2 sm:col-span-1">
+                              <span className="text-[10px] text-slate-400 block font-medium uppercase">Trạng thái</span>
+                              <span className="font-bold text-blue-600 block mt-0.5">
+                                {item.tournament.statusBadge}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Footer card giải đấu: Giờ thi đấu, Địa điểm & Nút Xem giải */}
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                            <div className="flex items-center gap-1 text-slate-700 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
+                              <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span>{item.startTime} – {item.endTime}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-slate-500">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate max-w-[200px]">{item.location}</span>
+                            </div>
+                          </div>
+
+                          <Link
+                            href="/tournaments"
+                            className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs inline-flex items-center gap-1.5 transition-all ml-auto"
+                          >
+                            <span>Xem giải đấu</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </div>
+                    </motion.article>
+                  );
+                }
+
+                /* ==========================================================
+                   DẠNG 2: THẺ KÈO GIAO LƯU / MỜI GỌI (Pickup Need Player / Club Recruiting)
+                   ========================================================== */
                 return (
                   <motion.article
                     key={item.id}
@@ -340,42 +479,27 @@ export default function HomeSocialFeed() {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-blue-200 transition-all space-y-3 relative group"
                   >
-                    {/* TOP HEADER: Badge loại sự kiện + Tên môn + Tên Host / CLB */}
+                    {/* TOP HEADER: Badge loại kèo + Thể thao + Host */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0">
-                        {/* Badge sự kiện */}
-                        {item.type === 'PICKUP_NEED_PLAYER' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200 shrink-0">
+                        {item.type === 'PICKUP_NEED_PLAYER' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200/90 shrink-0">
                             <Flame className="w-3 h-3 text-orange-500" />
                             <span>{item.slots?.missingText || 'THIẾU NGƯỜI'}</span>
                           </span>
-                        )}
-                        {item.type === 'CLUB_RECRUITING' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/90 shrink-0">
                             <ShieldCheck className="w-3 h-3 text-blue-600" />
                             <span>CLB TUYỂN GIAO LƯU</span>
                           </span>
                         )}
-                        {item.type === 'TOURNAMENT_COMPLETED' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                            <Trophy className="w-3 h-3 text-emerald-600" />
-                            <span>KẾT QUẢ GIẢI ĐẤU</span>
-                          </span>
-                        )}
-                        {item.type === 'TOURNAMENT_OPENED' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                            <Sparkles className="w-3 h-3 text-purple-600" />
-                            <span>MỞ ĐĂNG KÝ GIẢI</span>
-                          </span>
-                        )}
 
-                        {/* Sport Tag */}
                         <span className="text-xs font-semibold text-slate-500 truncate">
                           {item.sport} {item.sportTier && `• ${item.sportTier}`}
                         </span>
                       </div>
 
-                      {/* Host / Club Name bên phải */}
+                      {/* Host info */}
                       <div className="text-right shrink-0">
                         <span className="text-xs font-semibold text-slate-700 block">
                           {item.host.name}
@@ -388,7 +512,7 @@ export default function HomeSocialFeed() {
                       </div>
                     </div>
 
-                    {/* TIÊU ĐỀ HOẠT ĐỘNG */}
+                    {/* TIÊU ĐỀ KÈO GIAO LƯU */}
                     <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                       {item.title}
                     </h3>
@@ -398,28 +522,36 @@ export default function HomeSocialFeed() {
                       {item.description}
                     </p>
 
-                    {/* CARD ĐẶC THÙ CHO GIẢI ĐẤU (NẾU CÓ) */}
-                    {item.tournament && (
-                      <div className="rounded-xl p-3 bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-800 truncate">
-                            {item.tournament.championNames ? `Vô địch: ${item.tournament.championNames}` : `Giải thưởng: ${item.tournament.prize}`}
+                    {/* BOX MỜI GỌI THÀNH VIÊN VÀO KÈO (Avatar stack + Số slot còn trống) */}
+                    {item.slots && (
+                      <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          {/* Avatars đã vào sân */}
+                          <div className="flex -space-x-2 overflow-hidden">
+                            {item.slots.joinedPlayers.map((p, idx) => (
+                              <div
+                                key={idx}
+                                style={{ backgroundColor: p.initialsBg || '#2563eb' }}
+                                className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-2xs"
+                                title={p.name}
+                              >
+                                {p.name.charAt(0)}
+                              </div>
+                            ))}
                           </div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">
-                            {item.location}
-                          </div>
+                          <span className="text-xs font-semibold text-slate-650">
+                            Đã có {item.slots.current}/{item.slots.max} người
+                          </span>
                         </div>
-                        <Link
-                          href="/tournaments"
-                          className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 shrink-0 shadow-xs inline-flex items-center gap-1"
-                        >
-                          <span>Xem giải</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
+
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 block uppercase font-medium">Chi phí chia sân</span>
+                          <span className="text-xs font-extrabold text-blue-600">{item.slots.feePerSlot}/slot</span>
+                        </div>
                       </div>
                     )}
 
-                    {/* MỐC GIỜ THI ĐẤU & ĐỊA ĐIỂM */}
+                    {/* FOOTER: MỐC GIỜ THI ĐẤU & NÚT VÀO SLOT */}
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-3 text-xs text-slate-600 font-medium flex-wrap">
                         <div className="flex items-center gap-1.5 text-blue-700 bg-blue-50/80 px-2.5 py-1 rounded-lg font-bold">
@@ -429,33 +561,25 @@ export default function HomeSocialFeed() {
 
                         <div className="flex items-center gap-1 text-slate-500">
                           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate max-w-[220px]">{item.location}</span>
+                          <span className="truncate max-w-[200px]">{item.location}</span>
                         </div>
                       </div>
 
-                      {/* Cụm Action Slot cho kèo thiếu người */}
-                      {isPickup && item.slots && (
-                        <div className="flex items-center gap-2.5 shrink-0 ml-auto">
-                          <span className="text-xs font-bold text-slate-700">
-                            {item.slots.feePerSlot}
-                          </span>
-
-                          <span className="text-xs font-semibold text-slate-500">
-                            {item.slots.current}/{item.slots.max}
-                          </span>
-
+                      {/* Nút Tham Gia Slot */}
+                      {item.slots && (
+                        <div className="ml-auto">
                           {isFull ? (
-                            <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold">
+                            <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold block">
                               Đã đủ slot
                             </span>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleJoinSlot(item)}
-                              className="px-3.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                              className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                             >
                               <UserPlus className="w-3.5 h-3.5" />
-                              <span>Vào slot</span>
+                              <span>Vào slot ngay</span>
                             </button>
                           )}
                         </div>
@@ -471,3 +595,4 @@ export default function HomeSocialFeed() {
     </div>
   );
 }
+

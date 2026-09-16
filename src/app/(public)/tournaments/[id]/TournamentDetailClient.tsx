@@ -1949,7 +1949,7 @@ const commonTranslate = useTranslations('Common');
                                   <span className="min-w-0 flex-1">
                                     <span className={`inline-block truncate text-sm sm:text-base ${
                                       isActive
-                                        ? 'font-bold text-blue-600 underline underline-offset-4 decoration-2 decoration-blue-600'
+                                        ? 'font-bold text-blue-600'
                                         : 'font-semibold text-slate-700'
                                     }`}>
                                       {displayName}

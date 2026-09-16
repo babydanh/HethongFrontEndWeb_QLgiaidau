@@ -430,212 +430,244 @@ function SessionDetailModal({
   return (
     // Backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       aria-modal="true"
       role="dialog"
       aria-label={item.title}
     >
-      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col">
+      <div className="relative w-full max-w-2xl max-h-[92vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
 
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 pt-4 pb-3 rounded-t-2xl">
-          <div className="flex items-start gap-3">
-            <ClubAvatarInline club={item.club} />
-            <div className="min-w-0 flex-1">
+        {/* ── Hero header strip ── */}
+        <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 px-5 pt-5 pb-4 text-white">
+          {/* close btn */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition-colors"
+            aria-label="Đóng"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          {/* Club identity */}
+          <div className="flex items-center gap-2.5 mb-3">
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-xs font-bold text-white border border-white/30"
+              style={item.club.avatarUrl ? { backgroundImage: `url(${item.club.avatarUrl})`, backgroundSize: 'cover' } : {}}
+            >
+              {!item.club.avatarUrl && item.club.initials}
+            </div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-slate-900 truncate">{item.club.name}</span>
+                <span className="text-sm font-bold text-white truncate">{item.club.name}</span>
                 {item.club.verified && (
-                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-label="Đã xác minh" />
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-blue-200" aria-label="Đã xác minh" />
                 )}
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">{item.sport} · {item.sportTier}</p>
+              <p className="text-[11px] text-blue-200">{item.sport} · {item.sportTier}</p>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
-              aria-label="Đóng"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
-          <h2 className="mt-2.5 text-base font-bold text-slate-950 leading-snug">{item.title}</h2>
-          {slots && (
-            <div className="mt-1.5 flex items-center gap-2">
+
+          {/* Session title */}
+          <h2 className="text-lg font-bold leading-snug text-white pr-10">{item.title}</h2>
+
+          {/* Status badges row */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {slots && (
               <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
-                isFull ? 'border-slate-200 bg-slate-100 text-slate-600' : 'border-amber-200 bg-amber-50 text-amber-700'
+                isFull
+                  ? 'border-white/30 bg-white/20 text-white'
+                  : 'border-amber-300/60 bg-amber-400/30 text-amber-100'
               }`}>
                 <Flame className="h-3 w-3" />
                 {getMissingLabel(slots.current, slots.max)}
               </span>
-              <span className="text-xs text-slate-500">{slots.current}/{slots.max} người</span>
-            </div>
-          )}
+            )}
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-blue-100">
+              <Clock3 className="h-3 w-3" />
+              {item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}
+            </span>
+            {slots && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-400/25 px-2.5 py-0.5 text-[11px] font-bold text-emerald-100">
+                <Sparkles className="h-3 w-3" />
+                {slots.feePerSlot}/người
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 px-4 py-3 space-y-4">
+        {/* ── 2-column body ── */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_220px] divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
 
-          {/* Meta info */}
-          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-slate-700">
-              <Clock3 className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-              <span className="font-semibold">{item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}</span>
-            </div>
-            <div className="flex items-start gap-2 text-xs text-slate-700">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-blue-500 mt-0.5" />
-              <span>{item.location}</span>
-            </div>
-            {slots && (
-              <div className="flex items-center gap-2 text-xs text-slate-700">
-                <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                <span className="font-bold text-emerald-700">{slots.feePerSlot}/người · Chia tiền sân</span>
-              </div>
-            )}
-            {item.courtDetails && (
-              <div className="flex items-start gap-2 text-xs text-slate-600">
-                <Info className="h-3.5 w-3.5 shrink-0 text-slate-400 mt-0.5" />
-                <span>{item.courtDetails}</span>
-              </div>
-            )}
-          </div>
+            {/* Left column: details + host + note */}
+            <div className="px-5 py-4 space-y-4">
 
-          {/* Description */}
-          <div>
-            <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
-          </div>
-
-          {/* Rules */}
-          {item.rules && item.rules.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-slate-700 mb-1.5">Quy định buổi chơi</p>
-              <ul className="space-y-1">
-                {item.rules.map((rule, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-blue-500 mt-0.5" />
-                    {rule}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Joined players */}
-          {slots && slots.joinedPlayers.length > 0 && (
-            <div>
-              <p className="text-xs font-bold text-slate-700 mb-2">Đã tham gia ({slots.current}/{slots.max})</p>
-              <div className="flex flex-wrap gap-2">
-                {slots.joinedPlayers.map((p, i) => (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <span
-                      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white shadow-sm"
-                      style={{ backgroundColor: p.initialsBg }}
-                    >
-                      {getInitials(p.name)}
-                    </span>
-                    <span className="text-xs text-slate-600">{p.name.split(' ').pop()}</span>
-                  </div>
-                ))}
-                {/* Empty slots */}
-                {Array.from({ length: Math.max(slots.max - slots.current, 0) }).map((_, i) => (
-                  <div key={`empty-${i}`} className="flex items-center gap-1.5">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-[10px] text-slate-400">
-                      ?
-                    </span>
-                    <span className="text-xs text-slate-400">Trống</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Host contact */}
-          {item.host && (
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
-              <p className="text-xs font-bold text-slate-700 mb-2">Liên hệ với host</p>
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-sm font-bold text-white shadow-sm"
-                  style={item.host.avatarUrl ? { backgroundImage: `url(${item.host.avatarUrl})`, backgroundSize: 'cover' } : {}}
-                >
-                  {!item.host.avatarUrl && initials(item.host.name)}
+              {/* Location + fee */}
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-start gap-2 text-sm text-slate-700 min-w-0">
+                  <MapPin className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
+                  <span className="leading-tight">{item.location}</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-slate-900 leading-none">{item.host.name}</p>
-                  {item.host.role && <p className="text-[11px] text-slate-500 mt-0.5">{item.host.role}</p>}
-                </div>
+                {item.courtDetails && (
+                  <div className="flex items-start gap-2 text-sm text-slate-500 min-w-0">
+                    <Info className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
+                    <span className="leading-tight">{item.courtDetails}</span>
+                  </div>
+                )}
               </div>
-              {(item.host.phone || item.host.zalo) && (
-                <div className="mt-3 flex gap-2">
-                  {item.host.phone && (
-                    <a
-                      href={`tel:${item.host.phone.replace(/\s/g, '')}`}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+
+              {/* Description */}
+              <p className="text-sm text-slate-600 leading-relaxed">{item.description}</p>
+
+              {/* Rules */}
+              {item.rules && item.rules.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-slate-700 mb-2">Quy định buổi chơi</p>
+                  <ul className="space-y-1.5">
+                    {item.rules.map((rule, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
+                        {rule}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Host contact */}
+              {item.host && (
+                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3.5">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-blue-600 mb-2.5">Liên hệ với host</p>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-blue-200 bg-blue-600 text-sm font-bold text-white shadow-sm"
+                      style={item.host.avatarUrl ? { backgroundImage: `url(${item.host.avatarUrl})`, backgroundSize: 'cover' } : {}}
                     >
-                      <Phone className="h-3.5 w-3.5" />
-                      Gọi điện
-                    </a>
-                  )}
-                  {item.host.zalo && (
-                    <a
-                      href={`https://zalo.me/${item.host.zalo}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      Nhắn Zalo
-                    </a>
+                      {!item.host.avatarUrl && initials(item.host.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">{item.host.name}</p>
+                      {item.host.role && <p className="text-xs text-slate-500 mt-0.5">{item.host.role}</p>}
+                    </div>
+                  </div>
+                  {(item.host.phone || item.host.zalo) && (
+                    <div className="flex gap-2">
+                      {item.host.phone && (
+                        <a
+                          href={`tel:${item.host.phone.replace(/\s/g, '')}`}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
+                        >
+                          <Phone className="h-3.5 w-3.5" />
+                          Gọi điện
+                        </a>
+                      )}
+                      {item.host.zalo && (
+                        <a
+                          href={`https://zalo.me/${item.host.zalo}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          Nhắn Zalo
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* Note input */}
-          {!submitted && !isJoined && !isFull && (
-            <div>
-              <label className="text-xs font-bold text-slate-700 mb-1.5 block">
-                Ghi chú khi gửi yêu cầu <span className="font-normal text-slate-400">(không bắt buộc)</span>
-              </label>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Ví dụ: Tôi chơi trình 2.8, thích vui vẻ..."
-                rows={2}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none"
-              />
-            </div>
-          )}
+              {/* Note input */}
+              {!submitted && !isJoined && !isFull && (
+                <div>
+                  <label className="text-xs font-bold text-slate-700 mb-1.5 block">
+                    Ghi chú khi gửi yêu cầu <span className="font-normal text-slate-400">(không bắt buộc)</span>
+                  </label>
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Ví dụ: Tôi chơi trình 2.8, thích vui vẻ..."
+                    rows={2}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none"
+                  />
+                </div>
+              )}
 
-          {/* Submitted success */}
-          {(submitted || isJoined) && (
-            <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5 flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-              <p className="text-xs font-semibold text-emerald-700">Đã gửi yêu cầu tham gia thành công!</p>
+              {/* Submitted success */}
+              {(submitted || isJoined) && (
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-2.5">
+                  <UserCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+                  <p className="text-sm font-semibold text-emerald-700">Đã gửi yêu cầu tham gia thành công!</p>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Right column: participant roster grid */}
+            {slots && (
+              <div className="px-4 py-4">
+                <div className="flex items-baseline justify-between mb-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Xác nhận tham gia</p>
+                  <span className="text-sm font-bold text-slate-900">{slots.current}/{slots.max}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-x-2 gap-y-4">
+                  {/* Filled slots */}
+                  {slots.joinedPlayers.map((p, i) => (
+                    <div key={i} className="flex flex-col items-center gap-1 min-w-0">
+                      <span
+                        className="flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-white text-sm font-bold text-white shadow-md ring-2 ring-blue-100"
+                        style={{ backgroundColor: p.initialsBg }}
+                      >
+                        {getInitials(p.name)}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-700 text-center truncate w-full">{p.name.split(' ').pop()}</span>
+                    </div>
+                  ))}
+                  {/* Empty slots */}
+                  {Array.from({ length: Math.max(slots.max - slots.current, 0) }).map((_, i) => (
+                    <div key={`e-${i}`} className="flex flex-col items-center gap-1 min-w-0">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 text-lg font-light text-slate-400">
+                        +
+                      </span>
+                      <span className="text-[10px] text-slate-400 text-center">Trống</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-4 rounded-full bg-slate-100 h-1.5 overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-full transition-all"
+                    style={{ width: `${(slots.current / slots.max) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 text-[11px] text-slate-400 text-right">
+                  {`Còn ${Math.max(slots.max - slots.current, 0)} chỗ trống`}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="sticky bottom-0 bg-white border-t border-slate-100 px-4 py-3 flex gap-2 rounded-b-2xl">
+        {/* ── Footer CTA ── */}
+        <div className="border-t border-slate-100 bg-white px-5 py-3.5 flex gap-2.5">
           {!submitted && !isJoined && !isFull ? (
             <>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 inline-flex items-center justify-center rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 Để sau
               </button>
               <button
                 type="button"
                 onClick={handleSendRequest}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98]"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98]"
               >
                 <Send className="h-4 w-4" />
-                Gửi yêu cầu
+                Gửi yêu cầu tham gia
               </button>
             </>
           ) : (

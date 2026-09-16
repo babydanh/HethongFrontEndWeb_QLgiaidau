@@ -46,7 +46,8 @@ import { RankAvatar, getRankRingClass } from '@/components/ui/RankAvatar';
 import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
-import LeftActionDock from '@/components/layout/LeftActionDock';
+import LeftActionDock, { type MainViewMode } from '@/components/layout/LeftActionDock';
+import HomeSocialFeed from '@/components/ui/HomeSocialFeed';
 import {
   AthleteProfileCard,
   SocialMatchFilters,
@@ -448,6 +449,7 @@ export default function HomePage() {
   const feedRequestInFlightRef = useRef(false);
   const feedRefreshQueuedRef = useRef(false);
   const [feedRefreshTick, setFeedRefreshTick] = useState(0);
+  const [mainView, setMainView] = useState<MainViewMode>('EXPLORE');
   const pickupsSectionRef = useRef<HTMLDivElement>(null);
 
   const handleScrollToPickups = () => {
@@ -1774,11 +1776,8 @@ export default function HomePage() {
         selectedCategoryId={selectedCategoryId}
         onSelectCategory={setSelectedCategoryId}
         getCategoryLabel={getCategoryLabel}
-        onShareClick={() => {
-          setActiveShareUrl(typeof window !== 'undefined' ? window.location.href : '');
-          setActiveShareTitle(document?.title || 'SportO - Nền tảng thể thao');
-          setIsShareModalOpen(true);
-        }}
+        activeView={mainView}
+        onSelectView={setMainView}
       />
 
       {/* Main Content: 3 Columns with sleek sidebars and expansive center social feed */}
@@ -1821,21 +1820,38 @@ export default function HomePage() {
           />
         </aside>
 
-        {/* 2. CENTER COLUMN: Featured Tournaments Banner, Day Selector, Tonight Matches, Upcoming Schedule (flex-1 expansive) */}
+        {/* 2. CENTER COLUMN: Khám Phá (Explore) HOẶC Bảng Tin Hoạt Động (Social Feed) */}
         <section className="flex-1 min-w-0 w-full flex flex-col gap-3.5 order-1 lg:order-2">
-          {/* Section: Giải đấu nổi bật */}
-          <section className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-                {translate('featuredTournaments')}
-              </h2>
-              <Link
-                href="/tournaments"
-                className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
-              >
-                {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+          {mainView === 'FEED' ? (
+            /* VIEW B: BẢNG TIN CỘNG ĐỒNG & HOẠT ĐỘNG PLAYER */
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-200/80">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                    Bảng Tin &amp; Hoạt Động Vận Động Viên
+                  </h2>
+                </div>
+                <span className="text-xs text-slate-500 font-medium">Cập nhật trực tiếp</span>
+              </div>
+              <HomeSocialFeed />
             </div>
+          ) : (
+            /* VIEW A: KHÁM PHÁ (Giải đấu nổi bật, Kèo giao lưu, Lịch thi đấu) */
+            <>
+              {/* Section: Giải đấu nổi bật */}
+              <section className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                    {translate('featuredTournaments')}
+                  </h2>
+                  <Link
+                    href="/tournaments"
+                    className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    {translate('viewAll')} <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
 
             {isLoading ? (
               <div className="w-full aspect-[2.1/1] rounded-lg bg-slate-200/80 dark:bg-slate-800/80 animate-pulse border border-slate-200/60" />
@@ -1973,6 +1989,8 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+          )}
+            </>
           )}
         </section>
 

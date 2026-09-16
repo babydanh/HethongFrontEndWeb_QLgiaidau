@@ -2,18 +2,20 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { Share2, Compass, Check, Trophy } from 'lucide-react';
+import { Compass, Newspaper, Check, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSportLogo } from '@/constants/sports';
 import type { Category } from '@/types/category';
+
+export type MainViewMode = 'EXPLORE' | 'FEED';
 
 interface LeftActionDockProps {
   categories: Category[];
   selectedCategoryId: string;
   onSelectCategory: (id: string) => void;
   getCategoryLabel: (cat: Category) => string;
-  onShareClick?: () => void;
+  activeView: MainViewMode;
+  onSelectView: (view: MainViewMode) => void;
 }
 
 export default function LeftActionDock({
@@ -21,7 +23,8 @@ export default function LeftActionDock({
   selectedCategoryId,
   onSelectCategory,
   getCategoryLabel,
-  onShareClick,
+  activeView,
+  onSelectView,
 }: LeftActionDockProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
@@ -88,7 +91,7 @@ export default function LeftActionDock({
                   />
                 </span>
               ) : (
-                <Compass className={`w-5 h-5 ${selectedCategoryId ? 'text-white' : 'text-slate-700 group-hover:text-blue-600'}`} />
+                <Trophy className={`w-5 h-5 ${selectedCategoryId ? 'text-white' : 'text-slate-700 group-hover:text-blue-600'}`} />
               )}
 
               {/* Active dot badge if filtered */}
@@ -192,35 +195,39 @@ export default function LeftActionDock({
             </AnimatePresence>
           </div>
 
-          {/* 2. ICON 2: KHÁM PHÁ (Trang chủ / Home Feed) */}
-          <Link
-            href="/"
-            onClick={() => onSelectCategory('')}
+          {/* 2. ICON 2: KHÁM PHÁ (Trang chủ Khám phá) */}
+          <button
+            type="button"
+            onClick={() => onSelectView('EXPLORE')}
             className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer group relative ${
-              selectedCategoryId === ''
-                ? 'bg-blue-50 text-blue-600 font-bold'
+              activeView === 'EXPLORE'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'bg-slate-100/90 hover:bg-blue-50 hover:text-blue-600 text-slate-700'
             }`}
-            title="Khám phá trang chủ"
-            aria-label="Khám phá trang chủ"
+            title="Khám phá giải đấu & trận đấu"
+            aria-label="Khám phá"
           >
-            <Compass className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <Compass className={`w-5 h-5 group-hover:scale-110 transition-transform ${activeView === 'EXPLORE' ? 'text-white' : 'text-slate-700 group-hover:text-blue-600'}`} />
             <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-50">
               Khám phá
             </span>
-          </Link>
+          </button>
 
-          {/* 3. ICON 3: CHIA SẺ (Lucide Share2 Icon cùng tông trang chủ) */}
+          {/* 3. ICON 3: BẢNG TIN & HOẠT ĐỘNG PLAYER (Social Feed) */}
           <button
             type="button"
-            onClick={onShareClick}
-            className="w-11 h-11 rounded-full flex items-center justify-center bg-slate-100/90 hover:bg-blue-50 hover:text-blue-600 text-slate-700 transition-all cursor-pointer group relative"
-            title="Chia sẻ trang"
-            aria-label="Chia sẻ trang"
+            onClick={() => onSelectView('FEED')}
+            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer group relative ${
+              activeView === 'FEED'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'bg-slate-100/90 hover:bg-blue-50 hover:text-blue-600 text-slate-700'
+            }`}
+            title="Bảng tin & Hoạt động người chơi"
+            aria-label="Bảng tin & Hoạt động"
           >
-            <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform text-slate-700 group-hover:text-blue-600" />
+            <Newspaper className={`w-5 h-5 group-hover:scale-110 transition-transform ${activeView === 'FEED' ? 'text-white' : 'text-slate-700 group-hover:text-blue-600'}`} />
             <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-50">
-              Chia sẻ
+              Bảng tin & Hoạt động
             </span>
           </button>
         </motion.aside>

@@ -1762,6 +1762,8 @@ export default function HomePage() {
             matchesPlayed={matchesPlayed || 46}
             winRate={winRate || 68}
             credibility={98}
+            tierName={displayTier}
+            categoryName={sportName}
             onViewProfile={() => {
               if (!user?.id) return;
               openUserProfile({

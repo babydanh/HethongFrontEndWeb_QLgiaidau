@@ -15,6 +15,8 @@ import {
   Trophy,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { getRankBorderColor } from '@/components/ui/RankAvatar';
+import { getRankProgressInfo } from '@/utils/rank-style';
 
 export interface SocialPickupItem {
   id: string;
@@ -51,6 +53,8 @@ export function AthleteProfileCard({
   matchesPlayed,
   winRate,
   credibility,
+  tierName,
+  categoryName,
   onViewProfile,
 }: {
   user?: { fullName?: string | null; avatarUrl?: string | null } | null;
@@ -58,44 +62,100 @@ export function AthleteProfileCard({
   matchesPlayed: number;
   winRate: number;
   credibility?: number;
+  tierName?: string | null;
+  categoryName?: string | null;
   onViewProfile?: () => void;
 }) {
   const translate = useTranslations('Home');
 
+  const rankColor = getRankBorderColor(elo, tierName, matchesPlayed, categoryName);
+  const progress = getRankProgressInfo(elo, categoryName);
+  const displayTier = tierName || progress.current.name;
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden text-center p-4">
-      {/* Avatar with subtle brand tier tag */}
-      <div className="relative inline-block mx-auto mb-2">
-        <div className="w-14 h-14 rounded-full border-2 border-blue-100 overflow-hidden shadow-2xs bg-slate-50 mx-auto">
-          {user?.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt={user.fullName || 'Athlete'}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-base">
-              {(user?.fullName?.trim().charAt(0) || 'U').toUpperCase()}
-            </div>
-          )}
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden text-center p-4 transition-all">
+      {/* Clickable Profile Header: Avatar, Name & ELO */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onViewProfile}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onViewProfile?.();
+          }
+        }}
+        className="cursor-pointer group flex flex-col items-center focus:outline-hidden"
+        title={translate('viewProfile')}
+      >
+        {/* Avatar with rank colored border */}
+        <div className="relative inline-block mx-auto mb-2">
+          <div
+            className="w-14 h-14 rounded-full border-2 overflow-hidden shadow-2xs bg-slate-50 mx-auto transition-transform group-hover:scale-105"
+            style={{
+              borderColor: rankColor,
+              boxShadow: `0 0 10px -2px ${rankColor}40`,
+            }}
+          >
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.fullName || 'Athlete'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center font-bold text-base bg-slate-50"
+                style={{ color: rankColor }}
+              >
+                {(user?.fullName?.trim().charAt(0) || 'U').toUpperCase()}
+              </div>
+            )}
+          </div>
+          <span
+            className="absolute -bottom-0.5 right-0 w-4.5 h-4.5 rounded-full text-white font-bold text-[9px] flex items-center justify-center border-2 border-white shadow-2xs"
+            style={{ backgroundColor: rankColor }}
+          >
+            {displayTier.charAt(0).toUpperCase()}
+          </span>
         </div>
-        <span className="absolute -bottom-0.5 right-0 w-4.5 h-4.5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center border-2 border-white shadow-2xs">
-          B
-        </span>
+
+        <h3 className="text-slate-900 font-bold text-sm tracking-tight truncate max-w-full group-hover:text-blue-600 transition-colors">
+          {user?.fullName || 'Nguyễn Minh Danh'}
+        </h3>
+
+        {/* ELO & Rank text colored without badge background */}
+        <div className="flex items-center justify-center gap-1.5 mt-1 flex-wrap">
+          <span className="text-xs font-bold" style={{ color: rankColor }}>
+            ELO {elo || 1511}
+          </span>
+          <span className="text-slate-300 text-xs">•</span>
+          <span className="text-xs font-semibold" style={{ color: rankColor }}>
+            {displayTier}
+          </span>
+          <span className="text-slate-400 text-xs font-normal">TP.HCM</span>
+        </div>
       </div>
 
-      <h3 className="text-slate-900 font-bold text-sm tracking-tight truncate">
-        {user?.fullName || 'Nguyễn Minh Danh'}
-      </h3>
-      <div className="flex items-center justify-center gap-1.5 mt-0.5">
-        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-semibold">
-          ELO {elo || 1511}
-        </span>
-        <span className="text-slate-400 text-xs font-normal">TP.HCM</span>
+      {/* Rank Progress Bar */}
+      <div className="mt-2.5 mb-1 px-1">
+        <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium mb-1">
+          <span>{Math.round(progress.percent)}%</span>
+          <span>{progress.next ? progress.next.name : 'Max Rank'}</span>
+        </div>
+        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progress.percent}%`,
+              backgroundColor: rankColor,
+            }}
+          />
+        </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2 py-2.5 border-y border-slate-100 my-3">
+      <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-slate-100 mt-3">
         <div>
           <div className="text-sm font-bold text-slate-800 leading-none">
             {matchesPlayed || 46}
@@ -121,14 +181,6 @@ export function AthleteProfileCard({
           </div>
         </div>
       </div>
-
-      <Link
-        href="/profile"
-        onClick={onViewProfile}
-        className="w-full py-1.5 px-3 rounded-lg border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-200 font-medium text-xs inline-flex items-center justify-center gap-1.5 hover:underline transition-all"
-      >
-        <span>{translate('viewProfile')}</span>
-      </Link>
     </div>
   );
 }

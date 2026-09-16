@@ -1760,7 +1760,7 @@ export default function HomePage() {
 
             <TournamentHeroBanner
               tournaments={activeTournaments.length > 0 ? activeTournaments : tournaments}
-              heightClass="h-[185px] sm:h-[230px] md:h-[280px] lg:h-[330px] xl:h-[380px] 2xl:h-[420px]"
+              heightClass="aspect-[2.1/1]"
             />
           </section>
 

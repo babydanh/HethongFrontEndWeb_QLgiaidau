@@ -1386,11 +1386,7 @@ export default function QuickTournamentCreate() {
                       return (
                         <div
                           key={formatId}
-                          className={`flex items-center justify-between rounded-xl border px-3 py-2 transition-none ${
-                            isSelected
-                              ? 'border-blue-600 bg-blue-50/30 text-blue-950 ring-1 ring-blue-600/20'
-                              : 'border-slate-200 bg-white text-slate-700'
-                          }`}
+                          className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 transition-none"
                         >
                           <button
                             type="button"

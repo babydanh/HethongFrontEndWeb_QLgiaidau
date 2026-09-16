@@ -109,10 +109,6 @@ function getLeaderboardFormatLabel(
   });
 }
 
-const normalizeGenderFilter = (gender: string | null | undefined): 'MALE' | 'FEMALE' => {
-  return gender?.trim().toUpperCase() === 'FEMALE' ? 'FEMALE' : 'MALE';
-};
-
 export default function LeaderboardPage() {
     const t = useTranslations("Leaderboard");
   const eloTranslate = useTranslations('EloDisplay');
@@ -143,7 +139,10 @@ export default function LeaderboardPage() {
     const [provinces, setProvinces] = useState<Region[]>([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<string>('');
     const [selectedMatchType, setSelectedMatchType] = useState<string>('SINGLES');
-    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('MALE');
+    // A player's public rank may be gender-neutral (genderRestriction = null).
+    // Keep the initial filter open so that rank is not hidden by an invented
+    // MALE/FEMALE constraint. Users can still narrow the list explicitly.
+    const [selectedGenderFilter, setSelectedGenderFilter] = useState<string>('');
 
     // ELO User Search States
     const [searchQuery, setSearchQuery] = useState("");
@@ -212,28 +211,12 @@ export default function LeaderboardPage() {
         const init = async () => {
             try {
                 const catsRes = await categoriesApi.getCategories();
-                const apiCategories = (catsRes && catsRes.data && catsRes.data.length > 0) ? catsRes.data : [];
-                
-                const FALLBACK_CATEGORIES: Category[] = [
-                  { id: 'cat-badminton', name: t('sportBadminton'), slug: 'badminton', isActive: true },
-                  { id: 'cat-table-tennis', name: t('sportTableTennis'), slug: 'table_tennis', isActive: true },
-                  { id: 'cat-pickleball', name: t('sportPickleball'), slug: 'pickleball', isActive: true },
-                  { id: 'cat-tennis', name: t('sportTennis'), slug: 'tennis', isActive: true },
-                  { id: 'cat-football', name: t('sportFootball'), slug: 'football', isActive: true },
-                ];
+                // The public category list is the source of truth. Do not
+                // re-add a category omitted by the admin, otherwise an
+                // inactive sport can appear as an available leaderboard tab.
+                const apiCategories = Array.isArray(catsRes?.data) ? catsRes.data : [];
 
-                const merged: Category[] = [...apiCategories];
-                FALLBACK_CATEGORIES.forEach(fallbackCat => {
-                  const exists = apiCategories.some(apiCat => 
-                    apiCat.slug === fallbackCat.slug || 
-                    apiCat.name.toLowerCase() === fallbackCat.name.toLowerCase()
-                  );
-                  if (!exists) {
-                    merged.push(fallbackCat);
-                  }
-                });
-
-                const activeCats = merged.filter((cat) => {
+                const activeCats = apiCategories.filter((cat) => {
                   const catKey = cat.slug || cat.id;
                   if (typeof window !== 'undefined') {
                     const localOverride = localStorage.getItem(`sport_active_${catKey}`);
@@ -257,13 +240,12 @@ export default function LeaderboardPage() {
                 if (cancelled) return;
                 setCategories(activeCats);
                 setActiveCategoryId(defaultCategory?.id ?? null);
-                const profileGender = normalizeGenderFilter(user?.gender);
                 const defaultMatchType = prominentRank?.matchType ?? 'SINGLES';
                 setSelectedMatchType(defaultMatchType);
                 setSelectedGenderFilter(
                   defaultMatchType === 'MIXED_DOUBLES'
                     ? 'MIXED'
-                    : profileGender,
+                    : prominentRank?.genderRestriction ?? '',
                 );
 
                 const res = await regionsApi.getProvinces();
@@ -450,7 +432,9 @@ export default function LeaderboardPage() {
                                     if (matchType === 'MIXED_DOUBLES') {
                                       setSelectedGenderFilter('MIXED');
                                     } else if (selectedGenderFilter === 'MIXED') {
-                                      setSelectedGenderFilter(normalizeGenderFilter(user?.gender));
+                                      // Returning to singles must not invent a gender
+                                      // constraint; generic ranks use a null restriction.
+                                      setSelectedGenderFilter('');
                                     }
                                 }}
                                 className="w-full pl-2.5 pr-7 py-1.5 border border-slate-200 rounded-lg text-xs appearance-none focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50 text-slate-800 font-bold"

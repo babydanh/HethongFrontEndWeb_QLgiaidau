@@ -1,312 +1,441 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
-  Heart,
-  MessageSquare,
-  Share2,
+  Clock,
+  MapPin,
+  Users,
   Trophy,
   Flame,
   Award,
+  UserPlus,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
   Calendar,
   Sparkles,
-  Send,
-  MoreHorizontal
+  Filter
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { getSportLogo } from '@/constants/sports';
 
-export interface SocialActivityItem {
+export type ActivityEventType =
+  | 'PICKUP_NEED_PLAYER'   // Kèo giao lưu đang thiếu người
+  | 'CLUB_RECRUITING'      // CLB tuyển thêm người sinh hoạt/giao lưu
+  | 'TOURNAMENT_OPENED'    // Giải đấu mới mở đăng ký
+  | 'TOURNAMENT_COMPLETED' // Giải đấu hoàn thành (vinh danh vô địch)
+  | 'PLAYER_RANK_UP';      // Player thăng hạng thành tích
+
+export interface ActivityFeedItem {
   id: string;
-  author: {
+  type: ActivityEventType;
+  sport: string;
+  sportTier?: string;
+  playDate: string; // VD: "2026-09-16"
+  timeSlot: 'MORNING' | 'AFTERNOON' | 'EVENING' | 'NIGHT';
+  startTime: string;
+  endTime: string;
+  location: string;
+  title: string;
+  description: string;
+  
+  // Thông tin chủ thể (Host hoặc CLB hoặc Ban tổ chức)
+  host: {
     id: string;
-    fullName: string;
+    name: string;
     avatarUrl?: string | null;
-    tierName?: string;
-    elo?: number;
-    clubName?: string;
+    isClub?: boolean;
+    clubBadge?: string;
   };
-  type: 'MATCH_RESULT' | 'RANK_UP' | 'POST' | 'TOURNAMENT_JOIN';
-  createdAt: string;
-  content: string;
-  mediaUrls?: string[];
-  matchDetails?: {
-    tournamentName?: string;
-    score: string;
-    opponentName: string;
-    isWin: boolean;
-    eloChange: number;
-    sport: string;
+
+  // Dành riêng cho Kèo thiếu người / CLB tuyển
+  slots?: {
+    current: number;
+    max: number;
+    feePerSlot: string;
+    missingText: string;
+    joinedPlayers: Array<{ name: string; avatarUrl?: string | null; initialsBg?: string }>;
   };
-  likesCount: number;
-  commentsCount: number;
-  isLiked?: boolean;
+
+  // Dành cho giải đấu
+  tournament?: {
+    id: string;
+    prize: string;
+    statusBadge: string;
+    championNames?: string;
+  };
 }
 
-const SAMPLE_ACTIVITIES: SocialActivityItem[] = [
+const MOCK_ACTIVITIES: ActivityFeedItem[] = [
   {
     id: 'act-1',
-    author: {
+    type: 'PICKUP_NEED_PLAYER',
+    sport: 'Pickleball',
+    sportTier: 'Trình độ 2.5 - 3.0',
+    playDate: '2026-09-16',
+    timeSlot: 'EVENING',
+    startTime: '19:30',
+    endTime: '21:30',
+    location: 'Sân D-Sport Q7 (Sân 3)',
+    title: 'Giao lưu Pickleball D-Sport Q7 • Đang thiếu 1 slot đánh đôi',
+    description: 'Host Minh Danh đã thuê trọn sân 2 tiếng, hiện nhóm đã có 3 bạn. Cần tìm thêm 1 bạn đánh vui vẻ cọ xát nước non, chia tiền sân nhẹ nhàng.',
+    host: {
       id: 'u-1',
-      fullName: 'Nguyễn Minh Danh',
+      name: 'Nguyễn Minh Danh',
       avatarUrl: null,
-      tierName: 'Tier 5',
-      elo: 1833,
-      clubName: 'VNDC Sport',
+      isClub: false,
     },
-    type: 'MATCH_RESULT',
-    createdAt: '15 phút trước',
-    content: 'Trận bán kết đôi nam Pickleball quá kịch tính! Cảm ơn người anh em Tuấn Hùng đã bọc lót cực kỳ xuất sắc ở set quyết định.',
-    matchDetails: {
-      tournamentName: 'Giải Pickleball Tranh Cúp Hà Anh Lần 1',
-      score: '11-9, 8-11, 11-7',
-      opponentName: 'Hải Nam / Văn Toàn',
-      isWin: true,
-      eloChange: +24,
-      sport: 'Pickleball',
+    slots: {
+      current: 3,
+      max: 4,
+      feePerSlot: '55.000đ',
+      missingText: 'Thiếu 1 người',
+      joinedPlayers: [
+        { name: 'Minh Danh', initialsBg: '#2563eb' },
+        { name: 'Tuấn Hùng', initialsBg: '#4f46e5' },
+        { name: 'Hải Nam', initialsBg: '#2563eb' },
+      ],
     },
-    likesCount: 18,
-    commentsCount: 5,
-    isLiked: true,
   },
   {
     id: 'act-2',
-    author: {
-      id: 'u-2',
-      fullName: 'Hoàng Bách',
+    type: 'CLUB_RECRUITING',
+    sport: 'Tennis',
+    sportTier: 'NTRP 3.0 - 3.5',
+    playDate: '2026-09-16',
+    timeSlot: 'EVENING',
+    startTime: '20:00',
+    endTime: '22:00',
+    location: 'CLB Quần Vợt Lan Anh, Q.10 (Sân mái che số 2)',
+    title: 'CLB Lan Anh Tennis tuyển 2 khách giao lưu sinh hoạt tối nay',
+    description: 'Buổi sinh hoạt tuần định kỳ của CLB. Hội viên chính thức đã có 6 bạn (cần 8 bạn đánh 2 sân). Mở rộng 2 slot cho anh em ngoài vào cọ xát thử chân.',
+    host: {
+      id: 'c-1',
+      name: 'CLB Lan Anh Tennis',
       avatarUrl: null,
-      tierName: 'NTRP 3.5',
-      elo: 1640,
-      clubName: 'Lan Anh Tennis',
+      isClub: true,
+      clubBadge: 'CLB Đã xác minh',
     },
-    type: 'RANK_UP',
-    createdAt: '1 giờ trước',
-    content: 'Chính thức thăng hạng NTRP 3.5 sau chuỗi 5 trận toàn thắng tuần này! Mục tiêu tiếp theo là giải Lan Anh Autumn Cup 🚀🎾',
-    likesCount: 32,
-    commentsCount: 9,
-    isLiked: false,
+    slots: {
+      current: 6,
+      max: 8,
+      feePerSlot: '80.000đ',
+      missingText: 'Thiếu 2 người',
+      joinedPlayers: [
+        { name: 'Hoàng Bách', initialsBg: '#d97706' },
+        { name: 'Thành Trung', initialsBg: '#7c3aed' },
+        { name: 'Đình Trọng', initialsBg: '#0284c7' },
+      ],
+    },
   },
   {
     id: 'act-3',
-    author: {
-      id: 'u-3',
-      fullName: 'Vũ Đức',
-      avatarUrl: null,
-      tierName: 'Hạng B',
-      elo: 1520,
-      clubName: 'Kỳ Hòa Badminton',
+    type: 'TOURNAMENT_COMPLETED',
+    sport: 'Pickleball',
+    playDate: '2026-09-16',
+    timeSlot: 'AFTERNOON',
+    startTime: '14:00',
+    endTime: '17:30',
+    location: 'Cụm Sân Hà Anh Pickleball Tuy Hòa',
+    title: 'Chung kết Giải Pickleball Tranh Cúp Hà Anh Lần 1 đã khép lại!',
+    description: 'Trận chung kết đôi nam đầy cảm xúc đã tìm ra Nhà Vô Địch với màn lội ngược dòng 11-9 ở set 3 quyết định.',
+    host: {
+      id: 'org-1',
+      name: 'Ban Tổ Chức Hà Anh Cup',
+      isClub: true,
+      clubBadge: 'Giải chính thức',
     },
-    type: 'POST',
-    createdAt: '3 giờ trước',
-    content: 'Tối nay 20:00 sân Kỳ Hòa Q10 có ai rảnh vào giao lưu đôi nam không? Bên mình có 2 người rồi, đánh vui vẻ nước non nhé!',
-    likesCount: 12,
-    commentsCount: 7,
-    isLiked: false,
+    tournament: {
+      id: 'tourn-1',
+      prize: 'Tổng thưởng 30 Triệu',
+      statusBadge: 'ĐÃ HOÀN THÀNH',
+      championNames: 'Nguyễn Minh Danh & Lê Tuấn Hùng',
+    },
+  },
+  {
+    id: 'act-4',
+    type: 'TOURNAMENT_OPENED',
+    sport: 'Cầu lông',
+    sportTier: 'Đôi Nam Nữ Mở Rộng',
+    playDate: '2026-09-17',
+    timeSlot: 'MORNING',
+    startTime: '08:00',
+    endTime: '11:30',
+    location: 'Sân Cầu Lông Kỳ Hòa Q10',
+    title: 'Giải Cầu Lông Mở Rộng Kỳ Hòa Autumn Cup chính thức mở đăng ký!',
+    description: 'Quy tụ 32 đôi phong trào tranh tài. Đã có 22/32 đôi đăng ký giữ chỗ. Cổng đăng ký sẽ đóng khi đủ 32 đôi.',
+    host: {
+      id: 'org-2',
+      name: 'CLB Cầu Lông Kỳ Hòa',
+      isClub: true,
+      clubBadge: 'Mở đăng ký',
+    },
+    tournament: {
+      id: 'tourn-2',
+      prize: '20 Triệu + Cúp',
+      statusBadge: 'CÒN 10 SUẤT',
+    },
   },
 ];
 
 export default function HomeSocialFeed() {
-  const [activities, setActivities] = useState<SocialActivityItem[]>(SAMPLE_ACTIVITIES);
-  const [newPostText, setNewPostText] = useState('');
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<'ALL' | 'MORNING' | 'AFTERNOON' | 'EVENING'>('ALL');
+  const [activities, setActivities] = useState<ActivityFeedItem[]>(MOCK_ACTIVITIES);
 
-  const handleLike = (id: string) => {
+  // Sinh 5 ngày để lọc
+  const dateTabs = useMemo(() => {
+    const today = new Date();
+    const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    return Array.from({ length: 5 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const dayOfWeek = dayNames[d.getDay()];
+      const dayMonth = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return {
+        index: i,
+        label: i === 0 ? `Hôm nay (${dayMonth})` : `${dayOfWeek} (${dayMonth})`,
+        rawDate: d.toISOString().split('T')[0],
+      };
+    });
+  }, []);
+
+  const filteredActivities = useMemo(() => {
+    return activities.filter((act) => {
+      if (selectedTimeFilter !== 'ALL' && act.timeSlot !== selectedTimeFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [activities, selectedTimeFilter]);
+
+  const handleJoinSlot = (item: ActivityFeedItem) => {
+    if (!item.slots) return;
+    if (item.slots.current >= item.slots.max) {
+      toast.error('Kèo này đã đủ người!');
+      return;
+    }
     setActivities((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const nextLiked = !item.isLiked;
+      prev.map((act) => {
+        if (act.id === item.id && act.slots) {
           return {
-            ...item,
-            isLiked: nextLiked,
-            likesCount: item.likesCount + (nextLiked ? 1 : -1),
+            ...act,
+            slots: {
+              ...act.slots,
+              current: act.slots.current + 1,
+              missingText: act.slots.max - (act.slots.current + 1) === 0 ? 'ĐÃ ĐỦ NGƯỜI' : `Thiếu ${act.slots.max - (act.slots.current + 1)} người`,
+            },
           };
         }
-        return item;
+        return act;
       })
     );
-  };
-
-  const handleCreatePost = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPostText.trim()) return;
-
-    const newPost: SocialActivityItem = {
-      id: `act-${Date.now()}`,
-      author: {
-        id: 'me',
-        fullName: 'Tôi',
-        avatarUrl: null,
-        tierName: 'Thành viên',
-        elo: 1500,
-      },
-      type: 'POST',
-      createdAt: 'Vừa xong',
-      content: newPostText.trim(),
-      likesCount: 0,
-      commentsCount: 0,
-      isLiked: false,
-    };
-
-    setActivities([newPost, ...activities]);
-    setNewPostText('');
+    toast.success(`Đã vào slot kèo: ${item.title}`);
   };
 
   return (
-    <div className="space-y-3.5 animate-in fade-in duration-200">
-      {/* 1. Quick Post Composer Box */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs">
-        <form onSubmit={handleCreatePost} className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-xs">
-              ME
-            </div>
-            <textarea
-              value={newPostText}
-              onChange={(e) => setNewPostText(e.target.value)}
-              placeholder="Chia sẻ khoảnh khắc thi đấu, kết quả trận đấu hoặc tìm người giao lưu..."
-              rows={2}
-              className="w-full text-sm text-slate-800 placeholder:text-slate-400 border-none resize-none focus:outline-none focus:ring-0 bg-transparent py-1.5"
-            />
+    <div className="space-y-3 animate-in fade-in duration-200">
+      {/* 1. THANH BỘ LỌC NGÀY (Dải ngày trên đầu Bảng Tin) */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-blue-600" />
+            <span className="text-xs font-bold text-slate-850 uppercase tracking-wider">
+              Lọc hoạt động theo ngày
+            </span>
           </div>
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
-                <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-                <span>Hoạt động Player</span>
-              </span>
-            </div>
-            <button
-              type="submit"
-              disabled={!newPostText.trim()}
-              className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Đăng tin</span>
-            </button>
-          </div>
-        </form>
+          <span className="text-xs font-semibold text-blue-650 bg-blue-50/80 px-2 py-0.5 rounded-full">
+            {filteredActivities.length} sự kiện
+          </span>
+        </div>
+
+        {/* Date Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {dateTabs.map((tab) => {
+            const isSelected = selectedDayIndex === tab.index;
+            return (
+              <button
+                key={tab.index}
+                type="button"
+                onClick={() => setSelectedDayIndex(tab.index)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-650'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Time Slot Quick Filter */}
+        <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 text-xs flex-wrap">
+          <span className="text-slate-400 font-medium text-[11px] mr-1">Khung giờ:</span>
+          {[
+            { id: 'ALL', label: 'Tất cả giờ' },
+            { id: 'MORNING', label: 'Sáng (06h - 11h)' },
+            { id: 'AFTERNOON', label: 'Chiều (13h - 17h)' },
+            { id: 'EVENING', label: 'Tối vàng (17h - 22h)' },
+          ].map((t) => {
+            const isAct = selectedTimeFilter === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setSelectedTimeFilter(t.id as unknown as typeof selectedTimeFilter)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  isAct
+                    ? 'bg-slate-900 text-white font-bold'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* 2. Feed Stream */}
+      {/* 2. DANH SÁCH THẺ TIN HOẠT ĐỘNG */}
       <div className="space-y-3">
-        {activities.map((item) => {
-          const initials = (item.author.fullName.trim().slice(0, 2) || 'MD').toUpperCase();
+        {filteredActivities.map((item) => {
+          const sportLogo = getSportLogo(item.sport);
+          const isPickup = item.type === 'PICKUP_NEED_PLAYER' || item.type === 'CLUB_RECRUITING';
+          const isFull = item.slots && item.slots.current >= item.slots.max;
+
           return (
             <motion.article
               key={item.id}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-slate-300 transition-all space-y-3"
+              className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-blue-200 transition-all space-y-3 relative group"
             >
-              {/* Header: Author + Tier + Time */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
-                    {item.author.avatarUrl ? (
-                      <img src={item.author.avatarUrl} alt={item.author.fullName} className="w-full h-full object-cover rounded-full" />
-                    ) : (
-                      initials
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-slate-900 leading-snug hover:text-blue-600 cursor-pointer">
-                        {item.author.fullName}
-                      </h4>
-                      {item.author.tierName && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100">
-                          {item.author.tierName}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-                      <span>{item.createdAt}</span>
-                      {item.author.clubName && (
-                        <>
-                          <span>•</span>
-                          <span className="font-medium text-slate-600">{item.author.clubName}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+              {/* TOP HEADER: Badge loại sự kiện + Tên môn + Tên Host / CLB */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  {/* Badge sự kiện */}
+                  {item.type === 'PICKUP_NEED_PLAYER' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-orange-700 border border-orange-200 shrink-0">
+                      <Flame className="w-3 h-3 text-orange-500" />
+                      <span>{item.slots?.missingText || 'THIẾU NGƯỜI'}</span>
+                    </span>
+                  )}
+                  {item.type === 'CLUB_RECRUITING' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                      <ShieldCheck className="w-3 h-3 text-blue-600" />
+                      <span>CLB TUYỂN GIAO LƯU</span>
+                    </span>
+                  )}
+                  {item.type === 'TOURNAMENT_COMPLETED' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                      <Trophy className="w-3 h-3 text-emerald-600" />
+                      <span>KẾT QUẢ GIẢI ĐẤU</span>
+                    </span>
+                  )}
+                  {item.type === 'TOURNAMENT_OPENED' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+                      <Sparkles className="w-3 h-3 text-purple-600" />
+                      <span>MỞ ĐĂNG KÝ GIẢI</span>
+                    </span>
+                  )}
+
+                  {/* Sport Tag */}
+                  <span className="text-xs font-semibold text-slate-500 truncate">
+                    {item.sport} {item.sportTier && `• ${item.sportTier}`}
+                  </span>
                 </div>
-                <button type="button" className="text-slate-400 hover:text-slate-600 p-1">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
+
+                {/* Host / Club Name bên phải */}
+                <div className="text-right shrink-0">
+                  <span className="text-xs font-semibold text-slate-700 block">
+                    {item.host.name}
+                  </span>
+                  {item.host.clubBadge && (
+                    <span className="text-[10px] text-slate-400 block font-normal">
+                      {item.host.clubBadge}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Content text */}
-              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                {item.content}
+              {/* TIÊU ĐỀ HOẠT ĐỘNG */}
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                {item.title}
+              </h3>
+
+              {/* NỘI DUNG MÔ TẢ CHI TIẾT */}
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                {item.description}
               </p>
 
-              {/* Match Result Banner if type is MATCH_RESULT */}
-              {item.type === 'MATCH_RESULT' && item.matchDetails && (
-                <div className="rounded-xl p-3.5 bg-gradient-to-r from-blue-50/80 to-indigo-50/50 border border-blue-100/80 flex items-center justify-between gap-3">
+              {/* CARD ĐẶC THÙ CHO GIẢI ĐẤU (NẾU CÓ) */}
+              {item.tournament && (
+                <div className="rounded-xl p-3 bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 mb-0.5">
-                      <Trophy className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{item.matchDetails.tournamentName}</span>
+                    <div className="text-xs font-bold text-slate-800 truncate">
+                      {item.tournament.championNames ? `Vô địch: ${item.tournament.championNames}` : `Giải thưởng: ${item.tournament.prize}`}
                     </div>
-                    <div className="text-xs text-slate-600 font-medium">
-                      Đối đầu: <span className="font-bold text-slate-800">{item.matchDetails.opponentName}</span>
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      Tỷ số set: <span className="font-bold text-blue-700">{item.matchDetails.score}</span>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      {item.location}
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <span className="inline-block px-2.5 py-1 rounded-lg bg-emerald-500 text-white text-xs font-extrabold shadow-2xs">
-                      +{item.matchDetails.eloChange} ELO
+                  <Link
+                    href="/tournaments"
+                    className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 shrink-0 shadow-xs inline-flex items-center gap-1"
+                  >
+                    <span>Xem giải</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+
+              {/* 3. MỐC KHUNG GIỜ THI ĐẤU & ĐỊA ĐIỂM Ở DƯỚI BẢNG TIN */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+                {/* Cụm thông tin Giờ + Sân */}
+                <div className="flex items-center gap-3 text-xs text-slate-600 font-medium flex-wrap">
+                  <div className="flex items-center gap-1.5 text-blue-700 bg-blue-50/80 px-2.5 py-1 rounded-lg">
+                    <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span className="font-bold">{item.startTime} – {item.endTime}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-slate-500">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate max-w-[220px]">{item.location}</span>
+                  </div>
+                </div>
+
+                {/* Cụm Action Slot cho kèo thiếu người */}
+                {isPickup && item.slots && (
+                  <div className="flex items-center gap-2.5 shrink-0 ml-auto">
+                    <span className="text-xs font-bold text-slate-700">
+                      {item.slots.feePerSlot}
                     </span>
+
+                    <span className="text-xs font-semibold text-slate-500">
+                      {item.slots.current}/{item.slots.max}
+                    </span>
+
+                    {isFull ? (
+                      <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-500 text-xs font-semibold">
+                        Đã đủ slot
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleJoinSlot(item)}
+                        className="px-3.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>Vào slot</span>
+                      </button>
+                    )}
                   </div>
-                </div>
-              )}
-
-              {/* Rank Up Banner */}
-              {item.type === 'RANK_UP' && (
-                <div className="rounded-xl p-3.5 bg-gradient-to-r from-amber-50 to-orange-50/60 border border-amber-200/70 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <Award className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
-                      Thăng Hạng Thành Tích
-                    </h5>
-                    <p className="text-xs text-amber-800 font-medium mt-0.5">
-                      Đạt mức xếp hạng {item.author.tierName} • ELO {item.author.elo}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Action row (Like, Comment, Share) */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs font-semibold text-slate-500">
-                <button
-                  type="button"
-                  onClick={() => handleLike(item.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                    item.isLiked ? 'text-rose-600 bg-rose-50 font-bold' : 'hover:bg-slate-100 text-slate-600'
-                  }`}
-                >
-                  <Heart className={`w-4 h-4 ${item.isLiked ? 'fill-rose-600' : ''}`} />
-                  <span>{item.likesCount} Thích</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>{item.commentsCount} Bình luận</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span>Chia sẻ</span>
-                </button>
+                )}
               </div>
             </motion.article>
           );

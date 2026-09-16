@@ -67,6 +67,7 @@ export function AthleteProfileCard({
   credibility,
   tierName,
   categoryName,
+  isLoading,
   onViewProfile,
 }: {
   user?: { fullName?: string | null; avatarUrl?: string | null } | null;
@@ -76,9 +77,48 @@ export function AthleteProfileCard({
   credibility?: number;
   tierName?: string | null;
   categoryName?: string | null;
+  isLoading?: boolean;
   onViewProfile?: (e?: React.MouseEvent | React.KeyboardEvent) => void;
 }) {
   const translate = useTranslations('Home');
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden text-center p-4 animate-pulse">
+        {/* Avatar skeleton */}
+        <div className="w-14 h-14 rounded-full bg-slate-200 mx-auto mb-2" />
+        {/* User name skeleton */}
+        <div className="h-4 bg-slate-200 rounded w-28 mx-auto mb-2" />
+        {/* Elo & Tier skeleton */}
+        <div className="h-3 bg-slate-200 rounded w-36 mx-auto mb-3" />
+        {/* Progress bar skeleton */}
+        <div className="mt-2.5 mb-1 px-1">
+          <div className="flex justify-between mb-1">
+            <div className="h-2.5 bg-slate-200 rounded w-6" />
+            <div className="h-2.5 bg-slate-200 rounded w-12" />
+          </div>
+          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-slate-200 rounded-full w-1/3" />
+          </div>
+        </div>
+        {/* Stats row skeleton */}
+        <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-slate-100 mt-3">
+          <div className="flex flex-col items-center">
+            <div className="h-3.5 bg-slate-200 rounded w-8 mb-1" />
+            <div className="h-2 bg-slate-200 rounded w-10" />
+          </div>
+          <div className="border-x border-slate-100 flex flex-col items-center">
+            <div className="h-3.5 bg-slate-200 rounded w-8 mb-1" />
+            <div className="h-2 bg-slate-200 rounded w-10" />
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="h-3.5 bg-slate-200 rounded w-8 mb-1" />
+            <div className="h-2 bg-slate-200 rounded w-10" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const rankColor = getRankBorderColor(elo, tierName, matchesPlayed, categoryName);
   const progress = getRankProgressInfo(elo, categoryName);
@@ -127,13 +167,13 @@ export function AthleteProfileCard({
         </div>
 
         <h3 className="text-slate-900 font-bold text-sm tracking-tight truncate max-w-full group-hover:text-blue-600 transition-colors">
-          {user?.fullName || 'Nguyễn Minh Danh'}
+          {user?.fullName || translate('user')}
         </h3>
 
         {/* ELO & Rank text colored without badge background */}
         <div className="flex items-center justify-center gap-1.5 mt-1 flex-wrap">
           <span className="text-xs font-bold" style={{ color: rankColor }}>
-            ELO {elo || 1511}
+            ELO {elo || (matchesPlayed > 0 ? 1000 : 0)}
           </span>
           <span className="text-slate-300 text-xs">•</span>
           <span className="text-xs font-semibold" style={{ color: rankColor }}>
@@ -164,7 +204,7 @@ export function AthleteProfileCard({
       <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-slate-100 mt-3">
         <div>
           <div className="text-sm font-bold text-slate-800 leading-none">
-            {matchesPlayed || 46}
+            {matchesPlayed}
           </div>
           <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
             {translate('matchLabel')}
@@ -172,7 +212,7 @@ export function AthleteProfileCard({
         </div>
         <div className="border-x border-slate-100">
           <div className="text-sm font-bold text-blue-600 leading-none">
-            {winRate || 68}%
+            {winRate}%
           </div>
           <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
             {translate('wins')}
@@ -180,7 +220,7 @@ export function AthleteProfileCard({
         </div>
         <div>
           <div className="text-sm font-bold text-emerald-600 leading-none">
-            {credibility || 98}%
+            {credibility ?? 100}%
           </div>
           <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
             {translate('credibility')}

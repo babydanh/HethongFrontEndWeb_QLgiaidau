@@ -1790,12 +1790,13 @@ export default function HomePage() {
           {/* Athlete Profile Card */}
           <AthleteProfileCard
             user={user}
-            elo={activeElo || 1511}
-            matchesPlayed={matchesPlayed || 46}
-            winRate={winRate || 68}
-            credibility={98}
+            elo={activeElo}
+            matchesPlayed={matchesPlayed}
+            winRate={winRate}
+            credibility={matchesPlayed > 0 ? 100 : 100}
             tierName={displayTier}
             categoryName={sportName}
+            isLoading={isLoading || (isAuthenticated && userRankings === null)}
             onViewProfile={(e) => {
               if (!user?.id) return;
               const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;

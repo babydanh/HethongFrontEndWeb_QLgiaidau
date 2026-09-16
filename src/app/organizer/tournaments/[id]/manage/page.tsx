@@ -1738,18 +1738,18 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                       type="button"
                       onClick={() => handleManageNavigation(tab.id)}
                       title={tab.title || tab.label}
-                      className={`px-3 py-2.5 sm:px-4 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
+                      className={`px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
                         isActive
-                          ? 'border-blue-600 text-blue-600'
-                          : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                          ? 'border-blue-600 text-blue-600 font-black'
+                          : 'border-transparent text-slate-800 font-bold hover:text-black hover:border-slate-400'
                       }`}
                     >
-                      <TabIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                      <TabIcon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-600'}`} />
                       {tab.label ? <span>{tab.label}</span> : null}
                       {tab.badge != null && (
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                            isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                            isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
                           }`}
                         >
                           {tab.badge}
@@ -1800,7 +1800,9 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                           <div
                             key={div.id}
                             id={`manage-division-accordion-${div.id}`}
-                            className="transition-colors hover:bg-slate-100/60 group scroll-mt-28"
+                            className={`transition-colors group scroll-mt-28 ${
+                              isActive ? 'border-l-4 border-l-blue-600 bg-white' : 'hover:bg-slate-100/60'
+                            }`}
                           >
                             <div className="flex items-center justify-between">
                               <button
@@ -1819,35 +1821,35 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                                     });
                                   }
                                 }}
-                                className={`flex min-h-[44px] flex-1 items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 cursor-pointer ${
+                                className={`flex min-h-[44px] flex-1 items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 cursor-pointer bg-white ${
                                   isActive
-                                    ? 'bg-blue-50/80 text-blue-950 font-bold'
-                                    : 'text-slate-700'
+                                    ? 'text-slate-950 font-bold'
+                                    : 'text-slate-800 hover:text-black'
                                 }`}
                               >
                                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
                                   isActive
                                     ? 'bg-blue-600 text-white shadow-2xs'
-                                    : 'bg-white text-slate-500 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-200'
+                                    : 'bg-white text-slate-600 border border-slate-200/80 group-hover:text-blue-600 group-hover:border-blue-300'
                                 }`}>
                                   <BracketIcon className="h-4 w-4" aria-hidden="true" />
                                 </span>
 
                                 <div className="min-w-0 flex-1">
-                                  <span className="block truncate text-xs sm:text-sm font-bold">
+                                  <span className="block truncate text-xs sm:text-sm font-bold text-slate-900">
                                     {getDisplayDivisionName(div)}
                                   </span>
                                 </div>
 
                                 {divTotal > 0 && (
-                                  <span className="inline-flex shrink-0 items-center text-[10px] font-semibold text-slate-500 mr-1">
+                                  <span className="inline-flex shrink-0 items-center text-[10px] font-semibold text-slate-600 mr-1">
                                     {divCompleted}/{divTotal} trận
                                   </span>
                                 )}
 
                                 <span
                                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-colors ${
-                                    isActive ? 'bg-white text-blue-700 shadow-2xs' : 'bg-white/80 text-slate-600 border border-slate-200/60'
+                                    isActive ? 'bg-slate-100 text-blue-700 shadow-2xs border border-blue-200' : 'bg-white text-slate-700 border border-slate-200'
                                   }`}
                                 >
                                   <Users className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1855,7 +1857,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                                 </span>
 
                                 <ChevronDown
-                                  className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+                                  className={`w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ${
                                     isActive ? 'rotate-180 text-blue-600' : ''
                                   }`}
                                 />

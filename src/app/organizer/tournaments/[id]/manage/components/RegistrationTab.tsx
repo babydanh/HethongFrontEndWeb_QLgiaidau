@@ -613,7 +613,7 @@ export function RegistrationTab({
                                 <div key={member.userId} className="flex items-center gap-2">
                                   <RegistrationProfileAvatar name={memberName} avatarUrl={member.avatarUrl} />
                                   <div className="min-w-0">
-                                    <p className="truncate text-xs font-bold text-slate-700">
+                                    <p className="truncate text-xs font-bold text-slate-900">
                                       {memberName}
                                       {member.role === 'RESERVE' && (
                                         <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">

@@ -46,7 +46,6 @@ import {
   Volume2,
   X,
   Zap,
-  ZoomIn,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
@@ -3729,9 +3728,9 @@ export function CourtScheduleBoard({
       )}
 
       {/* EXCEL HOME RIBBON TOOLBAR (Microsoft Excel / Google Sheets Inspired) */}
-      <div className="relative z-50 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-xs overflow-visible">
+      <div className="relative z-50 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/90 bg-white/95 px-2.5 py-1.5 shadow-xs backdrop-blur-xs overflow-visible">
         {/* Left: Functional Groups */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 flex-wrap">
           {/* GROUP 0: NGÀY THI ĐẤU (Interactive Date Picker & Popover) */}
           <div className="relative z-[100] flex items-center gap-1 bg-slate-50/80 p-0.5 rounded-lg border border-slate-200/80">
             <button
@@ -4110,56 +4109,30 @@ export function CourtScheduleBoard({
         </div>
 
         {/* Right: Court Scrolling + Export, Print, Layout, Zoom, Fullscreen & Reset */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex shrink-0 items-center gap-1">
           {/* Quick Court Scroll Navigation Buttons (◀ Sân trước | Sân sau ▶) */}
           {courts.length > 1 && (
-            <div className="flex items-center gap-0.5 bg-blue-50/80 border border-blue-200 rounded-lg p-0.5 shadow-2xs">
+            <div className="flex items-center gap-0.5 rounded-lg border border-blue-200 bg-blue-50/80 p-0.5 shadow-2xs">
               <button
                 type="button"
                 onClick={() => handleScrollCourts('left')}
-                className="h-6 px-2 rounded text-[11px] font-black text-blue-800 hover:bg-blue-600 hover:text-white flex items-center gap-1 transition-all cursor-pointer"
+                aria-label="Cuộn sang các sân trước"
+                className="flex h-7 w-7 items-center justify-center rounded text-blue-800 transition-all hover:bg-blue-600 hover:text-white cursor-pointer"
                 title="Cuộn ngang sang các sân trước (bên trái)"
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span>Sân trước</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleScrollCourts('right')}
-                className="h-6 px-2 rounded text-[11px] font-black text-blue-800 hover:bg-blue-600 hover:text-white flex items-center gap-1 transition-all cursor-pointer"
+                aria-label="Cuộn sang các sân sau"
+                className="flex h-7 w-7 items-center justify-center rounded text-blue-800 transition-all hover:bg-blue-600 hover:text-white cursor-pointer"
                 title="Cuộn ngang sang các sân sau (bên phải)"
               >
-                <span>Sân sau</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           )}
-
-          {/* Export to Excel */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleExportExcel}
-            disabled={scheduledMatches.length === 0}
-            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
-            title="Xuất lịch thi đấu theo sân ra file Excel (.CSV UTF-8)"
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-            <span className="text-[11px] hidden sm:inline">Xuất Excel</span>
-          </Button>
-
-          {/* Print Schedule */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePrintSchedule}
-            disabled={scheduledMatches.length === 0}
-            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
-            title="In lịch thi đấu ra giấy hoặc lưu PDF"
-          >
-            <Printer className="h-3.5 w-3.5 text-slate-600" />
-            <span className="text-[11px] hidden sm:inline">In lịch</span>
-          </Button>
 
           {/* Fullscreen Toggle */}
           <Button
@@ -4172,49 +4145,68 @@ export function CourtScheduleBoard({
             title={isLocalFullscreen ? 'Thoát toàn màn hình (Esc)' : 'Mở toàn màn hình để dễ xếp lịch'}
           >
             {isLocalFullscreen ? <Minimize2 className="h-3.5 w-3.5 text-blue-600" /> : <Maximize2 className="h-3.5 w-3.5 text-slate-600" />}
-            <span className="text-[11px] hidden sm:inline">{isLocalFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
+            <span className="hidden text-[11px] xl:inline">{isLocalFullscreen ? 'Thu nhỏ' : 'Toàn màn hình'}</span>
           </Button>
 
-          {/* Zoom Level Selector */}
-          <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-bold text-slate-700">
-            <span className="px-1.5 text-[10px] text-slate-400">Thu phóng:</span>
-            {[0.8, 1.0, 1.25, 1.5].map((z) => (
+          <details className="relative">
+            <summary className="flex h-7 cursor-pointer list-none items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 [&::-webkit-details-marker]:hidden" aria-label="Mở thêm công cụ lịch">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="hidden xl:inline">Thêm</span>
+            </summary>
+            <div className="absolute right-0 top-full z-[110] mt-1 grid w-44 gap-1 rounded-xl border border-slate-200 bg-white p-1.5 text-xs shadow-2xl">
               <button
-                key={z}
                 type="button"
-                onClick={() => setZoomLevel(z)}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                  zoomLevel === z ? 'bg-white text-blue-700 shadow-2xs border border-slate-200' : 'hover:text-slate-900'
-                }`}
+                onClick={handleExportExcel}
+                disabled={scheduledMatches.length === 0}
+                className="flex h-8 items-center gap-2 rounded-lg px-2 text-left font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Xuất lịch thi đấu theo sân ra file Excel"
               >
-                {Math.round(z * 100)}%
+                <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                Xuất Excel
               </button>
-            ))}
-          </div>
-
-          {/* Reset Rows Evenly */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleResetAllRowsEvenly}
-            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg flex items-center gap-1 cursor-pointer"
-            title="Đặt lại tất cả các mốc giờ về kích thước đều nhau"
-          >
-            <RotateCcw className="h-3 w-3" />
-            <span className="text-[11px]">Canh đều</span>
-          </Button>
-
-          {/* Clear All Schedule */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClearAllSchedule}
-            disabled={scheduledMatches.length === 0}
-            className="h-7 px-2 text-xs font-semibold border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg cursor-pointer"
-            title="Xóa toàn bộ lịch thi đấu"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+              <button
+                type="button"
+                onClick={handlePrintSchedule}
+                disabled={scheduledMatches.length === 0}
+                className="flex h-8 items-center gap-2 rounded-lg px-2 text-left font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                title="In lịch thi đấu ra giấy hoặc lưu PDF"
+              >
+                <Printer className="h-3.5 w-3.5 text-slate-600" />
+                In lịch
+              </button>
+              <div className="my-0.5 h-px bg-slate-100" />
+              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1.5">
+                <span className="font-semibold text-slate-500">Thu phóng</span>
+                <select
+                  aria-label="Mức thu phóng"
+                  value={zoomLevel}
+                  onChange={(event) => setZoomLevel(Number(event.target.value))}
+                  className="h-7 rounded border border-slate-200 bg-white px-1 text-[11px] font-bold text-slate-700 outline-hidden"
+                >
+                  {[0.8, 1.0, 1.25, 1.5].map((z) => <option key={z} value={z}>{Math.round(z * 100)}%</option>)}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={handleResetAllRowsEvenly}
+                className="flex h-8 items-center gap-2 rounded-lg px-2 text-left font-semibold text-slate-700 hover:bg-slate-50"
+                title="Đặt lại tất cả các mốc giờ về kích thước đều nhau"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Canh đều
+              </button>
+              <button
+                type="button"
+                onClick={handleClearAllSchedule}
+                disabled={scheduledMatches.length === 0}
+                className="flex h-8 items-center gap-2 rounded-lg px-2 text-left font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Xóa toàn bộ lịch thi đấu"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Xóa lịch
+              </button>
+            </div>
+          </details>
         </div>
       </div>
 

@@ -36,6 +36,11 @@ export interface SocialPickupItem {
   hostAvatar?: string | null;
   matchType?: string; // 'Đôi Nam Nữ' | 'Đôi Nam' | 'Đơn'
   description?: string;
+  isClubHosted?: boolean;
+  clubName?: string;
+  clubLogoUrl?: string | null;
+  isRanked?: boolean;
+  distance?: string;
   players: Array<{
     id: string;
     fullName: string;
@@ -557,91 +562,76 @@ export function SocialPickupRow({
   item: SocialPickupItem;
   onJoin?: (item: SocialPickupItem) => void;
 }) {
-  const translate = useTranslations('Home');
   const [joined, setJoined] = useState(false);
   const remaining = Math.max(0, item.maxSlots - (item.currentSlots + (joined ? 1 : 0)));
-  const sportIcon = getSportLogo(item.sport);
+
+  // Display Name: Club Name if Club Hosted, else Host Name
+  const entityName = item.isClubHosted
+    ? (item.clubName || 'Hà Anh Club')
+    : (item.hostName || 'Chủ kèo');
+  const entityAvatar = item.isClubHosted ? item.clubLogoUrl : item.hostAvatar;
+  const entityInitial = (entityName.trim().slice(0, 2) || 'CL').toUpperCase();
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-2xs hover:border-blue-200/80 hover:shadow-xs transition-all flex flex-col gap-3 group">
-      {/* Top Row: Sport Icon + Badges & Slots Badge */}
-      <div className="flex items-start justify-between gap-2.5">
+    <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:border-blue-200 hover:shadow-xs transition-all flex flex-col gap-3 group">
+      {/* 1. TOP ROW: Club / Host Avatar + Name (Left) & Sport/Distance Icon (Right) */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Left: Round Blue Avatar + Name */}
         <div className="flex items-center gap-2.5 min-w-0">
-          {/* Sport Icon Circle */}
-          <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200/70 flex items-center justify-center shrink-0 shadow-2xs p-1">
-            {sportIcon ? (
-              <img src={sportIcon} alt={item.sport} className="w-5 h-5 object-contain" />
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+            {entityAvatar ? (
+              <img src={entityAvatar} alt={entityName} className="w-full h-full object-cover" />
             ) : (
-              <Trophy className="w-4 h-4 text-blue-600" />
+              <span>{entityInitial}</span>
             )}
           </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-100">
-              {item.sport}
-            </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
-              {item.sportTier}
-            </span>
-            {item.matchType && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                {item.matchType}
-              </span>
-            )}
-          </div>
+          <span className="font-bold text-sm text-slate-900 truncate">
+            {entityName}
+          </span>
         </div>
 
-        {/* Slot status pill */}
-        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 border ${
-          remaining === 0
-            ? 'bg-slate-100 text-slate-500 border-slate-200'
-            : remaining === 1
-            ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse'
-            : 'bg-amber-50 text-amber-800 border-amber-200'
-        }`}>
-          {item.urgentText || (remaining === 0 ? 'Đã đủ người' : `Còn ${remaining} slot`)}
-        </span>
+        {/* Right: Racket Icon + Distance Pill / Badge */}
+        <div className="flex flex-col items-center justify-center bg-slate-50/80 hover:bg-slate-100/80 border border-slate-100 rounded-xl px-2.5 py-1 text-slate-600 shrink-0 transition-colors">
+          <Trophy className="w-3.5 h-3.5 text-blue-600 mb-0.5" />
+          <span className="text-[10px] font-medium text-slate-500 leading-tight">
+            {item.distance || '1.2 km'}
+          </span>
+        </div>
       </div>
 
-      {/* Main Info: Title / Time & Venue */}
-      <div>
-        {item.title && (
-          <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 mb-1.5">
-            {item.title}
-          </h4>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+      {/* 2. MIDDLE ROW: Title & Match Metadata (Clock & Venue) */}
+      <div className="flex flex-col gap-1">
+        <h4 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+          {item.title || 'Giao lưu Pickleball D-Sport Q7'}
+        </h4>
+        <div className="flex items-center gap-4 text-xs text-slate-500 font-medium flex-wrap mt-0.5">
+          <div className="flex items-center gap-1.5 text-slate-600">
+            <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
             <span>{item.timeRange}</span>
           </div>
           <div className="flex items-center gap-1.5 text-slate-600 truncate">
-            <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span className="truncate" title={item.courtLocation}>{item.courtLocation}</span>
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">{item.courtLocation}</span>
           </div>
         </div>
       </div>
 
-      {/* Bottom Row: Players Joined + Price + Action Button */}
-      <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 gap-3">
-        {/* Players List with Avatars & Slot Indicator */}
+      {/* 3. BOTTOM ROW: Members Stack + Slot Text (Left) & Price + Action Icon Button (Right) */}
+      <div className="flex items-center justify-between pt-1 gap-3">
+        {/* Left: Avatar group + X/Y người */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center -space-x-1.5 shrink-0">
             {item.players.map((p, idx) => (
               <div
                 key={p.id || idx}
-                className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center text-[10px] font-bold text-slate-700"
-                style={{ backgroundColor: p.initialsBg || '#e2e8f0' }}
+                className="w-7 h-7 rounded-full border-2 border-white bg-blue-600 text-white overflow-hidden shrink-0 shadow-2xs flex items-center justify-center text-[10px] font-bold"
+                style={{ backgroundColor: p.initialsBg || (idx % 2 === 0 ? '#2563eb' : '#4f46e5') }}
                 title={p.fullName}
               >
                 {p.avatarUrl ? (
-                  <img
-                    src={p.avatarUrl}
-                    alt={p.fullName}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={p.avatarUrl} alt={p.fullName} className="w-full h-full object-cover" />
                 ) : (
-                  (p.fullName.trim().charAt(0) || 'P').toUpperCase()
+                  (p.fullName.trim().slice(0, 2) || 'MD').toUpperCase()
                 )}
               </div>
             ))}
@@ -651,27 +641,20 @@ export function SocialPickupRow({
               </div>
             )}
           </div>
-          <div className="text-[11px] text-slate-500 min-w-0">
-            <span className="font-semibold text-slate-700">{item.currentSlots + (joined ? 1 : 0)}</span>/{item.maxSlots} người
-            {item.hostName && (
-              <span className="hidden sm:inline text-slate-400 ml-1.5">• Chủ kèo: <strong className="text-slate-600 font-medium">{item.hostName}</strong></span>
-            )}
-          </div>
+          <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+            {item.currentSlots + (joined ? 1 : 0)}/{item.maxSlots} người
+          </span>
         </div>
 
-        {/* Price & Action */}
+        {/* Right: Big Price & Blue Action Button */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right">
-            <div className="font-extrabold text-blue-600 text-sm leading-none">
-              {item.feePerSlot}
-            </div>
-            <span className="text-[10px] text-slate-400 font-medium">/ người</span>
-          </div>
+          <span className="text-base sm:text-lg font-bold text-blue-600 tracking-tight">
+            {item.feePerSlot.endsWith('đ') ? item.feePerSlot : `${item.feePerSlot.replace(/k$/i, '.000')}đ`}
+          </span>
 
           {joined ? (
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-              <Check className="w-3.5 h-3.5" />
-              <span>Đã vào kèo</span>
+            <span className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0">
+              <Check className="w-4 h-4" />
             </span>
           ) : (
             <button
@@ -680,10 +663,11 @@ export function SocialPickupRow({
                 onJoin?.(item);
               }}
               type="button"
-              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs hover:shadow transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+              className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white flex items-center justify-center shadow-xs hover:shadow transition-all cursor-pointer shrink-0"
+              title="Vào slot"
+              aria-label="Vào slot"
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>{translate('joinSlot')}</span>
+              <UserPlus className="w-4 h-4" />
             </button>
           )}
         </div>

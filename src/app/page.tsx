@@ -495,37 +495,43 @@ export default function HomePage() {
   const pickupMatches: SocialPickupItem[] = useMemo(() => [
     {
       id: 'pickup-1',
-      title: 'Kèo giao lưu buổi tối D-Sport Q7 • Đánh đôi',
+      title: 'Giao lưu Pickleball D–Sport Q7',
       sport: 'PICKLEBALL',
       sportColorBg: 'bg-blue-50',
       sportColorText: 'text-blue-700',
       sportTier: 'Hạng B / B+',
       matchType: 'Đôi Nam Nữ',
-      hostName: 'Minh Quân',
-      courtLocation: 'D-Sport Q7 (Sân 3), TP.HCM',
-      timeRange: '19:30 - 21:30',
-      feePerSlot: '55k',
+      isClubHosted: true,
+      clubName: 'Hà Anh Club',
+      isRanked: true,
+      distance: '1.2 km',
+      hostName: 'Hà Anh',
+      courtLocation: 'Sân D–Sport Q7',
+      timeRange: '19:30 – 21:30',
+      feePerSlot: '55.000đ',
       maxSlots: 4,
       currentSlots: 3,
       urgentText: 'Còn 1 slot',
       players: [
-        { id: 'u1', fullName: 'Minh Quân', initialsBg: '#2563eb' },
-        { id: 'u2', fullName: 'Tuấn Long', initialsBg: '#4f46e5' },
-        { id: 'u3', fullName: 'Hải Nam', initialsBg: '#0f172a' },
+        { id: 'u1', fullName: 'Minh Danh', initialsBg: '#2563eb' },
+        { id: 'u2', fullName: 'Tuấn Hùng', initialsBg: '#4f46e5' },
+        { id: 'u3', fullName: 'Hải Nam', initialsBg: '#2563eb' },
       ],
     },
     {
       id: 'pickup-2',
-      title: 'Đánh đôi phong trào Kỳ Hòa • Bao cầu xịn',
+      title: 'Đánh đôi phong trào Kỳ Hòa • Kèo tự do',
       sport: 'CẦU LÔNG',
       sportColorBg: 'bg-emerald-50',
       sportColorText: 'text-emerald-700',
       sportTier: 'Hạng C+ / B',
       matchType: 'Đôi Nam',
+      isClubHosted: false,
+      distance: '3.5 km',
       hostName: 'Vũ Đức',
       courtLocation: 'Sân Kỳ Hòa (Sân 5), Q.10',
-      timeRange: '20:00 - 22:00',
-      feePerSlot: '45k',
+      timeRange: '20:00 – 22:00',
+      feePerSlot: '45.000đ',
       maxSlots: 4,
       currentSlots: 2,
       urgentText: 'Còn 2 slot',
@@ -536,12 +542,15 @@ export default function HomePage() {
     },
     {
       id: 'pickup-3',
-      title: 'Giao lưu cuối tuần NTRP 3.0 - 3.5 • Sân mái che',
+      title: 'Giao lưu cuối tuần CLB Lan Anh NTRP 3.0 - 3.5 • Sân mái che',
       sport: 'TENNIS',
       sportColorBg: 'bg-amber-50',
       sportColorText: 'text-amber-700',
       sportTier: 'NTRP 3.0 - 3.5',
       matchType: 'Đôi',
+      isClubHosted: true,
+      clubName: 'Lan Anh Tennis',
+      isRanked: true,
       hostName: 'Hoàng Bách',
       courtLocation: 'CLB Quần Vợt Lan Anh, Q.10',
       timeRange: '18:00 - 20:00',
@@ -553,6 +562,26 @@ export default function HomePage() {
         { id: 'u6', fullName: 'Hoàng Bách', initialsBg: '#d97706' },
         { id: 'u7', fullName: 'Thành Trung', initialsBg: '#7c3aed' },
         { id: 'u8', fullName: 'Đình Trọng', initialsBg: '#0284c7' },
+      ],
+    },
+    {
+      id: 'pickup-4',
+      title: 'Tìm 1 bạn đánh đơn rèn thể lực • Tự do giao lưu',
+      sport: 'PICKLEBALL',
+      sportColorBg: 'bg-blue-50',
+      sportColorText: 'text-blue-700',
+      sportTier: 'Người mới / 2.5',
+      matchType: 'Đơn',
+      isClubHosted: false,
+      hostName: 'Thanh Tùng',
+      courtLocation: 'Sân VietPickle Tân Bình, TP.HCM',
+      timeRange: '17:00 - 18:30',
+      feePerSlot: '40k',
+      maxSlots: 2,
+      currentSlots: 1,
+      urgentText: 'Còn 1 slot',
+      players: [
+        { id: 'u9', fullName: 'Thanh Tùng', initialsBg: '#0284c7' },
       ],
     },
   ], []);
@@ -1807,12 +1836,6 @@ export default function HomePage() {
                 rect,
               );
             }}
-          />
-
-          {/* Match Filters */}
-          <SocialMatchFilters
-            activeFilter={activeFilterId}
-            onSelectFilter={setActiveFilterId}
           />
 
           {/* My Clubs */}

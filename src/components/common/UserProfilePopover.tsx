@@ -316,24 +316,30 @@ export default function UserProfilePopover({
   // True while getPublicProfile() hasn't resolved for the current user yet
   const isLoadingDetails = !fetchedDetails || fetchedDetails.id !== user?.id;
 
-  // Calculate Popover Position
+  // Calculate Popover Position using fixed viewport coordinates
   const popoverWidth = 340;
-  const popoverHeight = isEditingTags ? 380 : 310;
-  const scrollY = window.scrollY || document.documentElement.scrollTop;
-  const scrollX = window.scrollX || document.documentElement.scrollLeft;
+  const popoverHeight = isEditingTags ? 380 : 340;
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 
-  let top = anchorRect.bottom + scrollY + 8;
-  let left = anchorRect.left + scrollX;
-
-  if (left + popoverWidth > window.innerWidth - 16) {
-    left = window.innerWidth - popoverWidth - 16;
+  // Horizontal clamping
+  let left = anchorRect.left;
+  if (left + popoverWidth > viewportWidth - 16) {
+    left = viewportWidth - popoverWidth - 16;
   }
   if (left < 16) {
     left = 16;
   }
 
-  if (anchorRect.bottom + popoverHeight > window.innerHeight && anchorRect.top > popoverHeight) {
-    top = anchorRect.top + scrollY - popoverHeight - 8;
+  // Vertical placement: Prefer below anchorRect, flip above if overflowing bottom, clamp to viewport
+  let top = anchorRect.bottom + 8;
+  if (anchorRect.bottom + popoverHeight > viewportHeight - 16 && anchorRect.top > popoverHeight + 16) {
+    top = anchorRect.top - popoverHeight - 8;
+  } else if (top + popoverHeight > viewportHeight - 16) {
+    top = Math.max(16, viewportHeight - popoverHeight - 16);
+  }
+  if (top < 16) {
+    top = 16;
   }
 
   // Permissions to manage tags in this community
@@ -520,7 +526,7 @@ export default function UserProfilePopover({
     return (
       <div
         ref={popoverRef}
-        style={{ top: `${top}px`, left: `${left}px`, position: "absolute" }}
+        style={{ top: `${top}px`, left: `${left}px`, position: "fixed" }}
         className="z-[99999] w-[340px] animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
@@ -544,7 +550,7 @@ export default function UserProfilePopover({
       style={{
         top: `${top}px`,
         left: `${left}px`,
-        position: "absolute",
+        position: "fixed",
       }}
       className="z-[99999] w-[340px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-slate-800"
       onClick={(e) => e.stopPropagation()}
@@ -767,7 +773,7 @@ export default function UserProfilePopover({
                 const visibleRanks = distinctRanks.slice(0, maxVisible);
                 const hiddenRanks = distinctRanks.slice(maxVisible);
                 const remainingCount = hiddenRanks.length;
-                const hiddenTooltip = hiddenRanks.map(r => `${r.categoryName}: ${r.eloPoints} ELO (${r.tierName || '--'})`).join('\n');
+                const hiddenTooltip = `${hiddenRanks.map(r => `${r.categoryName}: ${r.eloPoints} ELO (${r.tierName || '--'})`).join('\n')}\n(Bấm để xem thêm trong hồ sơ)`;
 
                 return (
                   <div className="flex items-center flex-wrap gap-1.5">
@@ -782,12 +788,20 @@ export default function UserProfilePopover({
                     ))}
 
                     {remainingCount > 0 && (
-                      <span
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClose();
+                          if (profileData.id) {
+                            router.push(`/users/${profileData.id}`);
+                          }
+                        }}
                         title={hiddenTooltip}
-                        className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 cursor-help hover:bg-slate-200 transition-colors"
+                        className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-colors active:scale-95"
                       >
-                        +{remainingCount}
-                      </span>
+                        +{remainingCount} xem thêm
+                      </button>
                     )}
                   </div>
                 );

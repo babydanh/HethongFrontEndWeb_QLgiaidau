@@ -1764,13 +1764,17 @@ export default function HomePage() {
             credibility={98}
             tierName={displayTier}
             categoryName={sportName}
-            onViewProfile={() => {
+            onViewProfile={(e) => {
               if (!user?.id) return;
-              openUserProfile({
-                id: user.id,
-                fullName: user.fullName || translate('user'),
-                avatarUrl: user.avatarUrl,
-              });
+              const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;
+              openUserProfile(
+                {
+                  id: user.id,
+                  fullName: user.fullName || translate('user'),
+                  avatarUrl: user.avatarUrl,
+                },
+                rect,
+              );
             }}
           />
 

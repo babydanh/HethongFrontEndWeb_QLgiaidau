@@ -64,7 +64,7 @@ export function AthleteProfileCard({
   credibility?: number;
   tierName?: string | null;
   categoryName?: string | null;
-  onViewProfile?: () => void;
+  onViewProfile?: (e?: React.MouseEvent | React.KeyboardEvent) => void;
 }) {
   const translate = useTranslations('Home');
 
@@ -78,11 +78,11 @@ export function AthleteProfileCard({
       <div
         role="button"
         tabIndex={0}
-        onClick={onViewProfile}
+        onClick={(e) => onViewProfile?.(e)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onViewProfile?.();
+            onViewProfile?.(e);
           }
         }}
         className="cursor-pointer group flex flex-col items-center focus:outline-hidden"
@@ -356,12 +356,12 @@ export function SocialMyClubsCard({
                 href={club.id ? `/communities/${club.id}` : '/communities'}
                 className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all group"
               >
-                <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden relative">
+                <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden relative">
                   {club.logoUrl ? (
                     <img
                       src={club.logoUrl}
                       alt={club.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
                     <span>{initials}</span>

@@ -319,6 +319,10 @@ export function ScheduleTab({
         isOpen={Boolean(activeCourtsModalVenue)}
         onClose={() => setSelectedVenueForCourts(null)}
         venue={activeCourtsModalVenue}
+        venues={displayVenues}
+        onSelectVenue={(v) => setSelectedVenueForCourts(v)}
+        onRequestCreateVenue={() => setIsCreateVenueOpen(true)}
+        onRequestEditVenue={(v) => setSelectedVenueForEdit(v)}
         onAddCourt={async (venueId, name) => {
           if (handleAddVenueCourtDirect) {
             await handleAddVenueCourtDirect(venueId, name);

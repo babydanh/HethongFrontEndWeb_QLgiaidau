@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layers, MapPin, Plus, Sparkles, Trash2, X } from 'lucide-react';
+import { Layers, MapPin, Plus, Sparkles, Trash2, X, Pencil, Star } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TournamentVenueWithCourts } from '@/features/tournaments/api';
@@ -10,6 +10,10 @@ interface VenueCourtsModalProps {
   isOpen: boolean;
   onClose: () => void;
   venue: TournamentVenueWithCourts | null;
+  venues?: TournamentVenueWithCourts[];
+  onSelectVenue?: (venue: TournamentVenueWithCourts) => void;
+  onRequestCreateVenue?: () => void;
+  onRequestEditVenue?: (venue: TournamentVenueWithCourts) => void;
   onAddCourt: (venueId: string, courtName: string) => Promise<void>;
   onBatchAddCourts: (venueId: string, count: number, prefix?: string) => Promise<void>;
   onRemoveCourt: (venueId: string, courtId: string) => Promise<void>;
@@ -20,6 +24,10 @@ export function VenueCourtsModal({
   isOpen,
   onClose,
   venue,
+  venues = [],
+  onSelectVenue,
+  onRequestCreateVenue,
+  onRequestEditVenue,
   onAddCourt,
   onBatchAddCourts,
   onRemoveCourt,
@@ -34,6 +42,8 @@ export function VenueCourtsModal({
 
   if (!isOpen || !venue) return null;
 
+  // Danh sách địa điểm hiển thị trên tabs
+  const venueList = venues.length > 0 ? venues : [venue];
   const courts = venue.courts || [];
 
   const handleBatchCreate = async () => {
@@ -71,38 +81,102 @@ export function VenueCourtsModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="relative w-full max-w-2xl rounded-xl bg-white shadow-xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-white">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
-              <MapPin className="h-4 w-4" />
+        <div className="border-b border-slate-200 bg-white">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-blue-600" />
+              <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                Địa điểm &amp; Sân thi đấu ({venueList.length} cụm)
+              </h3>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-slate-900">{venue.name}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Cụm Địa Điểm Selector Tabs */}
+          <div className="flex items-center gap-2 px-5 py-2.5 overflow-x-auto no-scrollbar bg-slate-50/70 border-b border-slate-200">
+            {venueList.map((v) => {
+              const isSelected = v.id === venue.id;
+              const courtNum = v.courts?.length || 0;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => onSelectVenue?.(v)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 transition-all border ${
+                    isSelected
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  {v.isDefault && <span className="text-amber-300 text-[10px]">⭐</span>}
+                  <span className="truncate max-w-[140px]">{v.name}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {courtNum}
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* Nút thêm cụm địa điểm mới */}
+            {onRequestCreateVenue && (
+              <button
+                type="button"
+                onClick={onRequestCreateVenue}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 transition-all bg-white hover:bg-blue-50 text-blue-600 border border-dashed border-blue-300 hover:border-blue-400"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Thêm địa điểm</span>
+              </button>
+            )}
+          </div>
+
+          {/* Active Venue Details Banner */}
+          <div className="px-5 py-3 flex items-start justify-between gap-3 bg-white">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm font-bold text-slate-900">{venue.name}</h4>
                 {venue.isDefault ? (
-                  <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                    ⭐ Mặc định
+                  <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                    ⭐ Địa điểm chính (Mặc định)
                   </span>
                 ) : onSetDefaultVenue ? (
                   <button
                     type="button"
                     onClick={() => onSetDefaultVenue(venue.id)}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
                   >
-                    ⭐ Đặt làm mặc định
+                    <Star className="h-3 w-3" />
+                    <span>Đặt làm địa điểm chính</span>
                   </button>
                 ) : null}
               </div>
-              <p className="mt-0.5 text-xs text-slate-500">{venue.locationAddress}</p>
+              <p className="mt-0.5 text-xs text-slate-500 truncate" title={venue.locationAddress}>
+                {venue.locationAddress || 'Chưa có địa chỉ chi tiết'}
+              </p>
             </div>
+
+            {onRequestEditVenue && (
+              <button
+                type="button"
+                onClick={() => onRequestEditVenue(venue)}
+                className="flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-blue-600 py-1 px-2 rounded-md hover:bg-slate-100 transition-colors shrink-0"
+                title="Chỉnh sửa tên & địa chỉ"
+              >
+                <Pencil className="h-3 w-3" />
+                <span>Sửa</span>
+              </button>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Content Body */}

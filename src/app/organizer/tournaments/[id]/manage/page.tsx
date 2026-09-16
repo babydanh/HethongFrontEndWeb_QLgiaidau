@@ -962,18 +962,29 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             </div>
           </div>
 
-          {/* Location & Courts - Clean row matching detail page */}
+          {/* Location & Courts - Clean row matching detail page, hỗ trợ tóm tắt nhiều địa điểm */}
           {(() => {
-            const defaultVenue = s.tournamentVenues?.find((v) => v.isDefault) || s.tournamentVenues?.[0];
-            const courtCount = defaultVenue?.courts?.length ?? s.courts.length;
+            const venues = s.tournamentVenues || [];
+            const defaultVenue = venues.find((v) => v.isDefault) || venues[0];
+            const venueCount = venues.length;
+            const totalCourts = venues.reduce((acc, v) => acc + (v.courts?.length || 0), 0) || s.courts.length;
+
+            let displayLocation = locationLabel || 'Chưa thiết lập địa điểm';
+            if (defaultVenue) {
+              if (venueCount > 1) {
+                displayLocation = `${defaultVenue.name} (+${venueCount - 1} địa điểm khác)`;
+              } else {
+                displayLocation = defaultVenue.name || locationLabel || 'Chưa thiết lập địa điểm';
+              }
+            }
 
             return (
               <div
                 onClick={() => {
                   if (defaultVenue) {
                     setSelectedVenueForCourts(defaultVenue);
-                  } else if (s.tournamentVenues && s.tournamentVenues.length > 0) {
-                    setSelectedVenueForCourts(s.tournamentVenues[0]);
+                  } else if (venues.length > 0) {
+                    setSelectedVenueForCourts(venues[0]);
                   } else {
                     setIsCreateVenueOpen(true);
                   }
@@ -984,14 +995,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-600 leading-relaxed break-words" title={locationLabel}>
-                      {locationLabel || 'Chưa thiết lập địa điểm'}
+                    <p className="font-medium text-slate-600 leading-relaxed break-words" title={displayLocation}>
+                      {displayLocation}
                     </p>
-                    {courtCount > 0 && (
-                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
-                        {courtCount} sân thi đấu
-                      </p>
-                    )}
+                    <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                      {venueCount > 1 ? `${venueCount} cụm địa điểm • ` : ''}
+                      {totalCourts > 0 ? `${totalCourts} sân thi đấu` : 'Chưa thiết lập sân'}
+                    </p>
                   </div>
                   <Pencil className="w-3 h-3 text-slate-400 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0 mt-1" />
                 </div>
@@ -3055,7 +3065,7 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
         </ModalContent>
       </Modal>
 
-      {/* Modal Cài đặt Sân của Địa điểm (Tạo sân đơn, tạo hàng loạt, đặt sân chính) */}
+      {/* Modal Cài đặt Sân của Địa điểm (Tạo sân đơn, tạo hàng loạt, đặt sân chính, hỗ trợ nhiều địa điểm) */}
       <VenueCourtsModal
         isOpen={Boolean(selectedVenueForCourts)}
         onClose={() => setSelectedVenueForCourts(null)}
@@ -3064,6 +3074,10 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
             ? s.tournamentVenues?.find((v) => v.id === selectedVenueForCourts.id) || selectedVenueForCourts
             : null
         }
+        venues={s.tournamentVenues}
+        onSelectVenue={(v) => setSelectedVenueForCourts(v)}
+        onRequestCreateVenue={() => setIsCreateVenueOpen(true)}
+        onRequestEditVenue={(v) => setSelectedVenueForEdit(v)}
         onAddCourt={async (venueId, name) => {
           await s.handleAddVenueCourtDirect(venueId, name);
         }}

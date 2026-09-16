@@ -973,10 +973,10 @@ export default function QuickTournamentCreate() {
                             setValue('sport', value, { shouldValidate: true, shouldDirty: true });
                             handleSportChange(value);
                           }}
-                          className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-colors duration-150 cursor-pointer ${
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left cursor-pointer transition-colors ${
                             isSelected
-                              ? 'border-blue-600 bg-blue-50/40 text-blue-700 ring-1 ring-blue-600/30 font-semibold'
-                              : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50/70 hover:text-slate-900'
+                              ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-semibold'
+                              : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50'
                           }`}
                         >
                           {sportIcon ? (
@@ -1218,10 +1218,10 @@ export default function QuickTournamentCreate() {
                         key={opt.id}
                         type="button"
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
-                        className={`group flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-none cursor-pointer ${
+                        className={`group flex items-center gap-2.5 rounded-xl border p-2.5 text-left cursor-pointer transition-colors ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-50/30 ring-1 ring-blue-600/30'
-                            : 'border-slate-200 bg-white'
+                            ? 'border-blue-600 bg-blue-50/40'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
                         <div
@@ -1268,10 +1268,10 @@ export default function QuickTournamentCreate() {
                           key={num}
                           type="button"
                           onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
-                          className={`rounded-lg border px-2.5 py-1 text-xs transition-none cursor-pointer ${
+                          className={`rounded-lg border px-2.5 py-1 text-xs cursor-pointer transition-colors ${
                             isCurrent
                               ? 'border-blue-600 bg-blue-600 text-white font-semibold shadow-xs'
-                              : 'border-slate-200 bg-white text-slate-700 font-medium'
+                              : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50'
                           }`}
                         >
                           {num}
@@ -1332,8 +1332,8 @@ export default function QuickTournamentCreate() {
                               onClick={() => setValue('registrationMode', item.val as QuickValues['registrationMode'])}
                               className={`rounded-lg border p-1.5 text-center transition cursor-pointer ${
                                 isSelected
-                                  ? 'border-blue-500 bg-blue-50/80 font-bold text-blue-700 ring-1 ring-blue-200'
-                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                                  ? 'border-blue-600 bg-blue-50/50 font-bold text-blue-800'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
                               }`}
                             >
                               <div className="text-xs font-bold">{translate(item.labelKey)}</div>
@@ -1358,7 +1358,7 @@ export default function QuickTournamentCreate() {
                       {sport === 'football' ? translate('footballContentTitle') : translate('competitionContentTitle')}
                     </h3>
                   </div>
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700 border border-blue-200">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600">
                     {translate('selectedFormatsCount', { count: selectedFormats.length })}
                   </span>
                 </div>

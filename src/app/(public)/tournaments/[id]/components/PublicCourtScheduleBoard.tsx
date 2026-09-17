@@ -632,28 +632,14 @@ export default function PublicCourtScheduleBoard({
       {/* ── 1. TOP TOOLBAR RIBBON (Date, Step Switcher, Search, Zoom, Fullscreen) ── */}
       <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5 relative z-10">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          {/* Left: Tournament Logo + View Mode Pills + Date Selector Pills */}
+          {/* Left: View Mode Pills + Date Selector Pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            {tournament?.logoUrl && (
-              <div className="flex items-center gap-2 pr-2 border-r border-slate-200">
-                <div className="h-8 w-8 rounded-full border border-slate-200 bg-white p-0.5 overflow-hidden shrink-0 shadow-2xs">
-                  <img
-                    src={tournament.logoUrl}
-                    alt={tournament.name || 'Tournament logo'}
-                    className="h-full w-full object-cover rounded-full"
-                  />
-                </div>
-                <span className="text-xs font-black text-slate-900 hidden sm:inline max-w-[160px] truncate" title={tournament.name}>
-                  {tournament.name}
-                </span>
-              </div>
-            )}
 
             {onSwitchToList && (
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
+              <div className="flex items-center bg-slate-100/90 p-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-600 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1 rounded-md text-xs font-bold bg-white text-blue-600 shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Calendar className="h-3.5 w-3.5" />
                   <span>{translate('viewModeTimeline')}</span>
@@ -661,7 +647,7 @@ export default function PublicCourtScheduleBoard({
                 <button
                   type="button"
                   onClick={onSwitchToList}
-                  className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/70 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <Layers className="h-3.5 w-3.5" />
                   <span>{translate('viewModeList')}</span>
@@ -681,14 +667,14 @@ export default function PublicCourtScheduleBoard({
                     onClick={() => setSelectedDate(dateStr)}
                     className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200'
+                        ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-xs'
+                        : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
-                    <Calendar className="h-3 w-3 text-slate-400" />
+                    <Calendar className={`h-3 w-3 ${isActive ? 'text-blue-500' : 'text-slate-400'}`} />
                     <span>{formatDayLabel(dateStr)}</span>
                     {matchCount > 0 && (
-                      <span className={`px-1 py-0.2 rounded text-[10px] font-black ${isActive ? 'bg-blue-500/80 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                      <span className={`px-1 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
                         {matchCount}
                       </span>
                     )}
@@ -711,9 +697,9 @@ export default function PublicCourtScheduleBoard({
                   key={step}
                   type="button"
                   onClick={() => setStepMinutes(step)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition-all cursor-pointer ${
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
                     stepMinutes === step
-                      ? 'bg-blue-600 text-white shadow-2xs'
+                      ? 'bg-white text-blue-600 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
@@ -748,7 +734,7 @@ export default function PublicCourtScheduleBoard({
               <button
                 type="button"
                 onClick={() => setZoomLevel(1.0)}
-                className="h-6 px-1.5 rounded text-[11px] font-bold text-slate-700 hover:bg-white transition-all cursor-pointer"
+                className="h-6 min-w-[42px] px-1.5 rounded text-[11px] font-bold text-slate-700 hover:bg-white transition-all cursor-pointer text-center"
                 title={translate('timelineZoomReset')}
               >
                 {Math.round(zoomLevel * 100)}%

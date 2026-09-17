@@ -1018,97 +1018,43 @@ const commonTranslate = useTranslations('Common');
           </div>
         )}
 
-        {hasTournamentLogo ? (
-          /* When tournament HAS Logo -> Display Logo + Badges + Title at Top */
-          <div className="flex items-start gap-3.5">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white border-2 border-white shadow-md p-0.5 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-slate-200/80">
-              <img
-                src={tournamentLogo || ''}
-                alt={tournament.name}
-                className="w-full h-full object-cover rounded-full"
-              />
-            </div>
-            <div className="min-w-0 flex-1 space-y-1.5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {/* Status Badge */}
-                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
-                  isLive
-                    ? 'bg-rose-600 text-white'
-                    : isFinished
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-emerald-600 text-white'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
-                  {isLive
-                    ? (translate('inProgress') || 'Đang diễn ra')
-                    : isFinished
-                      ? (translate('completed') || 'Đã kết thúc')
-                      : (translate('upcoming') || 'Sắp diễn ra')}
-                </span>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Status Badge */}
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+              isLive
+                ? 'bg-rose-600 text-white'
+                : isFinished
+                  ? 'bg-slate-700 text-white'
+                  : 'bg-emerald-600 text-white'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
+              {isLive
+                ? (translate('inProgress') || 'Đang diễn ra')
+                : isFinished
+                  ? (translate('completed') || 'Đã kết thúc')
+                  : (translate('upcoming') || 'Sắp diễn ra')}
+            </span>
 
-                {/* Sport Badge */}
-                {activeTournament.category?.name && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
-                    {activeTournament.category.name}
-                  </span>
-                )}
+            {/* Sport Badge */}
+            {activeTournament.category?.name && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
+                {activeTournament.category.name}
+              </span>
+            )}
 
-                {/* Ranked / Casual Badge */}
-                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
-                  activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
-                }`}>
-                  {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
-                </span>
-              </div>
-
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-                {tournament.name}
-              </h1>
-            </div>
+            {/* Ranked / Casual Badge */}
+            <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+              activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
+            }`}>
+              {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
+            </span>
           </div>
-        ) : (
-          /* When tournament DOES NOT have custom logo -> show Organizer at top + Title below */
-          <>
-            {renderOrganizerBlock()}
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {/* Status Badge */}
-                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
-                  isLive
-                    ? 'bg-rose-600 text-white'
-                    : isFinished
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-emerald-600 text-white'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-white animate-pulse' : 'bg-white'}`} />
-                  {isLive
-                    ? (translate('inProgress') || 'Đang diễn ra')
-                    : isFinished
-                      ? (translate('completed') || 'Đã kết thúc')
-                      : (translate('upcoming') || 'Sắp diễn ra')}
-                </span>
 
-                {/* Sport Badge */}
-                {activeTournament.category?.name && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
-                    {activeTournament.category.name}
-                  </span>
-                )}
-
-                {/* Ranked / Casual Badge */}
-                <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
-                  activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
-                }`}>
-                  {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
-                </span>
-              </div>
-
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-                {tournament.name}
-              </h1>
-            </div>
-          </>
-        )}
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+            {tournament.name}
+          </h1>
+        </div>
 
       {/* Key Details Rows */}
       <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-[13px]">
@@ -1472,12 +1418,10 @@ const commonTranslate = useTranslations('Common');
           </div>
         )}
 
-        {/* If tournament HAS logo -> Show Creator at bottom under contact info */}
-        {hasTournamentLogo && (
-          <div className={hasContact ? "pt-3 border-t border-slate-100" : ""}>
-            {renderOrganizerBlock()}
-          </div>
-        )}
+        {/* Show Creator at bottom under contact info */}
+        <div className={hasContact ? "pt-3 border-t border-slate-100" : ""}>
+          {renderOrganizerBlock()}
+        </div>
       </div>
     );
   };

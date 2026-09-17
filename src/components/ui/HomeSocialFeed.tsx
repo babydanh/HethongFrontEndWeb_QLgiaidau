@@ -11,7 +11,6 @@ import {
   Clock3,
   Flame,
   MapPin,
-  Send,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -457,11 +456,13 @@ function SessionDetailModal({
   isJoined,
   onClose,
   onJoin,
+  onLeave,
 }: {
   item: ActivityFeedItem;
   isJoined: boolean;
   onClose: () => void;
   onJoin: () => Promise<boolean>;
+  onLeave: () => Promise<boolean>;
 }) {
   const slots = item.slots;
   const isFull = slots ? slots.current >= slots.max : false;
@@ -469,14 +470,24 @@ function SessionDetailModal({
   const identity = item.club ?? item.personalHost;
   const [note, setNote] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
-  const handleSendRequest = async () => {
-    if (!isFull && !isJoined) {
-      const didJoin = await onJoin();
-      if (!didJoin) return;
-    }
+  const handleJoin = async () => {
+    if (isFull || isJoined || isActionLoading) return;
+    setIsActionLoading(true);
+    const didJoin = await onJoin();
+    setIsActionLoading(false);
+    if (!didJoin) return;
     setSubmitted(true);
-    toast.success('Đã gửi yêu cầu tham gia thành công!');
+    toast.success('Đã tham gia buổi giao lưu!');
+  };
+
+  const handleLeave = async () => {
+    if (!isJoined || isActionLoading) return;
+    setIsActionLoading(true);
+    await onLeave();
+    setIsActionLoading(false);
+    setSubmitted(false);
   };
 
   return (
@@ -538,9 +549,6 @@ function SessionDetailModal({
                       {getMissingLabel(slots.current, slots.max)}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                    Có ELO
-                  </span>
                   <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-600">
                     Buổi giao lưu
                   </span>
@@ -553,6 +561,17 @@ function SessionDetailModal({
 
               {/* Core Info Rows */}
               <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3.5 space-y-2.5 text-xs text-slate-700">
+                {item.playDate && (
+                  <div className="flex items-center gap-2.5">
+                    <CalendarDays className="h-4 w-4 shrink-0 text-blue-600" />
+                    <span className="font-semibold">
+                      {(() => {
+                        const [y, m, d] = item.playDate.split('-');
+                        return `${d}/${m}/${y}`;
+                      })()}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2.5">
                   <Clock3 className="h-4 w-4 shrink-0 text-blue-600" />
                   <span className="font-semibold">{item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}</span>
@@ -609,40 +628,58 @@ function SessionDetailModal({
               )}
             </div>
 
-            {/* Right column: Exact SportO Slot Grid Widget (Image 3 style) */}
+            {/* Right column: Slot Grid */}
             {slots && (
               <div className="p-6 bg-slate-50/40 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h3 className="text-sm font-bold text-slate-900">Xác nhận tham gia</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Danh sách tham gia</h3>
                     <span className="text-xs font-bold text-slate-500">{slots.current}/{slots.max}</span>
                   </div>
 
-                  {/* 4-column Slot Grid matching Image 3 */}
+                  {/* 4-column Slot Grid */}
                   <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-4">
-                    {/* Joined Players with SportO round avatars */}
-                    {slots.joinedPlayers.map((p, i) => (
-                      <div key={i} className="flex flex-col items-center gap-1.5 min-w-0">
-                        <div
-                          className="flex h-12 w-12 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
-                          style={{ backgroundColor: p.initialsBg || '#3b82f6' }}
-                        >
-                          {getInitials(p.name)}
+                    {/* Joined Players */}
+                    {slots.joinedPlayers.map((p, i) => {
+                      const isMe = p.name === 'Bạn';
+                      return (
+                        <div key={i} className="flex flex-col items-center gap-1.5 min-w-0">
+                          <div
+                            className={`relative flex h-12 w-12 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs ${isMe && isJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+                            style={{ backgroundColor: p.initialsBg || '#3b82f6' }}
+                          >
+                            {getInitials(p.name)}
+                            {isMe && isJoined && (
+                              <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">✓</span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-semibold text-slate-700 text-center truncate w-full">
+                            {isMe ? 'Bạn' : p.name.split(' ').pop()}
+                          </span>
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-700 text-center truncate w-full">
-                          {p.name.split(' ').pop()}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
 
-                    {/* Empty Dash-border Slots */}
+                    {/* Empty Clickable Slots */}
                     {Array.from({ length: Math.max(slots.max - slots.current, 0) }).map((_, i) => {
                       const slotNumber = slots.current + i + 1;
+                      const isFirstEmpty = i === 0;
+                      const canJoin = isFirstEmpty && !isJoined && !isFull;
                       return (
                         <div key={`empty-slot-${i}`} className="flex flex-col items-center gap-1.5 min-w-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-200 bg-white text-lg font-light text-slate-400">
+                          <button
+                            type="button"
+                            disabled={!canJoin || isActionLoading}
+                            onClick={canJoin ? handleJoin : undefined}
+                            title={canJoin ? 'Bấm để vào slot này' : undefined}
+                            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed text-lg font-light transition-all ${
+                              canJoin
+                                ? 'border-blue-300 bg-blue-50 text-blue-400 hover:border-blue-500 hover:bg-blue-100 hover:text-blue-600 cursor-pointer'
+                                : 'border-slate-200 bg-white text-slate-400 cursor-default'
+                            }`}
+                          >
                             +
-                          </div>
+                          </button>
                           <span className="text-[10px] text-slate-400 text-center truncate w-full">
                             Slot #{slotNumber}
                           </span>
@@ -652,8 +689,30 @@ function SessionDetailModal({
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100 text-center">
-                  <p className="text-xs text-slate-400">
+                <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
+                  {/* Join/Leave compact button */}
+                  {isJoined ? (
+                    <button
+                      type="button"
+                      onClick={handleLeave}
+                      disabled={isActionLoading}
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi buổi'}
+                    </button>
+                  ) : !isFull ? (
+                    <button
+                      type="button"
+                      onClick={handleJoin}
+                      disabled={isActionLoading}
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" />
+                      {isActionLoading ? 'Đang xử lý...' : 'Vào slot'}
+                    </button>
+                  ) : null}
+                  <p className="text-xs text-slate-400 text-center">
                     {isFull
                       ? 'Buổi giao lưu đã đủ người tham gia'
                       : `Còn trống ${Math.max(slots.max - slots.current, 0)} slot`}
@@ -673,14 +732,26 @@ function SessionDetailModal({
           >
             Đóng
           </button>
-          {!submitted && !isJoined && !isFull && (
+          {isJoined && (
             <button
               type="button"
-              onClick={handleSendRequest}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98]"
+              onClick={handleLeave}
+              disabled={isActionLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-5 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
             >
-              <Send className="h-4 w-4" />
-              Gửi yêu cầu tham gia
+              <X className="h-4 w-4" />
+              {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi'}
+            </button>
+          )}
+          {!isJoined && !isFull && (
+            <button
+              type="button"
+              onClick={handleJoin}
+              disabled={isActionLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-50"
+            >
+              <UserPlus className="h-4 w-4" />
+              {isActionLoading ? 'Đang xử lý...' : 'Tham gia ngay'}
             </button>
           )}
         </div>
@@ -694,12 +765,14 @@ function ClubSessionCard({
   reducedMotion,
   isJoined,
   onJoin,
+  onLeave,
   onShare,
 }: {
   item: ActivityFeedItem;
   reducedMotion: boolean;
   isJoined: boolean;
   onJoin: () => Promise<boolean>;
+  onLeave: () => Promise<boolean>;
   onShare: () => void;
 }) {
   const [showModal, setShowModal] = useState(false);
@@ -718,6 +791,7 @@ function ClubSessionCard({
           isJoined={isJoined}
           onClose={() => setShowModal(false)}
           onJoin={onJoin}
+          onLeave={onLeave}
         />
       )}
       <EventShell reducedMotion={reducedMotion}>
@@ -792,7 +866,7 @@ function ClubSessionCard({
   );
 }
 
-function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin }: { item: ActivityFeedItem; reducedMotion: boolean; isJoined: boolean; onJoin: () => Promise<boolean> }) {
+function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin, onLeave }: { item: ActivityFeedItem; reducedMotion: boolean; isJoined: boolean; onJoin: () => Promise<boolean>; onLeave: () => Promise<boolean> }) {
   const [showModal, setShowModal] = useState(false);
   if (!item.slots || !item.personalHost) return null;
   const { current, max, feePerSlot, joinedPlayers } = item.slots;
@@ -801,7 +875,7 @@ function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin }: { item: A
 
   return (
     <>
-      {showModal && <SessionDetailModal item={item} isJoined={isJoined} onClose={() => setShowModal(false)} onJoin={onJoin} />}
+      {showModal && <SessionDetailModal item={item} isJoined={isJoined} onClose={() => setShowModal(false)} onJoin={onJoin} onLeave={onLeave} />}
       <EventShell reducedMotion={reducedMotion}>
         <div className="space-y-3 p-3.5 sm:p-4">
           <div className="flex items-start justify-between gap-3">
@@ -1053,7 +1127,7 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   const inputClass = 'h-11 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-3 sm:p-4 backdrop-blur-[2px]" onClick={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }} role="dialog" aria-modal="true" aria-labelledby="create-personal-pickup-title">
-      <form onSubmit={handleSubmit} className="w-full max-w-4xl max-h-[96vh] flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <form noValidate onSubmit={handleSubmit} className="w-full max-w-4xl max-h-[96vh] flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {/* Header: Đã bỏ bớt chữ dài dòng */}
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3 sm:px-6">
           <h2 id="create-personal-pickup-title" className="text-base sm:text-lg font-bold text-slate-950">
@@ -1428,6 +1502,61 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
     }
   }, []);
 
+  const handleLeaveSlot = useCallback(async (item: ActivityFeedItem): Promise<boolean> => {
+    if (!item.slots) return false;
+    const isPersonal = item.type === 'PERSONAL_PICKUP';
+
+    // Optimistic update: remove "Bạn" from joinedPlayers and decrement count
+    setActivities((currentActivities) =>
+      currentActivities.map((activity) => {
+        if (activity.id !== item.id || !activity.slots) return activity;
+        const nextPlayers = activity.slots.joinedPlayers.filter((p) => p.name !== 'Bạn');
+        return {
+          ...activity,
+          slots: {
+            ...activity.slots,
+            current: Math.max(activity.slots.current - 1, 0),
+            joinedPlayers: nextPlayers,
+          },
+        };
+      }),
+    );
+    setJoinedActivityIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      nextIds.delete(item.id);
+      return nextIds;
+    });
+
+    try {
+      if (isPersonal) {
+        await api.delete(`/social/pickups/${item.id}/participants/self`);
+        toast.success('Đã rút khỏi buổi giao lưu');
+      } else {
+        await api.post(`/club-match-sessions/${item.clubMatchSessionId}/participants/self/withdraw`);
+        toast.success('Đã rút khỏi buổi tập CLB');
+      }
+      return true;
+    } catch {
+      // Rollback on failure
+      setActivities((currentActivities) =>
+        currentActivities.map((activity) => {
+          if (activity.id !== item.id || !activity.slots) return activity;
+          return {
+            ...activity,
+            slots: {
+              ...activity.slots,
+              current: item.slots!.current,
+              joinedPlayers: item.slots!.joinedPlayers,
+            },
+          };
+        }),
+      );
+      setJoinedActivityIds((currentIds) => new Set(currentIds).add(item.id));
+      toast.error('Không thể rút khỏi slot. Vui lòng thử lại.');
+      return false;
+    }
+  }, []);
+
   const handleShare = useCallback(async (item: ActivityFeedItem) => {
     if (!item.club) {
       toast.error('Buổi giao lưu cá nhân đã hiển thị trên bảng tin, chưa hỗ trợ chia sẻ thêm');
@@ -1544,6 +1673,7 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
                       reducedMotion={reducedMotion}
                       isJoined={joinedActivityIds.has(item.id)}
                       onJoin={() => handleJoinSlot(item)}
+                      onLeave={() => handleLeaveSlot(item)}
                     />
                   ) : (
                     <ClubSessionCard
@@ -1552,6 +1682,7 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
                       reducedMotion={reducedMotion}
                       isJoined={joinedActivityIds.has(item.id)}
                       onJoin={() => handleJoinSlot(item)}
+                      onLeave={() => handleLeaveSlot(item)}
                       onShare={() => handleShare(item)}
                     />
                   );

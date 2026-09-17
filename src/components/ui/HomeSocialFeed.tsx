@@ -396,106 +396,106 @@ function SessionDetailModal({
   return (
     // Backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/40 backdrop-blur-xs"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       aria-modal="true"
       role="dialog"
       aria-label={item.title}
     >
-      <div className="relative w-full max-w-2xl max-h-[92vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden">
 
-        {/* ── Hero header strip ── */}
-        <div className="relative bg-gradient-to-br from-blue-600 to-blue-700 px-5 pt-5 pb-4 text-white">
-          {/* close btn */}
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition-colors"
-            aria-label="Đóng"
-          >
-            <X className="h-4 w-4" />
-          </button>
-
-          {/* Club identity */}
-          <div className="flex items-center gap-2.5 mb-3">
+        {/* ── Clean Header (No Dark Blue Banner) ── */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-white">
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-xs font-bold text-white border border-white/30"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200"
               style={item.club.avatarUrl ? { backgroundImage: `url(${item.club.avatarUrl})`, backgroundSize: 'cover' } : {}}
             >
               {!item.club.avatarUrl && item.club.initials}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-white truncate">{item.club.name}</span>
+                <span className="text-sm font-bold text-slate-900 truncate">{item.club.name}</span>
                 {item.club.verified && (
-                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-blue-200" aria-label="Đã xác minh" />
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-label="Đã xác minh" />
                 )}
               </div>
-              <p className="text-[11px] text-blue-200">{item.sport} · {item.sportTier}</p>
+              <p className="text-xs text-slate-500">{item.sport} · {item.sportTier}</p>
             </div>
           </div>
 
-          {/* Session title */}
-          <h2 className="text-lg font-bold leading-snug text-white pr-10">{item.title}</h2>
-
-          {/* Status badges row */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {slots && (
-              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
-                isFull
-                  ? 'border-white/30 bg-white/20 text-white'
-                  : 'border-amber-300/60 bg-amber-400/30 text-amber-100'
-              }`}>
-                <Flame className="h-3 w-3" />
-                {getMissingLabel(slots.current, slots.max)}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-blue-100">
-              <Clock3 className="h-3 w-3" />
-              {item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}
-            </span>
-            {slots && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/50 bg-emerald-400/25 px-2.5 py-0.5 text-[11px] font-bold text-emerald-100">
-                <Sparkles className="h-3 w-3" />
-                {slots.feePerSlot}/người
-              </span>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            aria-label="Đóng"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* ── 2-column body ── */}
+        {/* ── 2-Column Body ── */}
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_220px] divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] divide-y md:divide-y-0 md:divide-x divide-slate-100">
 
-              {/* Left column: details + note */}
-            <div className="px-5 py-4 space-y-4">
-
-              {/* Location + fee */}
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-start gap-2 text-sm text-slate-700 min-w-0">
-                  <MapPin className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                  <span className="leading-tight">{item.location}</span>
+            {/* Left column: Session details + Overview metrics + Note */}
+            <div className="p-6 space-y-6">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                  {slots && (
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${
+                      isFull
+                        ? 'border-slate-200 bg-slate-100 text-slate-600'
+                        : 'border-amber-200 bg-amber-50 text-amber-700'
+                    }`}>
+                      <Flame className="h-3 w-3" />
+                      {getMissingLabel(slots.current, slots.max)}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                    Có ELO
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                    Buổi giao lưu
+                  </span>
                 </div>
+                <h2 className="text-xl font-bold text-slate-950 leading-tight">{item.title}</h2>
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed">{item.description}</p>
+              </div>
+
+              {/* Info Rows */}
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
+                <div className="flex items-center gap-2.5 text-xs text-slate-700">
+                  <Clock3 className="h-4 w-4 shrink-0 text-blue-600" />
+                  <span className="font-semibold">{item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}</span>
+                </div>
+                <div className="flex items-start gap-2.5 text-xs text-slate-700">
+                  <MapPin className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
+                  <span className="font-medium">{item.location}</span>
+                </div>
+                {slots && (
+                  <div className="flex items-center gap-2.5 text-xs text-slate-700">
+                    <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
+                    <span className="font-bold text-emerald-700">{slots.feePerSlot}/người · Chia tiền sân</span>
+                  </div>
+                )}
                 {item.courtDetails && (
-                  <div className="flex items-start gap-2 text-sm text-slate-500 min-w-0">
+                  <div className="flex items-start gap-2.5 text-xs text-slate-500">
                     <Info className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
-                    <span className="leading-tight">{item.courtDetails}</span>
+                    <span>{item.courtDetails}</span>
                   </div>
                 )}
               </div>
 
-              {/* Description */}
-              <p className="text-sm text-slate-600 leading-relaxed">{item.description}</p>
-
-              {/* Rules */}
+              {/* Rules if available */}
               {item.rules && item.rules.length > 0 && (
                 <div>
-                  <p className="text-xs font-bold text-slate-700 mb-2">Quy định buổi chơi</p>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Quy định buổi chơi</h3>
                   <ul className="space-y-1.5">
                     {item.rules.map((rule, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                        {rule}
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-blue-600 mt-0.5" />
+                        <span>{rule}</span>
                       </li>
                     ))}
                   </ul>
@@ -506,100 +506,99 @@ function SessionDetailModal({
               {!submitted && !isJoined && !isFull && (
                 <div>
                   <label className="text-xs font-bold text-slate-700 mb-1.5 block">
-                    Ghi chú khi gửi yêu cầu <span className="font-normal text-slate-400">(không bắt buộc)</span>
+                    Ghi chú gửi kèm <span className="font-normal text-slate-400">(không bắt buộc)</span>
                   </label>
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Ví dụ: Tôi chơi trình 2.8, thích vui vẻ..."
+                    placeholder="Ví dụ: Mình chơi trình 2.8, xin slot giao lưu vui vẻ nhé..."
                     rows={2}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all resize-none"
                   />
                 </div>
               )}
 
-              {/* Submitted success */}
+              {/* Success notice */}
               {(submitted || isJoined) && (
                 <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-2.5">
                   <UserCheck className="h-5 w-5 text-emerald-600 shrink-0" />
-                  <p className="text-sm font-semibold text-emerald-700">Đã gửi yêu cầu tham gia thành công!</p>
+                  <p className="text-xs font-bold text-emerald-800">Đã tham gia buổi giao lưu thành công!</p>
                 </div>
               )}
             </div>
 
-            {/* Right column: participant roster grid */}
+            {/* Right column: Exact SportO Slot Grid Widget (Image 3 style) */}
             {slots && (
-              <div className="px-4 py-4">
-                <div className="flex items-baseline justify-between mb-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Xác nhận tham gia</p>
-                  <span className="text-sm font-bold text-slate-900">{slots.current}/{slots.max}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-x-2 gap-y-4">
-                  {/* Filled slots */}
-                  {slots.joinedPlayers.map((p, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1 min-w-0">
-                      <span
-                        className="flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-white text-sm font-bold text-white shadow-md ring-2 ring-blue-100"
-                        style={{ backgroundColor: p.initialsBg }}
-                      >
-                        {getInitials(p.name)}
-                      </span>
-                      <span className="text-[10px] font-semibold text-slate-700 text-center truncate w-full">{p.name.split(' ').pop()}</span>
-                    </div>
-                  ))}
-                  {/* Empty slots */}
-                  {Array.from({ length: Math.max(slots.max - slots.current, 0) }).map((_, i) => (
-                    <div key={`e-${i}`} className="flex flex-col items-center gap-1 min-w-0">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 text-lg font-light text-slate-400">
-                        +
-                      </span>
-                      <span className="text-[10px] text-slate-400 text-center">Trống</span>
-                    </div>
-                  ))}
+              <div className="p-6 bg-slate-50/40 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h3 className="text-sm font-bold text-slate-900">Xác nhận tham gia</h3>
+                    <span className="text-xs font-bold text-slate-500">{slots.current}/{slots.max}</span>
+                  </div>
+
+                  {/* 4-column Slot Grid matching Image 3 */}
+                  <div className="mt-5 grid grid-cols-4 gap-x-2 gap-y-4">
+                    {/* Joined Players with SportO round avatars */}
+                    {slots.joinedPlayers.map((p, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1.5 min-w-0">
+                        <div
+                          className="flex h-12 w-12 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
+                          style={{ backgroundColor: p.initialsBg || '#3b82f6' }}
+                        >
+                          {getInitials(p.name)}
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-700 text-center truncate w-full">
+                          {p.name.split(' ').pop()}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Empty Dash-border Slots */}
+                    {Array.from({ length: Math.max(slots.max - slots.current, 0) }).map((_, i) => {
+                      const slotNumber = slots.current + i + 1;
+                      return (
+                        <div key={`empty-slot-${i}`} className="flex flex-col items-center gap-1.5 min-w-0">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-slate-200 bg-white text-lg font-light text-slate-400">
+                            +
+                          </div>
+                          <span className="text-[10px] text-slate-400 text-center truncate w-full">
+                            Slot #{slotNumber}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Progress bar */}
-                <div className="mt-4 rounded-full bg-slate-100 h-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 rounded-full transition-all"
-                    style={{ width: `${(slots.current / slots.max) * 100}%` }}
-                  />
+                <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+                  <p className="text-xs text-slate-400">
+                    {isFull
+                      ? 'Buổi giao lưu đã đủ người tham gia'
+                      : `Còn trống ${Math.max(slots.max - slots.current, 0)} slot`}
+                  </p>
                 </div>
-                <p className="mt-1.5 text-[11px] text-slate-400 text-right">
-                  {`Còn ${Math.max(slots.max - slots.current, 0)} chỗ trống`}
-                </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Footer CTA ── */}
-        <div className="border-t border-slate-100 bg-white px-5 py-3.5 flex gap-2.5">
-          {!submitted && !isJoined && !isFull ? (
-            <>
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                Để sau
-              </button>
-              <button
-                type="button"
-                onClick={handleSendRequest}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98]"
-              >
-                <Send className="h-4 w-4" />
-                Gửi yêu cầu tham gia
-              </button>
-            </>
-          ) : (
+        {/* ── Footer Actions ── */}
+        <div className="border-t border-slate-100 bg-white px-6 py-4 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            Đóng
+          </button>
+          {!submitted && !isJoined && !isFull && (
             <button
               type="button"
-              onClick={onClose}
-              className="flex-1 inline-flex items-center justify-center rounded-xl bg-slate-100 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
+              onClick={handleSendRequest}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98]"
             >
-              Đóng
+              <Send className="h-4 w-4" />
+              Gửi yêu cầu tham gia
             </button>
           )}
         </div>

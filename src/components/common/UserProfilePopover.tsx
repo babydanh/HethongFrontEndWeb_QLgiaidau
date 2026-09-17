@@ -823,6 +823,71 @@ export default function UserProfilePopover({
             );
           })()}
 
+          {/* ELO Tier Badges for each sport with Smart Overflow (World/Public Rank) - ONLY when NOT in club */}
+          {!communityId && (
+            <div className="mt-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Hạng hệ thống toàn cầu
+              </p>
+              {(() => {
+                const eligible = eligibleRanks.length > 0
+                  ? eligibleRanks
+                  : (profileData.ranks || []).filter((r) => (r.eloPoints || 0) > 0);
+
+                const seenCategories = new Set<string>();
+                const distinctRanks = eligible.filter((r) => {
+                  const cat = (r.categoryName || '').toLowerCase();
+                  if (seenCategories.has(cat)) return false;
+                  seenCategories.add(cat);
+                  return true;
+                });
+
+                if (distinctRanks.length === 0 && !eligibleHighlightRank) {
+                  return (
+                    <p className="text-[11px] text-slate-400 italic">Chưa tham gia xếp hạng toàn quốc</p>
+                  );
+                }
+
+                const maxVisible = 3;
+                const visibleRanks = distinctRanks.slice(0, maxVisible);
+                const hiddenRanks = distinctRanks.slice(maxVisible);
+                const remainingCount = hiddenRanks.length;
+                const hiddenTooltip = `${hiddenRanks.map(r => `${r.categoryName}: ${r.eloPoints} ELO (${r.tierName || '--'})`).join('\n')}\n(Bấm để xem thêm trong hồ sơ)`;
+
+                return (
+                  <div className="flex items-center flex-wrap gap-1.5">
+                    {visibleRanks.map((rank, idx) => (
+                      <EloTierBadge
+                        key={`${rank.categoryName || 'cat'}-${rank.matchType || idx}`}
+                        elo={rank.eloPoints}
+                        tierName={rank.tierName || undefined}
+                        categoryName={rank.categoryName || undefined}
+                        size="sm"
+                      />
+                    ))}
+
+                    {remainingCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClose();
+                          if (profileData.id) {
+                            router.push(`/users/${profileData.id}`);
+                          }
+                        }}
+                        title={hiddenTooltip}
+                        className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-colors active:scale-95"
+                      >
+                        +{remainingCount} xem thêm
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Bio if available */}
           {profileData.bio && (
             <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">

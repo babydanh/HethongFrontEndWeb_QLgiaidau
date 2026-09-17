@@ -1658,11 +1658,11 @@ export default function HomePage() {
           {/* Time Badge (e.g. 14:30) */}
           <div className="shrink-0">
             {timeString ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+              <span className="text-xs font-bold text-slate-800">
                 {timeString}
               </span>
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-50 text-slate-500 border border-slate-200/60">
+              <span className="text-[11px] font-medium text-slate-500">
                 {translate('statusUpcoming')}
               </span>
             )}

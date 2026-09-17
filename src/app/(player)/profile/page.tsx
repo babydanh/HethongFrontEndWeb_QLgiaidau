@@ -670,6 +670,15 @@ export default function ProfilePage() {
 
   const isOwner = Boolean(user?.id && (!loadedProfileUserId || loadedProfileUserId === user.id));
 
+  // Role cao nhất của người dùng: ADMIN > ORGANIZER > PLAYER
+  const highestRole = (() => {
+    const allRoles = Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || []));
+    if (allRoles.includes('ADMIN')) return 'ADMIN';
+    if (allRoles.includes('ORGANIZER')) return 'ORGANIZER';
+    if (allRoles.includes('PLAYER')) return 'PLAYER';
+    return allRoles[0] || null;
+  })();
+
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
@@ -714,30 +723,52 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Vignette overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none" />
 
-        {/* Compact Share Button on top-right of banner (Gọn gàng icon chia sẻ mở modal) */}
-        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 flex items-center gap-2">
+        {/* Action Button: Chỉ duy nhất 1 icon Chia sẻ gọn gàng góc trên phải */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30">
           <button
             type="button"
             onClick={() => setIsShareModalOpen(true)}
-            className="w-9 h-9 rounded-lg bg-black/45 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-md active:scale-95 cursor-pointer transition-all duration-200"
-            title={translate("shareProfile")}
             aria-label={translate("shareProfile")}
+            title={translate("shareProfile")}
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all shadow-md active:scale-95 border border-white/20 cursor-pointer"
           >
             <Share2 className="w-4 h-4 text-white" />
           </button>
         </div>
+
+        {/* Change Cover Button - Icon camera góc dưới phải banner (chỉ hiện với chính chủ) */}
+        {isOwner && (
+          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30">
+            <button
+              type="button"
+              onClick={handleCoverClick}
+              disabled={isUploadingCover}
+              aria-label={translate("changeCover")}
+              title={translate("changeCover")}
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all shadow-md active:scale-95 border border-white/20 disabled:opacity-50 cursor-pointer"
+            >
+              {isUploadingCover ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <Camera className="w-4 h-4 text-white" />
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Warning banner for missing gender */}
-      {!isLoading && displayUser && !displayUser.gender && (
-        <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+      {/* Profile completion banner (remains as is) */}
+      {isOwner && profileData && !profileData.gender && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
             <div>
-              <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
+              <h4 className="font-bold text-amber-900 text-sm">{translate("profileIncomplete")}</h4>
               <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
             </div>
           </div>
@@ -793,28 +824,28 @@ export default function ProfilePage() {
                 )}
               </h1>
 
-              {/* Role Tags với chữ màu trắng */}
-              <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5">
-                {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
-                  let roleLabel = role;
-                  let roleColor = 'bg-blue-600 text-white border-blue-700';
-                  if (role === 'PLAYER') {
-                    roleLabel = translate("rolePlayer");
-                    roleColor = 'bg-blue-600 text-white border-blue-700 shadow-2xs';
-                  } else if (role === 'ORGANIZER') {
-                    roleLabel = translate("roleOrganizer");
-                    roleColor = 'bg-indigo-600 text-white border-indigo-700 shadow-2xs';
-                  } else if (role === 'ADMIN') {
-                    roleLabel = translate("roleModerator");
-                    roleColor = 'bg-purple-600 text-white border-purple-700 shadow-2xs';
-                  }
-                  return (
-                    <span key={role} className={`px-2.5 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider text-white ${roleColor}`}>
+              {/* Role Tag duy nhất cao nhất với chữ màu trắng */}
+              {highestRole && (() => {
+                let roleLabel = highestRole;
+                let roleColor = 'bg-blue-600 text-white border-blue-700 shadow-2xs';
+                if (highestRole === 'PLAYER') {
+                  roleLabel = translate("rolePlayer");
+                  roleColor = 'bg-blue-600 text-white border-blue-700 shadow-2xs';
+                } else if (highestRole === 'ORGANIZER') {
+                  roleLabel = translate("roleOrganizer");
+                  roleColor = 'bg-indigo-600 text-white border-indigo-700 shadow-2xs';
+                } else if (highestRole === 'ADMIN') {
+                  roleLabel = translate("roleModerator");
+                  roleColor = 'bg-purple-600 text-white border-purple-700 shadow-2xs';
+                }
+                return (
+                  <div className="flex items-center justify-center mt-2.5">
+                    <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider text-white ${roleColor}`}>
                       {roleLabel}
                     </span>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })()}
 
               {/* Tag / Badge các môn thể thao có hạng (hiện môn nào có hiện hết, không có viền xám ngăn cách) */}
               {distinctSportRanks.length > 0 && (
@@ -878,31 +909,6 @@ export default function ProfilePage() {
                 </p>
               )}
             </div>
-
-              {/* Bộ môn & Kỹ năng sở trường */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-blue-600" />
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("sportsAndSkills")}</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                    Pickleball
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    Cầu lông (Badminton)
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-750 border border-slate-200">
-                    Đánh đôi nam / nữ
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-750 border border-slate-200">
-                    Dink kỹ thuật
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-750 border border-slate-200">
-                    Phản xạ lưới nhanh
-                  </span>
-                </div>
-              </div>
 
               {/* Thông tin chi tiết */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
@@ -1195,155 +1201,86 @@ export default function ProfilePage() {
                     )}
                   </div>
 
-                  {/* Câu lạc bộ của tôi */}
+                  {/* Hoạt động Câu lạc bộ */}
                   <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("myClubs")}</h3>
-                  <Link href="/communities/create">
-                    <Button variant="success" size="sm" className="rounded-lg px-4 flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      {translate("createClub")}
-                    </Button>
-                  </Link>
-                </div>
-
-                {isLoading || isLoadingCommunities ? (
-                  <div className="animate-pulse flex gap-4">
-                    <div className="w-16 h-16 bg-slate-200 rounded-full"></div>
-                    <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-emerald-600" />
+                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("myClubs")}</h3>
+                      </div>
+                      {isOwner && (
+                        <Link href="/communities/create">
+                          <Button variant="outline" size="sm" className="rounded-lg px-3 text-xs font-bold flex items-center gap-1.5 h-8">
+                            <Users className="w-3.5 h-3.5" />
+                            {translate("createClub")}
+                          </Button>
+                        </Link>
+                      )}
                     </div>
-                  </div>
-                ) : createdCommunities.length > 0 || joinedCommunities.length > 0 ? (
-                  <div className="space-y-6">
-                    {createdCommunities.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <ShieldCheck className="w-4 h-4 text-blue-600" />
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">{translate("clubsManagedLabel")}</h4>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {createdCommunities.map(community => {
-                            const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
-                            const isPending = community.status === 'PENDING';
-                            const isRejected = community.status === 'REJECTED';
-                            const roleBadgeLabel = isOwner ? translate("clubOwner") : community.myRole === 'MODERATOR' ? translate("clubModerator") : translate("clubMember");
-                            const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200';
 
-                            return (
-                              <div key={community.id} className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-blue-500 hover:shadow-md transition-all group bg-slate-50">
-                                <Link href={`/communities/${community.id}`} className="flex min-w-0 flex-1 items-center gap-4">
-                                  {Boolean(community.logoUrl?.trim()) && (
-                                    <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
-                                      <Image
-                                        src={community.logoUrl!}
-                                        alt={community.name}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  )}
-                                  <div className="min-w-0 flex-grow">
-                                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                                      <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
-                                    </div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${roleBadgeStyle}`}>
-                                        {roleBadgeLabel}
-                                      </span>
-                                      <p className={`text-xs flex items-center gap-1 ${isRejected ? 'text-rose-700' : isPending ? 'text-amber-700' : 'text-emerald-600'}`}>
-                                        <span className={`w-2 h-2 rounded-full inline-block ${isRejected ? 'bg-rose-500' : isPending ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-                                        {isRejected ? translate("clubRejected") : isPending ? translate("clubPending") : translate("clubActive")}
-                                      </p>
-                                    </div>
-                                    {isRejected && community.rejectedReason && (
-                                      <p className="mt-1 line-clamp-2 text-xs text-rose-700">{community.rejectedReason}</p>
-                                    )}
-                                  </div>
-                                </Link>
-                                {isOwner && isRejected && (
-                                  <Link
-                                    href={`/communities/create?resubmitId=${community.id}`}
-                                    className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                  >
-                                    {translate("clubResubmit")}
-                                  </Link>
+                    {isLoading || isLoadingCommunities ? (
+                      <div className="animate-pulse flex gap-4">
+                        <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+                        <div className="flex-1 space-y-2 py-1">
+                          <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                          <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                        </div>
+                      </div>
+                    ) : (createdCommunities.length > 0 || joinedCommunities.length > 0) ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[...createdCommunities, ...joinedCommunities].map((community) => {
+                          const isClubOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
+                          const roleBadgeLabel = isClubOwner ? translate("clubOwner") : community.myRole === 'MODERATOR' ? translate("clubModerator") : translate("clubMember");
+                          const roleBadgeStyle = isClubOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+                          return (
+                            <Link
+                              key={community.id}
+                              href={`/communities/${community.id}`}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50/60 hover:bg-slate-50 hover:border-slate-200 transition-all group cursor-pointer"
+                            >
+                              <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
+                                {community.logoUrl ? (
+                                  <Image
+                                    src={community.logoUrl}
+                                    alt={community.name}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <Users className="w-5 h-5 text-slate-400" />
                                 )}
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    {joinedCommunities.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Users className="w-4 h-4 text-emerald-600" />
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">{translate("clubsJoinedLabel")}</h4>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {joinedCommunities.map(community => {
-                            const isOwner = community.creatorId === displayUser?.id || community.myRole === 'OWNER';
-                            const roleBadgeLabel = isOwner ? translate("clubOwner") : community.myRole === 'MODERATOR' ? translate("clubModerator") : translate("clubMember");
-                            const roleBadgeStyle = isOwner ? 'bg-blue-50 text-blue-700 border-blue-200' : community.myRole === 'MODERATOR' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
-
-                            return (
-                              <Link href={`/communities/${community.id}`} key={community.id}>
-                                <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all group bg-slate-50 cursor-pointer">
-                                  {Boolean(community.logoUrl?.trim()) && (
-                                    <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 relative shrink-0 bg-white flex items-center justify-center">
-                                      <Image
-                                        src={community.logoUrl!}
-                                        alt={community.name}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  )}
-                                  <div className="min-w-0 flex-grow">
-                                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                                      <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{community.name}</h4>
-                                    </div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${roleBadgeStyle}`}>
-                                        {roleBadgeLabel}
-                                      </span>
-                                      <p className={`text-xs flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-700'}`}>
-                                        <span className={`w-2 h-2 rounded-full inline-block ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                        {community.status === 'ACTIVE' ? translate("clubActive") : translate("clubInactive")}
-                                      </p>
-                                    </div>
-                                  </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{community.name}</h4>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${roleBadgeStyle}`}>
+                                    {roleBadgeLabel}
+                                  </span>
+                                  <span className={`text-[11px] font-medium flex items-center gap-1 ${community.status === 'ACTIVE' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${community.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                    {community.status === 'ACTIVE' ? translate("clubActive") : translate("clubInactive")}
+                                  </span>
                                 </div>
-                              </Link>
-                            );
-                          })}
-                        </div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                        <Users className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
+                        <p className="text-xs text-slate-500 font-semibold">{translate("clubsEmptyTitle")}</p>
+                        <Link href="/communities" className="inline-block mt-2">
+                          <Button variant="outline" size="sm" className="text-xs font-bold h-7 px-3">
+                            {translate("exploreClubs")}
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="text-center py-8 border-2 border-dashed border-slate-100 rounded-lg">
-                    <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-600 font-medium">{translate("clubsEmptyTitle")}</p>
-                    <p className="text-slate-400 text-sm mt-1 mb-4">{translate("clubsEmptyDescription")}</p>
-                    <Link href="/communities">
-                      <Button variant="outline">
-                        {translate("exploreClubs")}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-center py-12 border-dashed">
-                <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500 font-medium text-lg">{translate("activityEmpty")}</p>
-                <p className="text-slate-400 text-sm mt-1">{translate("activityHint")}</p>
-              </div>
-            </>
-          )}
+                </>
+              )}
 
         {activeTab === 'tournaments' && (
           <div className="space-y-6">

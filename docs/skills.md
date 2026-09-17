@@ -248,6 +248,11 @@
     - **Giải pháp khắc phục:**
       - Kiểm tra giá trị trạng thái hiện tại trước khi gọi cập nhật (ví dụ: `if (!isLoading) setIsLoading(true)` hoặc `if (membership !== null) setMembership(null)`).
       - Bao bọc các lời gọi hàm chứa `setState` trong `Promise.resolve().then(() => { ... })` để trì hoãn việc cập nhật sang microtask tiếp theo, thoát khỏi chu kỳ render đồng bộ hiện tại.
+9. **Quy tắc hiển thị nội dung AI/Markdown**:
+    - **TUYỆT ĐỐI KHÔNG** để AI render đường gạch ngang Markdown (`---`, `***`, `___`) hoặc thẻ
+      `<hr>` thành một đường xám mờ trong giao diện.
+    - Khi dùng `react-markdown`, component phải override `hr` về `null` hoặc lọc node tương đương;
+      dùng khoảng cách, heading hoặc card để phân tách nội dung thay vì đường kẻ ngang.
 9. **Quy chuẩn tỷ lệ và chiều rộng của Banner / Cover Image**:
     - **TUYỆT ĐỐI KHÔNG** để tỷ lệ banner quá hẹp hoặc chiều rộng quá gò bó.
     - Banner giải đấu lớn nên sử dụng chiều rộng tối đa `max-w-screen-2xl` kết hợp chiều cao `h-[320px] md:h-[460px]`.

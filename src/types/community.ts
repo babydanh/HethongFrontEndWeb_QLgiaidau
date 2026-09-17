@@ -6,6 +6,8 @@ export interface Community {
   description?: string;
   logoUrl?: string;
   bannerUrl?: string;
+  /** Newest gallery image exposed as the public list-card cover fallback. */
+  coverImageUrl?: string | null;
   provinceCode?: string;
   districtCode?: string;
   wardCode?: string;

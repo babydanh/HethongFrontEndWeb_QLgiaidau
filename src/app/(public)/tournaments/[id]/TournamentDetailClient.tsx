@@ -831,6 +831,9 @@ const commonTranslate = useTranslations('Common');
   }
 
   const isRegistrationLocked = activeTournament.isRegistrationLocked;
+  const isRegistrationNotStarted = activeTournament.registrationStartDate
+    ? new Date() < new Date(activeTournament.registrationStartDate)
+    : false;
   const isRegistrationExpired = activeTournament.registrationEndDate ? new Date() > new Date(activeTournament.registrationEndDate) : false;
   const isRegistrationOpen = isTournamentOpenForRegistration(activeTournament.status);
   const showRegistrationDetails = !isTournamentInProgress(activeTournament.status) && !isTournamentCompleted(activeTournament.status);
@@ -876,7 +879,10 @@ const commonTranslate = useTranslations('Common');
       registrationButtonLabel = translate('registrationFull') || 'Đã đủ hồ sơ';
       isRegistrationButtonDisabled = true;
     }
-  } else if (isTournamentUpcoming(activeTournament.status) || isTournamentRegistrationClosed(activeTournament.status)) {
+  } else if (isRegistrationNotStarted || (isTournamentUpcoming(activeTournament.status) && !isTournamentRegistrationClosed(activeTournament.status))) {
+    registrationButtonLabel = translate('status.upcoming') || translate('upcoming') || 'Sắp diễn ra';
+    isRegistrationButtonDisabled = true;
+  } else if (isTournamentRegistrationClosed(activeTournament.status)) {
     registrationButtonLabel = translate('registrationClosed');
     isRegistrationButtonDisabled = true;
   } else if (isTournamentInProgress(activeTournament.status)) {
@@ -1021,7 +1027,7 @@ const commonTranslate = useTranslations('Common');
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-1.5">
             {/* Status Badge */}
-            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold rounded-md shadow-2xs ${
               isLive
                 ? 'bg-rose-600 text-white'
                 : isFinished
@@ -1038,13 +1044,13 @@ const commonTranslate = useTranslations('Common');
 
             {/* Sport Badge */}
             {activeTournament.category?.name && (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
+              <span className="px-1.5 py-0.5 text-[11px] font-bold rounded-md bg-blue-600 text-white shadow-2xs inline-flex items-center gap-1">
                 {activeTournament.category.name}
               </span>
             )}
 
             {/* Ranked / Casual Badge */}
-            <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md shadow-2xs ${
+            <span className={`px-1.5 py-0.5 text-[11px] font-bold rounded-md shadow-2xs ${
               activeTournament.isRanked ? 'bg-amber-500 text-white' : 'bg-slate-800 text-white'
             }`}>
               {activeTournament.isRanked ? `⭐ ${translate('rankedBadge')}` : (translate('casualBadge') || 'Giải phong trào')}
@@ -1057,7 +1063,7 @@ const commonTranslate = useTranslations('Common');
         </div>
 
       {/* Key Details Rows */}
-      <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs sm:text-[13px]">
+      <div className="space-y-2.5 pt-3 border-t border-slate-100 text-sm sm:text-[14px]">
         {/* Dates */}
         <div className="flex items-start gap-2.5">
           <Calendar className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
@@ -1120,7 +1126,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="info"
-                size="sm"
+                size="md"
               />
             </div>
           );
@@ -1138,7 +1144,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="warning"
-                size="sm"
+                size="md"
               />
             </div>
           );
@@ -1156,7 +1162,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="danger"
-                size="sm"
+                size="md"
               />
             </div>
           );
@@ -1174,7 +1180,7 @@ const commonTranslate = useTranslations('Common');
                   dayLabel: commonTranslate('countdownDay') || 'ngày',
                 }}
                 variant="danger"
-                size="sm"
+                size="md"
               />
             </div>
           );
@@ -1193,7 +1199,7 @@ const commonTranslate = useTranslations('Common');
                   <Button
                     type="button"
                     onClick={() => router.push(registerHref)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-3 rounded-lg shadow-xs text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-3 rounded-lg shadow-xs text-base flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   >
                     <CreditCard className="w-4 h-4" />
                     <span>{translate('continuePayment') || 'Thanh toán ngay'}</span>
@@ -1202,7 +1208,7 @@ const commonTranslate = useTranslations('Common');
                   <Button
                     type="button"
                     onClick={() => router.push(registerHref)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-lg text-sm shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-lg text-base shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   >
                     <CheckCircle className="w-4 h-4 shrink-0" />
                     <span>{translate('alreadyRegistered') || 'Đã đăng ký'}</span>
@@ -1211,7 +1217,7 @@ const commonTranslate = useTranslations('Common');
                   <Button
                     type="button"
                     disabled
-                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-base cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
                   >
                     <Users className="w-4 h-4 text-slate-400" />
                     <span>{translate('registrationFull') || 'Đã đủ hồ sơ'}</span>
@@ -1220,7 +1226,7 @@ const commonTranslate = useTranslations('Common');
                   <Button
                     type="button"
                     disabled
-                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-base cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
                   >
                     <span>{registrationButtonLabel}</span>
                   </Button>
@@ -1228,7 +1234,7 @@ const commonTranslate = useTranslations('Common');
                   <Button
                     type="button"
                     onClick={() => handleTabSelect('matches')}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-base cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Calendar className="w-4 h-4" />
                     {translate('tabs.matches') || 'Lịch thi đấu'}
@@ -1237,14 +1243,14 @@ const commonTranslate = useTranslations('Common');
                   <Button
                     type="button"
                     disabled
-                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
+                    className="w-full bg-slate-100 border border-slate-200 text-slate-400 font-bold py-3 rounded-lg text-base cursor-not-allowed flex items-center justify-center gap-2 shadow-2xs"
                   >
                     <span>{registrationButtonLabel}</span>
                   </Button>
                 ) : isClubLite ? (
                   activeTournament.inviteCode ? (
                     <Link href={`/lite/tournaments/join/${activeTournament.inviteCode}`} className="block w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-base">
                         {translate('liteJoin')}
                       </Button>
                     </Link>
@@ -1262,7 +1268,7 @@ const commonTranslate = useTranslations('Common');
                           }
                         }
                       }}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm cursor-pointer"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-base cursor-pointer"
                     >
                       {registrationButtonLabel || translate('liteJoin') || 'Chọn Slot tham gia'}
                     </Button>
@@ -1282,7 +1288,7 @@ const commonTranslate = useTranslations('Common');
                         setIsRegisterModalOpen(true);
                       }
                     }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-sm cursor-pointer"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-xs text-base cursor-pointer"
                   >
                     {registrationButtonLabel}
                   </Button>

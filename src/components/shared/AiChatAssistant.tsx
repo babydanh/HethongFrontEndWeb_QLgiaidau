@@ -521,7 +521,12 @@ export default function AiChatAssistant() {
                     }`}
                   >
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{ hr: () => null }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -720,4 +725,3 @@ export default function AiChatAssistant() {
     </div>
   );
 }
-

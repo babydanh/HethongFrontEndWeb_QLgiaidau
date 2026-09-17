@@ -137,10 +137,18 @@ export function RegistrationFormBuilder({
   };
 
   const addOptionToField = (fieldId: string) => {
-    const text = trimSpaces(newOptionInputs[fieldId]);
-    if (!text) return;
     const targetField = config.fields.find((f) => f.id === fieldId);
     const existing = targetField?.options ?? [];
+    const typedText = trimSpaces(newOptionInputs[fieldId]);
+    let text = typedText;
+    if (!text) {
+      let nextNumber = existing.length + 1;
+      text = registrationFormTranslate('choiceOption', { number: nextNumber });
+      while (existing.includes(text)) {
+        nextNumber += 1;
+        text = registrationFormTranslate('choiceOption', { number: nextNumber });
+      }
+    }
     if (!existing.includes(text)) {
       updateField(fieldId, { options: [...existing, text] });
     }

@@ -633,8 +633,8 @@ export default function ProfilePage() {
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
-      {/* Standalone Cover Photo Banner - Expanded Hero */}
-      <div className="h-60 sm:h-72 md:h-80 lg:h-96 bg-slate-950 relative group overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm select-none">
+      {/* Hero Section: Banner wraps profile cards */}
+      <div className="relative bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-md select-none">
         <input
           type="file"
           accept="image/*"
@@ -642,26 +642,20 @@ export default function ProfilePage() {
           ref={coverInputRef}
           onChange={handleCoverChange}
         />
+
+        {/* Background cover image or gradient */}
         {displayUser?.coverUrl ? (
           <img
             src={displayUser.coverUrl}
             alt="Cover"
-            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+            className="absolute inset-0 w-full h-full object-cover object-center"
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0a192f] to-[#0f2d59] overflow-hidden">
-            {/* Dynamic Glow Orbs */}
             <div className="absolute -top-24 -left-20 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute top-1/2 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-16 left-1/3 w-72 h-72 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
-
-            {/* Sports Grid & Court Lines Pattern */}
-            <svg
-              className="absolute inset-0 w-full h-full opacity-20"
-              xmlns="http://www.w3.org/2000/svg"
-              width="100%"
-              height="100%"
-            >
+            <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
               <defs>
                 <pattern id="sporto-court-grid" width="60" height="60" patternUnits="userSpaceOnUse">
                   <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1" />
@@ -673,7 +667,6 @@ export default function ProfilePage() {
                 </linearGradient>
               </defs>
               <rect width="100%" height="100%" fill="url(#sporto-court-grid)" />
-              {/* Court stylized vectors */}
               <circle cx="85%" cy="30%" r="140" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="2" strokeDasharray="6 6" />
               <circle cx="85%" cy="30%" r="200" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="1.5" opacity="0.6" />
               <path d="M -50 280 L 400 -100" stroke="url(#sporto-court-grad)" strokeWidth="1.5" strokeDasharray="8 8" />
@@ -681,11 +674,11 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Multi-layer Vignette & Bottom Blend */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 pointer-events-none" />
+        {/* Vignette overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Action Buttons on Cover */}
-        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center gap-2 z-10">
+        {/* Action buttons on top-right */}
+        <div className="relative z-10 flex justify-end gap-2 p-4 sm:p-5">
           <Link href="/profile/edit">
             <Button
               type="button"
@@ -695,7 +688,6 @@ export default function ProfilePage() {
               <span>{translate("editProfile")}</span>
             </Button>
           </Link>
-
           <button
             type="button"
             onClick={handleCopyProfileLink}
@@ -705,7 +697,6 @@ export default function ProfilePage() {
             <Share2 className="w-3.5 h-3.5 text-sky-400" />
             <span className="hidden sm:inline">{translate("shareProfile")}</span>
           </button>
-
           <button
             type="button"
             onClick={handleCoverClick}
@@ -721,31 +712,36 @@ export default function ProfilePage() {
             <span className="hidden md:inline">{translate("editCover")}</span>
           </button>
         </div>
-      </div>
 
-      {/* Warning banner for missing gender */}
-      {!isLoading && displayUser && !displayUser.gender && (
-        <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-            <div>
-              <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
-              <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
+        {/* Spacer: banner background height */}
+        <div className="h-28 sm:h-36 md:h-44" />
+
+        {/* Content sits inside hero, on top of banner */}
+        <div className="relative z-10 px-4 sm:px-6 pb-6">
+
+          {/* Warning banner for missing gender */}
+          {!isLoading && displayUser && !displayUser.gender && (
+            <div className="mb-4 bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                <div>
+                  <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
+                  <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
+                </div>
+              </div>
+              <Link href="/profile/edit">
+                <Button size="sm" variant="warning" className="font-bold text-xs">
+                  {translate("updateNow")}
+                </Button>
+              </Link>
             </div>
-          </div>
-          <Link href="/profile/edit">
-            <Button size="sm" variant="warning" className="font-bold text-xs">
-              {translate("updateNow")}
-            </Button>
-          </Link>
-        </div>
-      )}
+          )}
 
       {/* Main 2-Column Bento Grid */}
       <div className="min-h-[400px]">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
-          <div className="lg:col-span-1 flex flex-col gap-5 -mt-20 sm:-mt-28 md:-mt-36 relative z-20">
+          <div className="lg:col-span-1 flex flex-col gap-5 relative z-20">
             {/* Primary Athlete Card (Left Card with Avatar, Name, Badges, ELO Stats & Actions) */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
               {/* Top Accent Gradient Line */}

@@ -47,17 +47,22 @@ const getCategoryStyles = (name: string) => {
 
 function CommunityMediaImage({
   src,
+  fallbackSrc,
   alt,
   className,
   fallback,
 }: {
   src?: string | null;
+  fallbackSrc?: string | null;
   alt: string;
   className: string;
   fallback: ReactNode;
 }) {
-  const normalizedSource = src?.split(',')[0]?.trim() || null;
+  const normalizedSources = [src, fallbackSrc]
+    .map((value) => value?.split(',')[0]?.trim() || null)
+    .filter((value): value is string => Boolean(value));
   const [failedSource, setFailedSource] = useState<string | null>(null);
+  const normalizedSource = normalizedSources.find((source) => source !== failedSource) || null;
 
   if (!normalizedSource || failedSource === normalizedSource) return <>{fallback}</>;
 
@@ -226,6 +231,7 @@ export default function CommunitiesPage() {
             const rawLogo = community.logoUrl?.trim() || null;
             const communityLogo = (rawLogo && !rawLogo.includes('sporto_v1') && !rawLogo.includes('defaultFallback')) ? rawLogo : null;
             const communityBanner = community.bannerUrl?.split(',')[0]?.trim() || null;
+            const communityCover = community.coverImageUrl?.split(',')[0]?.trim() || null;
 
             return (
               <div
@@ -237,6 +243,7 @@ export default function CommunitiesPage() {
                 <div className="h-48 sm:h-52 bg-slate-50 relative overflow-hidden shrink-0">
                   <CommunityMediaImage
                     src={communityBanner}
+                    fallbackSrc={communityCover}
                     alt={`${community.name} banner`}
                     className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     fallback={(

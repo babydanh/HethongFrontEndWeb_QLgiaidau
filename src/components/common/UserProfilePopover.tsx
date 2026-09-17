@@ -1060,25 +1060,19 @@ export default function UserProfilePopover({
 
             if (friendship?.status === 'PENDING' && friendship.direction === 'OUTGOING') {
               return (
-                <div className={`flex gap-1.5 ${isFullWidth ? 'w-full' : 'flex-1 min-w-0'}`}>
-                  <button
-                    type="button"
-                    disabled
-                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-slate-100 px-2 py-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed min-w-0 truncate"
-                  >
-                    <Check className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{translate('friendRequestSent')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFriendshipAction('remove')}
-                    disabled={friendshipAction !== null}
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  >
-                    {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    {translate('friendCancel')}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handleFriendshipAction('remove')}
+                  disabled={friendshipAction !== null}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 ${isFullWidth ? 'w-full' : 'flex-1'}`}
+                >
+                  {friendshipAction === 'remove' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <UserRoundX className="h-3.5 w-3.5 text-slate-400" />
+                  )}
+                  {translate('friendCancel')}
+                </button>
               );
             }
 

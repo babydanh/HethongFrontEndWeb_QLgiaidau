@@ -14,6 +14,7 @@ import {
   Flame,
   Plus,
   Radio,
+  Search,
   Settings2,
   ShieldCheck,
   Swords,
@@ -455,51 +456,57 @@ export function ClubMatchSessionDetailView({
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* ── Left Column: Header + Tabs content ── */}
           <div className="min-w-0 space-y-5">
-            {/* Header */}
-            <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-7">
-              <div className="flex flex-wrap items-start justify-between gap-5">
-                <div className="min-w-0">
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
-                    <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
-                    <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{t('sessionType')}</Badge>
+            {/* Header + Tabs unified card */}
+            <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
+              <div className="p-5 sm:p-7">
+                <div className="flex flex-wrap items-start justify-between gap-5">
+                  <div className="min-w-0">
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
+                      <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
+                      <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{t('sessionType')}</Badge>
+                    </div>
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{session.resolvedName}</h1>
+                    {session.description ? (
+                      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">{session.description}</p>
+                    ) : (
+                      <p className="mt-2 text-sm text-slate-400">{t('noDescription')}</p>
+                    )}
                   </div>
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{session.resolvedName}</h1>
-                  {session.description ? (
-                    <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">{session.description}</p>
-                  ) : (
-                    <p className="mt-2 text-sm text-slate-400">{t('noDescription')}</p>
-                  )}
                 </div>
+
+                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
+                  {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
+                  {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
+                  <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
+                </div>
+
+                {((session.capabilities?.canWithdraw) ||
+                  (session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status)) ||
+                  (session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status))) && (
+                  <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                    {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
+                    {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
+                    {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
+                    {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
+                  </div>
+                )}
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
-                {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
-                {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
-                <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
-                {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
-                {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
-                {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
-              </div>
+              {/* Tab navigation docked seamlessly at bottom of header */}
+              <nav className="flex h-fit min-w-0 overflow-x-auto border-t border-slate-200/80 bg-slate-50/50 px-4" aria-label={t('tabNavigation')}>
+                {tabs.map((tab) => (
+                  <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
+                    {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
+                  </SessionTabButton>
+                ))}
+              </nav>
             </section>
-
-            {/* Tab navigation */}
-            <nav className="flex h-fit min-w-0 overflow-x-auto rounded-xl border border-slate-200/80 bg-white px-2 shadow-xs" aria-label={t('tabNavigation')}>
-              {tabs.map((tab) => (
-                <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
-                  {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
-                </SessionTabButton>
-              ))}
-            </nav>
 
         <div className="space-y-4">
 
-        {activeTab === 'overview' && <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+        {activeTab === 'overview' && <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 grid lg:grid-cols-[1.25fr_.75fr]">
+          <div className="p-5 sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{t('overviewTitle')}</h2></div>
               <span className="text-sm font-medium text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
@@ -515,7 +522,7 @@ export function ClubMatchSessionDetailView({
               <p className="mt-1 leading-6">{t('registrationOpensImmediately')} {t('pairingDerivedHint')}.</p>
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <div className="p-5 sm:p-6 bg-slate-50/40">
             <h2 className="text-lg font-bold text-slate-900">{t('basicInfoTitle')}</h2>
             <div className="mt-5 space-y-4 text-sm">
               {session.startAt && <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, '')} />}
@@ -525,8 +532,8 @@ export function ClubMatchSessionDetailView({
           </div>
         </section>}
 
-        {activeTab === 'participants' && <section className="space-y-4">
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+        {activeTab === 'participants' && <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs divide-y divide-slate-100">
+          <div className="p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div><h2 className="text-lg font-bold text-slate-900">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantsOnlyHint')}</p></div>
             <span className="text-sm font-medium text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
@@ -561,7 +568,7 @@ export function ClubMatchSessionDetailView({
           )}
           </div>
 
-          {session.viewerParticipant?.status === 'ACTIVE' && <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          {session.viewerParticipant?.status === 'ACTIVE' && <div className="p-5 sm:p-6 bg-slate-50/30">
           <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div><div><h2 className="text-lg font-bold text-slate-900">{t('preferences')}</h2><p className="mt-1 text-sm text-slate-500">{t('preferencesHint')}</p></div></div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {[
@@ -594,17 +601,19 @@ export function ClubMatchSessionDetailView({
         </div>
         </div>
 
-        {/* ── Right Column: Club Context + Registration Roster ── */}
-        <div className="min-w-0 space-y-5">
-          <aside className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
-            <div className="mt-4 flex items-center gap-3">
-              <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-12 w-12" />
-              <div className="min-w-0"><p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p><p className="mt-1 text-xs text-slate-500">{t('clubContextHint')}</p></div>
-            </div>
-          </aside>
+        {/* ── Right Column: Club Context + Registration Roster connected card ── */}
+        <div className="min-w-0">
+          <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs divide-y divide-slate-100">
+            <aside className="p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
+              <div className="mt-3 flex items-center gap-3">
+                <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-11 w-11" />
+                <div className="min-w-0"><p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p><p className="mt-0.5 text-xs text-slate-500">{t('clubContextHint')}</p></div>
+              </div>
+            </aside>
 
-          <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
+            <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
+          </div>
         </div>
       </div>
           {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={() => { setPairingOpen(false); onCreateMatch(setScoreMatch); }} />}
@@ -642,7 +651,7 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   const currentPage = Math.min(page, pageCount - 1);
   const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  return <aside className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+  return <div className="p-5">
     {/* Header */}
     <div className="flex items-center justify-between gap-3">
       <h2 className="text-sm font-bold text-slate-900">{t('registrationTitle')}</h2>
@@ -672,7 +681,7 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
 
     {pageCount > 1 && <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-medium text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
     {canWithdraw && <div className="mt-4 border-t border-slate-100 pt-3"><Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button></div>}
-  </aside>;
+  </div>;
 }
 
 function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, busy, t, assignPlayer, onClose, onCreate }: {
@@ -722,32 +731,45 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
           </div>
           <button
             type="button"
-            aria-label={t('closeForm')}
             onClick={onClose}
-            className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            aria-label={t('closeForm')}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <PairingSide title={t('sideA')} players={sideAPlayers} participants={participants} tone="blue" />
-          <PairingSide title={t('sideB')} players={sideBPlayers} participants={participants} tone="amber" />
-        </div>
-
-        <div className="mt-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('searchParticipantsHint')}
-            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none"
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <PairingSide
+            title={t('sideA')}
+            players={sideAPlayers}
+            participants={participants}
+            tone="blue"
+          />
+          <PairingSide
+            title={t('sideB')}
+            players={sideBPlayers}
+            participants={participants}
+            tone="amber"
           />
         </div>
 
-        <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
+        <div className="mt-5">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('searchParticipants')}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
           {filteredParticipants.length === 0 ? (
-            <div className="py-8 text-center text-xs font-medium text-slate-400">{t('noParticipantsFound')}</div>
+            <p className="py-8 text-center text-sm text-slate-400">{t('noParticipantsFound')}</p>
           ) : (
             filteredParticipants.map((item) => {
               const userId = item.participant.userId;
@@ -758,10 +780,10 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
 
               return (
                 <div
-                  key={item.participant.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2"
+                  key={userId}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 transition hover:bg-slate-50"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <Avatar
                       name={item.fullName}
                       userId={userId}
@@ -769,14 +791,19 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
                       mock={item.isMock}
                       className="h-8 w-8"
                     />
-                    <span
-                      title={item.fullName || undefined}
-                      className="min-w-0 truncate text-sm font-semibold text-slate-900"
-                    >
-                      {shortDisplayName(item.fullName)}
-                    </span>
+                    <div className="min-w-0">
+                      <p
+                        title={item.fullName || undefined}
+                        className="truncate text-sm font-semibold text-slate-900"
+                      >
+                        {shortDisplayName(item.fullName)}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {item.isMock ? t('mockPlayer') : item.participant.source}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 gap-1.5">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <Button
                       size="sm"
                       variant={isSideA ? 'default' : 'outline'}
@@ -831,8 +858,8 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
 
 function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; completedMatches: number; t: (key: string, values?: Record<string, string | number>) => string }) {
   const rankedStats = stats.filter((stat) => stat.played > 0);
-  return <section className="space-y-4">
-    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+  return <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs divide-y divide-slate-100">
+    <div className="p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{t('statisticsTitle')}</h2><p className="mt-1 text-sm text-slate-500">{t('statisticsHint')}</p></div><BarChart3 className="h-6 w-6 text-blue-600" /></div>
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(completedMatches)} label={t('completedMatches')} />
@@ -841,10 +868,10 @@ function StatisticsPanel({ stats, completedMatches, t }: { stats: PlayerStat[]; 
         <SummaryMetric icon={<Flame className="h-4 w-4" />} value={rankedStats[0]?.streak ? `${rankedStats[0].streak}` : '—'} label={t('currentStreak')} />
       </div>
     </div>
-    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+    <div className="p-5 sm:p-6 bg-slate-50/20">
       <div className="flex items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">{t('playerStatistics')}</h2><span className="text-xs font-medium text-slate-500">{t('completedMatchesOnly')}</span></div>
       {stats.length === 0 ? <p className="mt-6 rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">{t('noParticipants')}</p> : <div className="mt-4 overflow-x-auto"><div className="min-w-[620px] space-y-2">
-        {stats.map((stat, index) => <div key={stat.id} className="grid grid-cols-[auto_minmax(0,1fr)_72px_92px_92px_90px] items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
+        {stats.map((stat, index) => <div key={stat.id} className="grid grid-cols-[auto_minmax(0,1fr)_72px_92px_92px_90px] items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-3 shadow-xs">
           <span className="w-5 text-center text-xs font-bold text-slate-400">{index + 1}</span><div className="flex min-w-0 items-center gap-2"><Avatar name={stat.name} userId={stat.id} avatarUrl={stat.avatarUrl} className="h-9 w-9" /><span title={stat.name} className="truncate text-sm font-semibold text-slate-900">{shortDisplayName(stat.name)}</span></div>
           <StatValue label={t('played')} value={String(stat.played)} /><StatValue label={t('winLoss')} value={`${stat.wins}–${stat.losses}`} /><StatValue label={t(stat.streakType === 'WIN' ? 'winningStreak' : stat.streakType === 'LOSS' ? 'losingStreak' : 'streak')} value={stat.streak ? String(stat.streak) : '—'} tone={stat.streakType === 'WIN' ? 'positive' : stat.streakType === 'LOSS' ? 'negative' : 'default'} /><StatValue label="ELO" value={`${stat.eloDelta >= 0 ? '+' : ''}${stat.eloDelta}`} tone={stat.eloDelta >= 0 ? 'positive' : 'negative'} />
         </div>)}

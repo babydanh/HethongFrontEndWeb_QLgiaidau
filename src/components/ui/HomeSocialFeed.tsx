@@ -393,13 +393,13 @@ function SessionDetailModal({
       role="dialog"
       aria-label={item.title}
     >
-      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-xl border border-slate-200 flex flex-col overflow-hidden">
 
-        {/* ── Clean Header (No Dark Blue Banner) ── */}
+        {/* ── Clean Header ── */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-white">
           <div className="flex items-center gap-3 min-w-0">
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200"
               style={item.club.avatarUrl ? { backgroundImage: `url(${item.club.avatarUrl})`, backgroundSize: 'cover' } : {}}
             >
               {!item.club.avatarUrl && item.club.initials}
@@ -418,7 +418,7 @@ function SessionDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
             aria-label="Đóng"
           >
             <X className="h-5 w-5" />
@@ -427,12 +427,12 @@ function SessionDetailModal({
 
         {/* ── 2-Column Body ── */}
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] divide-y md:divide-y-0 md:divide-x divide-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] divide-y md:divide-y-0 md:divide-x divide-slate-100">
 
-            {/* Left column: Session details + Overview metrics + Note */}
-            <div className="p-6 space-y-6">
+            {/* Left column: Session details + Note */}
+            <div className="p-6 space-y-5">
               <div>
-                <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
                   {slots && (
                     <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${
                       isFull
@@ -450,30 +450,26 @@ function SessionDetailModal({
                     Buổi giao lưu
                   </span>
                 </div>
-                <h2 className="text-xl font-bold text-slate-950 leading-tight">{item.title}</h2>
-                <p className="mt-2 text-sm text-slate-600 leading-relaxed">{item.description}</p>
+                <h2 className="text-lg font-bold text-slate-900 leading-tight">{item.title}</h2>
+                {item.description && (
+                  <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{item.description}</p>
+                )}
               </div>
 
-              {/* Info Rows */}
-              <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
-                <div className="flex items-center gap-2.5 text-xs text-slate-700">
+              {/* Core Info Rows */}
+              <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3.5 space-y-2.5 text-xs text-slate-700">
+                <div className="flex items-center gap-2.5">
                   <Clock3 className="h-4 w-4 shrink-0 text-blue-600" />
                   <span className="font-semibold">{item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}</span>
                 </div>
-                <div className="flex items-start gap-2.5 text-xs text-slate-700">
+                <div className="flex items-start gap-2.5">
                   <MapPin className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
-                  <span className="font-medium">{item.location}</span>
+                  <span>{item.location}</span>
                 </div>
                 {slots && (
-                  <div className="flex items-center gap-2.5 text-xs text-slate-700">
+                  <div className="flex items-center gap-2.5">
                     <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
                     <span className="font-bold text-emerald-700">{slots.feePerSlot}/người · Chia tiền sân</span>
-                  </div>
-                )}
-                {item.courtDetails && (
-                  <div className="flex items-start gap-2.5 text-xs text-slate-500">
-                    <Info className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
-                    <span>{item.courtDetails}</span>
                   </div>
                 )}
               </div>

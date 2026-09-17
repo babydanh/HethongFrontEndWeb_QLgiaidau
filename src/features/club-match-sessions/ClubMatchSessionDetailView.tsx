@@ -453,36 +453,36 @@ export function ClubMatchSessionDetailView({
         </Link>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        {/* ── Hero header ── */}
-        <section className="rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm lg:col-start-1">
-          {/* Color strip */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 px-6 pt-6 pb-5 text-white">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${statusClasses(session.status)} border-white/30 bg-white/20 text-white`}>{t(`status.${session.status}`)}</span>
-              <span className="inline-flex items-center rounded-full border border-blue-300/50 bg-blue-500/30 px-3 py-1 text-xs font-bold text-blue-100">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</span>
-              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-medium text-blue-100">{t('sessionType')}</span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{session.resolvedName}</h1>
-            {session.description && (
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-blue-200">{session.description}</p>
-            )}
-            {/* Meta row */}
-            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-blue-100">
-              {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-300" />{formatSessionDate(session.startAt, locale, '')}</span>}
-              {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-300" />{formatSessionDate(session.endAt, locale, '')}</span>}
-              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-300" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
+        {/* ── Header ── */}
+        <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-7 lg:col-start-1">
+          <div className="flex flex-wrap items-start justify-between gap-5">
+            <div className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
+                <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
+                <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{t('sessionType')}</Badge>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{session.resolvedName}</h1>
+              {session.description ? (
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">{session.description}</p>
+              ) : (
+                <p className="mt-2 text-sm text-slate-400">{t('noDescription')}</p>
+              )}
             </div>
           </div>
 
-          {/* Action buttons row */}
-          {(session.capabilities?.canWithdraw || session.capabilities?.canManage) && (
-            <div className="bg-white border-t border-slate-100 px-6 py-3 flex flex-wrap gap-2">
-              {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
-              {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
-              {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
-              {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
-            </div>
-          )}
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
+            {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
+            {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
+            <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
+            {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
+            {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
+            {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
+          </div>
         </section>
 
         <aside className="self-start rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-1">
@@ -635,52 +635,37 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   const pageCount = Math.max(1, Math.ceil(slots.length / pageSize));
   const currentPage = Math.min(page, pageCount - 1);
   const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
-  const fillPercent = Math.round((activeCount / maxParticipants) * 100);
 
-  return <aside className="self-start rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm lg:col-start-2 lg:row-start-2">
+  return <aside className="self-start rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-2">
     {/* Header */}
-    <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-3 border-b border-slate-100">
+    <div className="flex items-center justify-between gap-3">
       <h2 className="text-sm font-bold text-slate-900">{t('registrationTitle')}</h2>
-      <span className="text-sm font-bold text-slate-900">{activeCount}/{maxParticipants}</span>
-    </div>
-    {/* Progress */}
-    <div className="px-5 pt-3 pb-1">
-      <div className="rounded-full bg-slate-100 h-1.5 overflow-hidden">
-        <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${fillPercent}%` }} />
-      </div>
-      <p className="mt-1 text-[11px] text-slate-400">{`${activeCount} tham gia · còn ${Math.max(maxParticipants - activeCount, 0)} chỗ`}</p>
+      <span className="text-xs font-bold text-slate-500">{activeCount}/{maxParticipants}</span>
     </div>
 
-    <div className="p-4 grid grid-cols-4 gap-x-2 gap-y-4">
+    <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-4">
       {visibleSlots.map((item, index) => {
         const slotNumber = currentPage * pageSize + index + 1;
         if (!item) {
           const emptySlot = <>
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-slate-300 bg-slate-50 text-2xl font-light text-slate-400">+</div>
-            <p className="mt-1.5 text-[10px] font-medium text-slate-400 text-center truncate">Slot {slotNumber}</p>
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-slate-200 bg-white text-lg font-light text-slate-400">+</div>
+            <p className="mt-1 text-[10px] font-medium text-slate-400 text-center truncate">Slot #{slotNumber}</p>
           </>;
           return canJoin
-            ? <button key={`slot-${slotNumber}`} type="button" disabled={busy} onClick={onJoin} className="min-w-0 cursor-pointer rounded-xl p-1 text-center transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60">{emptySlot}</button>
+            ? <button key={`slot-${slotNumber}`} type="button" disabled={busy} onClick={onJoin} className="min-w-0 cursor-pointer rounded-xl p-1 text-center transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">{emptySlot}</button>
             : <div key={`slot-${slotNumber}`} className="min-w-0 text-center">{emptySlot}</div>;
         }
         return <div key={item.participant.id} className="min-w-0 text-center">
           <div className="flex justify-center">
-            <Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-14 w-14 ring-2 ring-blue-100 ring-offset-1" />
+            <Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-11 w-11" />
           </div>
-          <p title={item.fullName || undefined} className="mt-1.5 truncate text-[10px] font-semibold text-slate-800">{shortDisplayName(item.fullName) || `#${slotNumber}`}</p>
+          <p title={item.fullName || undefined} className="mt-1 truncate text-[11px] font-semibold text-slate-700">{shortDisplayName(item.fullName) || `#${slotNumber}`}</p>
         </div>;
       })}
     </div>
 
-    {pageCount > 1 && <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-medium text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
-    {canJoin && !canWithdraw && (
-      <div className="px-4 pb-4 border-t border-slate-100 pt-3">
-        <button type="button" disabled={busy} onClick={onJoin} className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-60">
-          {t('join')}
-        </button>
-      </div>
-    )}
-    {canWithdraw && <div className="px-4 pb-4 border-t border-slate-100 pt-3"><Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button></div>}
+    {pageCount > 1 && <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-medium text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
+    {canWithdraw && <div className="mt-4 border-t border-slate-100 pt-3"><Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button></div>}
   </aside>;
 }
 

@@ -84,6 +84,53 @@ type MatchFeedPayload = {
   meta?: { totalPages?: number; nextCursor?: string | null; hasMore?: boolean };
 };
 
+type MatchCursorPage = {
+  matches: EnrichedMatch[];
+  requestCursor: string | null;
+  nextCursor: string | null;
+  hasMore: boolean;
+  totalPages: number;
+};
+
+type TournamentMatchState = {
+  page: number;
+  pages: Record<number, MatchCursorPage>;
+  isLoading: boolean;
+};
+
+type PublicTournamentCandidate = { id: string };
+
+type PublicTournamentFeedPayload = {
+  data?: unknown;
+  meta?: { nextCursor?: string | null; hasMore?: boolean };
+};
+
+const readPublicTournamentFeed = (value: unknown): {
+  tournaments: PublicTournamentCandidate[];
+  nextCursor: string | null;
+  hasMore: boolean;
+} => {
+  const outer = value as PublicTournamentFeedPayload | undefined;
+  if (Array.isArray(outer?.data)) {
+    return {
+      tournaments: (outer.data as PublicTournamentCandidate[]).filter((item) => Boolean(item?.id)),
+      nextCursor: outer?.meta?.nextCursor ?? null,
+      hasMore: outer?.meta?.hasMore ?? false,
+    };
+  }
+
+  const inner = outer?.data as PublicTournamentFeedPayload | undefined;
+  if (Array.isArray(inner?.data)) {
+    return {
+      tournaments: (inner.data as PublicTournamentCandidate[]).filter((item) => Boolean(item?.id)),
+      nextCursor: inner.meta?.nextCursor ?? null,
+      hasMore: inner.meta?.hasMore ?? false,
+    };
+  }
+
+  return { tournaments: [], nextCursor: null, hasMore: false };
+};
+
 const getHttpStatus = (error: unknown): number | undefined => {
   if (typeof error !== 'object' || error === null || !('response' in error)) return undefined;
   const response = error.response;
@@ -120,6 +167,10 @@ const readMatchFeed = (value: unknown): { matches: EnrichedMatch[]; totalPages: 
 
   return { matches: [], totalPages: 1, nextCursor: null, hasMore: false };
 };
+
+const TOURNAMENTS_VISIBLE_PER_BATCH = 4;
+const PUBLIC_TOURNAMENT_DISCOVERY_LIMIT = 12;
+const MATCHES_PER_TOURNAMENT_PAGE = 4;
 
 const getShortName = (fullName: string | null | undefined): string => {
   if (!fullName) return '';
@@ -280,7 +331,7 @@ export default function MatchesListPage() {
   };
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [matches, setMatches] = useState<EnrichedMatch[]>([]);
+  const [tournamentMatchStates, setTournamentMatchStates] = useState<Record<string, TournamentMatchState>>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
@@ -301,7 +352,6 @@ export default function MatchesListPage() {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [hasMoreMatches, setHasMoreMatches] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [groupPages, setGroupPages] = useState<Record<string, number>>({});
   const [cheerCounts, setCheerCounts] = useState<Record<string, number>>({});
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [activeShareUrl, setActiveShareUrl] = useState('');
@@ -310,6 +360,14 @@ export default function MatchesListPage() {
   const [tournamentLogos, setTournamentLogos] = useState<Record<string, string>>({});
   const [visibleTournamentCount, setVisibleTournamentCount] = useState<number>(4);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const matches = useMemo(
+    () => Object.values(tournamentMatchStates).flatMap((state) => state.pages[state.page]?.matches ?? []),
+    [tournamentMatchStates],
+  );
+  const tournamentMatchStatesRef = useRef(tournamentMatchStates);
+  useEffect(() => {
+    tournamentMatchStatesRef.current = tournamentMatchStates;
+  }, [tournamentMatchStates]);
   const filterKey = [
     debouncedSearchTerm,
     selectedCategoryId,
@@ -472,40 +530,100 @@ export default function MatchesListPage() {
         }
         setIsRateLimited(false);
 
-        const res = await matchesApi.getMatches({
-          limit: 100,
-          publicOnly: true,
-          ...(cursorToUse ? { cursor: cursorToUse } : {}),
+        const publicTournamentQuery = {
+          limit: PUBLIC_TOURNAMENT_DISCOVERY_LIMIT,
           search: debouncedSearchTerm || undefined,
           categoryId: selectedCategoryId || undefined,
-          status: selectedStatus || undefined,
           matchType,
           genderRestriction,
-          city: selectedProvince || undefined,
+          region: selectedProvince || undefined,
           isRanked: isRanked === 'true' ? true : isRanked === 'false' ? false : undefined,
           startDate: apiStartDate,
           endDate: apiEndDate,
-        });
+          bracketType: selectedBracketType || undefined,
+        };
 
-        const feed = readMatchFeed(res);
-        const resNextCursor = feed.nextCursor ?? null;
-        const resHasMore = Boolean(feed.hasMore && resNextCursor);
+        let discoveryCursor = isLoadMore ? cursorToUse : null;
+        let discovered: Array<{ tournamentId: string; feed: ReturnType<typeof readMatchFeed> }> = [];
+        let nextTournamentCursor: string | null = null;
+        let tournamentListHasMore = false;
 
-        if (isLoadMore) {
-          setMatches((prev) => {
-            const existingIds = new Set(prev.map((m) => m.id));
-            const uniqueNew = feed.matches.filter((m) => !existingIds.has(m.id));
-            return [...prev, ...uniqueNew];
+        // Public tournament listing can contain records without generated matches.
+        // Skip those with its cursor until four populated cards are available.
+        for (let attempt = 0; attempt < 3 && discovered.length < TOURNAMENTS_VISIBLE_PER_BATCH; attempt += 1) {
+          const tournamentResponse = await tournamentsApi.getPublicTournaments({
+            ...publicTournamentQuery,
+            ...(discoveryCursor ? { cursor: discoveryCursor } : {}),
           });
-        } else {
-          setMatches(feed.matches);
-          setGroupPages({});
-          setVisibleTournamentCount(4);
+          const tournamentFeed = readPublicTournamentFeed(tournamentResponse);
+          const pageResults = await Promise.all(
+            tournamentFeed.tournaments.map(async (tournament) => {
+              try {
+                const matchResponse = await matchesApi.getMatches({
+                  limit: MATCHES_PER_TOURNAMENT_PAGE,
+                  publicOnly: true,
+                  tournamentId: tournament.id,
+                  search: debouncedSearchTerm || undefined,
+                  categoryId: selectedCategoryId || undefined,
+                  status: selectedStatus || undefined,
+                  matchType,
+                  genderRestriction,
+                  bracketType: selectedBracketType || undefined,
+                  city: selectedProvince || undefined,
+                  isRanked: isRanked === 'true' ? true : isRanked === 'false' ? false : undefined,
+                  startDate: apiStartDate,
+                  endDate: apiEndDate,
+                });
+                return { tournamentId: tournament.id, feed: readMatchFeed(matchResponse) };
+              } catch (error) {
+                console.error(`Failed to fetch matches for tournament ${tournament.id}`, error);
+                return { tournamentId: tournament.id, feed: readMatchFeed(null) };
+              }
+            }),
+          );
+
+          const knownTournamentIds = new Set([
+            ...Object.keys(tournamentMatchStatesRef.current),
+            ...discovered.map((item) => item.tournamentId),
+          ]);
+          discovered = [
+            ...discovered,
+            ...pageResults.filter((item) => item.feed.matches.length > 0 && !knownTournamentIds.has(item.tournamentId)),
+          ];
+
+          nextTournamentCursor = tournamentFeed.nextCursor ?? null;
+          tournamentListHasMore = Boolean(tournamentFeed.hasMore && nextTournamentCursor);
+          if (!tournamentListHasMore || !nextTournamentCursor) break;
+          discoveryCursor = nextTournamentCursor;
+        }
+
+        const newTournamentStates = discovered.reduce<Record<string, TournamentMatchState>>((acc, item) => {
+          acc[item.tournamentId] = {
+            page: 1,
+            isLoading: false,
+            pages: {
+              1: {
+                matches: item.feed.matches,
+                requestCursor: null,
+                nextCursor: item.feed.nextCursor ?? null,
+                hasMore: Boolean(item.feed.hasMore && item.feed.nextCursor),
+                totalPages: item.feed.totalPages,
+              },
+            },
+          };
+          return acc;
+        }, {});
+
+        setTournamentMatchStates((previous) => (
+          isLoadMore ? { ...previous, ...newTournamentStates } : newTournamentStates
+        ));
+        if (!isLoadMore) {
+          setVisibleTournamentCount(TOURNAMENTS_VISIBLE_PER_BATCH);
           hasLoadedMatchesRef.current = true;
         }
 
-        setNextCursor(resNextCursor);
-        setHasMoreMatches(resHasMore);
+        setNextCursor(nextTournamentCursor);
+        setHasMoreMatches(tournamentListHasMore && Boolean(nextTournamentCursor));
       } catch (error) {
         console.error('Failed to fetch matches', error);
         setIsRateLimited(getHttpStatus(error) === 429);
@@ -532,6 +650,7 @@ export default function MatchesListPage() {
       selectedStatus,
       selectedProvince,
       isRanked,
+      selectedBracketType,
     ]
   );
 
@@ -549,12 +668,119 @@ export default function MatchesListPage() {
   const handleLoadMore = () => {
     if (isLoadingMore) return;
     if (groupedMatches.length > visibleTournamentCount) {
-      setVisibleTournamentCount((prev) => prev + 4);
+      setVisibleTournamentCount((prev) => prev + TOURNAMENTS_VISIBLE_PER_BATCH);
     } else if (hasMoreMatches && nextCursor) {
-      setVisibleTournamentCount((prev) => prev + 4);
+      setVisibleTournamentCount((prev) => prev + TOURNAMENTS_VISIBLE_PER_BATCH);
       fetchMatches(true, nextCursor);
     }
   };
+
+  const loadTournamentPage = useCallback(
+    async (tournamentId: string, targetPage: number) => {
+      const current = tournamentMatchStatesRef.current[tournamentId];
+      if (!current || current.isLoading || targetPage < 1) return;
+
+      const cachedPage = current.pages[targetPage];
+      if (cachedPage) {
+        setTournamentMatchStates((previous) => ({
+          ...previous,
+          [tournamentId]: { ...previous[tournamentId], page: targetPage },
+        }));
+        return;
+      }
+
+      const previousPage = current.pages[targetPage - 1];
+      const requestCursor = previousPage?.nextCursor ?? null;
+      if (targetPage > 1 && !requestCursor) return;
+
+      let matchType: string | undefined;
+      let genderRestriction: string | undefined;
+      if (selectedContent === 'SINGLE_MALE') {
+        matchType = 'SINGLES';
+        genderRestriction = 'MALE';
+      } else if (selectedContent === 'SINGLE_FEMALE') {
+        matchType = 'SINGLES';
+        genderRestriction = 'FEMALE';
+      } else if (selectedContent === 'DOUBLE_MALE') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'MALE';
+      } else if (selectedContent === 'DOUBLE_FEMALE') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'FEMALE';
+      } else if (selectedContent === 'DOUBLE_MIXED') {
+        matchType = 'DOUBLES';
+        genderRestriction = 'MIXED';
+      }
+
+      const apiStartDate = formatDateForAPI(startDate);
+      const apiEndDate = formatDateForAPI(endDate);
+      setTournamentMatchStates((previous) => ({
+        ...previous,
+        [tournamentId]: { ...previous[tournamentId], isLoading: true },
+      }));
+
+      try {
+        const response = await matchesApi.getMatches({
+          limit: MATCHES_PER_TOURNAMENT_PAGE,
+          publicOnly: true,
+          tournamentId,
+          cursor: requestCursor || undefined,
+          search: debouncedSearchTerm || undefined,
+          categoryId: selectedCategoryId || undefined,
+          status: selectedStatus || undefined,
+          matchType,
+          genderRestriction,
+          bracketType: selectedBracketType || undefined,
+          city: selectedProvince || undefined,
+          isRanked: isRanked === 'true' ? true : isRanked === 'false' ? false : undefined,
+          startDate: apiStartDate,
+          endDate: apiEndDate,
+        });
+        const feed = readMatchFeed(response);
+        setTournamentMatchStates((previous) => {
+          const existing = previous[tournamentId];
+          if (!existing) return previous;
+          return {
+            ...previous,
+            [tournamentId]: {
+              ...existing,
+              page: targetPage,
+              isLoading: false,
+              pages: {
+                ...existing.pages,
+                [targetPage]: {
+                  matches: feed.matches,
+                  requestCursor,
+                  nextCursor: feed.nextCursor ?? null,
+                  hasMore: Boolean(feed.hasMore && feed.nextCursor),
+                  totalPages: feed.totalPages,
+                },
+              },
+            },
+          };
+        });
+      } catch (error) {
+        console.error(`Failed to fetch page ${targetPage} for tournament ${tournamentId}`, error);
+        setTournamentMatchStates((previous) => {
+          const existing = previous[tournamentId];
+          return existing
+            ? { ...previous, [tournamentId]: { ...existing, isLoading: false } }
+            : previous;
+        });
+      }
+    },
+    [
+      debouncedSearchTerm,
+      endDate,
+      isRanked,
+      selectedBracketType,
+      selectedCategoryId,
+      selectedContent,
+      selectedProvince,
+      selectedStatus,
+      startDate,
+    ],
+  );
 
   // Làm giàu logo giải đấu từ Tournament detail API khi Match API không populate logoUrl
   useEffect(() => {
@@ -1111,13 +1337,14 @@ export default function MatchesListPage() {
       ) : (
         <div className="flex flex-col gap-6">
           {currentTournaments.map(group => {
-            // Cấu hình 1 hàng 2 trận gọn gàng (2 trận đấu trên mỗi trang của card giải đấu)
-            const MATCHES_PER_PAGE = 2;
-            const groupPage = groupPages[group.tournamentId] || 1;
-            const totalGroupPages = Math.ceil(group.matches.length / MATCHES_PER_PAGE);
+            const groupState = tournamentMatchStates[group.tournamentId];
+            const groupPage = groupState?.page ?? 1;
+            const currentGroupPage = groupState?.pages[groupPage];
+            const totalGroupPages = currentGroupPage?.totalPages ?? 1;
+            const isGroupLoading = Boolean(groupState?.isLoading);
 
-            // Slice matches based on sub-pagination inside the card
-            const visibleMatches = group.matches.slice((groupPage - 1) * MATCHES_PER_PAGE, groupPage * MATCHES_PER_PAGE);
+            // The API already returns exactly four records for this cursor page.
+            const visibleMatches = group.matches;
 
             return (
               <div
@@ -1493,21 +1720,23 @@ export default function MatchesListPage() {
                   })}
                 </div>
 
-                {/* Compact presentation pagination for matches already loaded by cursor */}
+                {/* Cursor pagination riêng cho từng giải, mỗi trang 4 trận */}
                 {totalGroupPages > 1 && (
                   <div className="flex justify-center items-center gap-2 mt-4 pt-4 border-t border-slate-100">
                     <button
-                      onClick={() => setGroupPages(prev => ({ ...prev, [group.tournamentId]: Math.max(1, groupPage - 1) }))}
-                      disabled={groupPage === 1}
+                      onClick={() => void loadTournamentPage(group.tournamentId, groupPage - 1)}
+                      disabled={groupPage === 1 || isGroupLoading}
                       aria-label={translate('previousPage')}
                       className="p-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-                    <span className="min-w-8 text-center text-xs font-bold text-slate-500">{groupPage}</span>
+                    <span className="min-w-8 text-center text-xs font-bold text-slate-500">
+                      {isGroupLoading ? <Loader2 className="inline h-3.5 w-3.5 animate-spin" /> : groupPage}
+                    </span>
                     <button
-                      onClick={() => setGroupPages(prev => ({ ...prev, [group.tournamentId]: Math.min(totalGroupPages, groupPage + 1) }))}
-                      disabled={groupPage === totalGroupPages}
+                      onClick={() => void loadTournamentPage(group.tournamentId, groupPage + 1)}
+                      disabled={groupPage >= totalGroupPages || !currentGroupPage?.hasMore || isGroupLoading}
                       aria-label={translate('nextPage')}
                       className="p-1.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >

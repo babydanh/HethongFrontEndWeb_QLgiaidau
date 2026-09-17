@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { BRAND } from '@/constants/brand';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
-import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark, Share2, Check, Compass, Sparkles, Target, Clock, Star, ThumbsUp } from 'lucide-react';
+import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark, Share2, Check, Compass, Sparkles, Target, Clock, Star, ThumbsUp, Swords } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/Avatar';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from "next-intl";
+import { cn } from '@/utils/cn';
 import { usersApi, UserProfile } from '@/features/users/api';
 import { communitiesApi, Community } from '@/features/communities/api';
 import { formatDate, formatCurrency } from '@/utils/format';
@@ -630,11 +631,13 @@ export default function ProfilePage() {
     }
   };
 
+  const isOwner = Boolean(user?.id && (!loadedProfileUserId || loadedProfileUserId === user.id));
+
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
       {/* ─── Cover Banner (Độc lập ở trên cùng) ─── */}
-      <div className="relative h-48 sm:h-56 md:h-64 bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-md select-none">
+      <div className="relative h-48 sm:h-56 md:h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-md select-none">
         <input
           type="file"
           accept="image/*"
@@ -679,38 +682,54 @@ export default function ProfilePage() {
 
         {/* Action buttons on top-right of banner */}
         <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 flex gap-2">
-          <Link href="/profile/edit">
-            <Button
-              type="button"
-              className="bg-black/40 hover:bg-black/60 text-white border border-white/20 font-bold text-xs h-8 sm:h-9 px-3 rounded-xl shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all duration-200 active:scale-95 cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-blue-300" />
-              <span>{translate("editProfile")}</span>
-            </Button>
-          </Link>
-          <button
-            type="button"
-            onClick={handleCopyProfileLink}
-            className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
-            title={translate("shareProfile")}
-          >
-            <Share2 className="w-3.5 h-3.5 text-sky-400" />
-            <span className="hidden sm:inline">{translate("shareProfile")}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleCoverClick}
-            disabled={isUploadingCover}
-            className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
-            title={translate("editCover")}
-          >
-            {isUploadingCover ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
-            ) : (
-              <Camera className="w-3.5 h-3.5 text-blue-400" />
-            )}
-            <span className="hidden md:inline">{translate("editCover")}</span>
-          </button>
+          {isOwner ? (
+            <>
+              <Link href="/profile/edit">
+                <Button
+                  type="button"
+                  className="bg-black/40 hover:bg-black/60 text-white border border-white/20 font-bold text-xs h-8 sm:h-9 px-3 rounded-xl shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all duration-200 active:scale-95 cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-blue-300" />
+                  <span>{translate("editProfile")}</span>
+                </Button>
+              </Link>
+              <button
+                type="button"
+                onClick={handleCopyProfileLink}
+                className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
+                title={translate("shareProfile")}
+              >
+                <Share2 className="w-3.5 h-3.5 text-sky-400" />
+                <span className="hidden sm:inline">{translate("shareProfile")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleCoverClick}
+                disabled={isUploadingCover}
+                className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
+                title={translate("editCover")}
+              >
+                {isUploadingCover ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5 text-blue-400" />
+                )}
+                <span className="hidden md:inline">{translate("editCover")}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleCopyProfileLink}
+                className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
+                title={translate("shareProfile")}
+              >
+                <Share2 className="w-3.5 h-3.5 text-sky-400" />
+                <span className="hidden sm:inline">{translate("shareProfile")}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -732,13 +751,13 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Main 2-Column Bento Grid - float up into banner with -mt */}
-      <div className="min-h-[400px] -mt-16 sm:-mt-20 md:-mt-24 relative z-20">
+      {/* Main 2-Column Bento Grid */}
+      <div className="min-h-[400px] relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
-          <div className="lg:col-span-1 flex flex-col gap-5">
+          <div className="lg:col-span-1 flex flex-col gap-5 -mt-16 sm:-mt-20 md:-mt-24">
             {/* Primary Athlete Card (Left Card with Avatar, Name, Badges, ELO Stats & Actions) */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-md p-5 flex flex-col items-center text-center relative overflow-hidden">
               {/* Top Accent Gradient Line */}
               <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400" />
 
@@ -752,8 +771,8 @@ export default function ProfilePage() {
                   categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
                   matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
                   size="lg"
-                  className="!h-20 !w-20"
-                  ringClassName="ring-4 ring-white shadow-xl transition-transform duration-300 hover:scale-[1.02]"
+                  className="!h-24 !w-24 border-4 shadow-xl transition-transform duration-300 hover:scale-[1.02]"
+                  ringClassName="ring-2 ring-white"
                 />
                 <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-2 ring-white" title={translate("onlineNow")}>
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -843,17 +862,38 @@ export default function ProfilePage() {
 
               {/* Action Buttons in Left Profile Card */}
               <div className="w-full flex flex-col gap-2 mt-4">
-                <Link href="/tournaments" className="w-full">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
-                    <Zap className="w-3.5 h-3.5 mr-1.5" />
-                    {translate("quickChallenge")}
-                  </Button>
-                </Link>
-                <Link href="/profile/edit" className="w-full">
-                  <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs">
-                    <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
-                  </Button>
-                </Link>
+                {isOwner ? (
+                  <>
+                    <Link href="/tournaments" className="w-full">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs cursor-pointer">
+                        <Zap className="w-3.5 h-3.5 mr-1.5" />
+                        {translate("quickChallenge")}
+                      </Button>
+                    </Link>
+                    <Link href="/profile/edit" className="w-full">
+                      <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs cursor-pointer">
+                        <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href={`/tournaments?challengeUser=${loadedProfileUserId || ''}`} className="w-full">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs cursor-pointer">
+                        <Swords className="w-3.5 h-3.5 mr-1.5" />
+                        {translate("quickChallenge")}
+                      </Button>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleCopyProfileLink}
+                      className="w-full h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                      {translate("shareProfile")}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -943,48 +983,50 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Tài khoản hoàn tiền */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("bankWallet")}</h3>
-                  <Link href="/profile/edit" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                    {translate("editProfile")}
-                  </Link>
-                </div>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
-                    <div className="h-4 bg-slate-200 animate-pulse rounded w-3/4"></div>
-                  </div>
-                ) : profileData?.bankName ? (
-                  <div className="flex flex-col gap-3 text-sm">
-                    <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                      <span className="text-slate-500 font-medium">{translate("bankWallet")}</span>
-                      <span className="text-slate-900 font-semibold">{profileData.bankName}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                      <span className="text-slate-500 font-medium">{translate("accountOrWalletNumber")}</span>
-                      <span className="text-slate-900 font-bold text-blue-650">{profileData.bankAccountNumber}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-slate-500 font-medium">{translate("accountHolder")}</span>
-                      <span className="text-slate-900 font-semibold uppercase">{profileData.bankAccountName}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                    <p className="text-slate-400 text-xs italic">{translate("refundAccountMissing")}</p>
-                    <Link href="/profile/edit">
-                      <Button size="sm" className="mt-2.5 text-xs font-bold px-3 py-1.5 h-auto">
-                        {translate("configureNow")}
-                      </Button>
+              {/* Tài khoản hoàn tiền - Chỉ hiển thị với chính chủ */}
+              {isOwner && (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("bankWallet")}</h3>
+                    <Link href="/profile/edit" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                      {translate("editProfile")}
                     </Link>
                   </div>
-                )}
-              </div>
+                  {isLoading ? (
+                    <div className="space-y-3">
+                      <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
+                      <div className="h-4 bg-slate-200 animate-pulse rounded w-3/4"></div>
+                    </div>
+                  ) : profileData?.bankName ? (
+                    <div className="flex flex-col gap-3 text-sm">
+                      <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                        <span className="text-slate-500 font-medium">{translate("bankWallet")}</span>
+                        <span className="text-slate-900 font-semibold">{profileData.bankName}</span>
+                      </div>
+                      <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                        <span className="text-slate-500 font-medium">{translate("accountOrWalletNumber")}</span>
+                        <span className="text-slate-900 font-bold text-blue-650">{profileData.bankAccountNumber}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-slate-500 font-medium">{translate("accountHolder")}</span>
+                        <span className="text-slate-900 font-semibold uppercase">{profileData.bankAccountName}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                      <p className="text-slate-400 text-xs italic">{translate("refundAccountMissing")}</p>
+                      <Link href="/profile/edit">
+                        <Button size="sm" className="mt-2.5 text-xs font-bold px-3 py-1.5 h-auto">
+                          {translate("configureNow")}
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* {translate("requestOrganizerRole")} (Organizer) */}
-              {!isLoading && (
+              {/* {translate("requestOrganizerRole")} (Organizer) - Chỉ hiển thị với chính chủ */}
+              {isOwner && !isLoading && (
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("roleOrganizer")}</h3>
                   {(profileData?.roles || user?.roles || []).includes('ORGANIZER') ||
@@ -1047,9 +1089,9 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="lg:col-span-2 space-y-5">
-              {/* Navigation Tabs Bar */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs px-3 sm:px-4 py-1.5 flex items-center overflow-x-auto no-scrollbar">
-                <div className="flex gap-1 sm:gap-2">
+              {/* Navigation Tabs Bar: Underline Style, Không đè lên banner */}
+              <div className="bg-white rounded-xl border border-slate-200 px-3 sm:px-6 flex items-center overflow-x-auto no-scrollbar shadow-2xs">
+                <div className="flex gap-4 sm:gap-8">
                   {([
                     { id: 'overview', label: translate("overview") },
                     { id: 'tournaments', label: translate("following") },
@@ -1061,11 +1103,12 @@ export default function ProfilePage() {
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`px-3.5 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all cursor-pointer ${
+                      className={cn(
+                        "py-3 text-xs sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer whitespace-nowrap",
                         activeTab === tab.id
-                          ? 'bg-blue-600 text-white shadow-xs font-extrabold'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                      }`}
+                          ? "border-blue-600 text-blue-600"
+                          : "border-transparent text-slate-500 hover:text-slate-800"
+                      )}
                     >
                       {tab.label}
                     </button>
@@ -1075,41 +1118,6 @@ export default function ProfilePage() {
 
               {activeTab === 'overview' && (
                 <>
-                  {/* Mục tiêu thể thao & Tìm bạn chơi */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-xl border border-blue-100 p-5 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider mb-2">
-                          <Target className="w-4 h-4 text-blue-600" />
-                          <span>{translate("sportsGoalsTitle")}</span>
-                        </div>
-                        <p className="text-slate-700 text-xs font-semibold leading-relaxed">
-                          {translate("sportsGoalsDesc")}
-                        </p>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-blue-150/50 flex items-center justify-between text-xs">
-                        <span className="text-slate-500 font-medium">Target ELO</span>
-                        <span className="font-extrabold text-blue-700">1,600+ (Tier A)</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-indigo-50/70 to-purple-50/40 rounded-xl border border-indigo-100 p-5 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-wider mb-2">
-                          <Users className="w-4 h-4 text-indigo-600" />
-                          <span>{translate("partnerSearchTitle")}</span>
-                        </div>
-                        <p className="text-slate-700 text-xs font-semibold leading-relaxed">
-                          {translate("partnerSearchDesc")}
-                        </p>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-indigo-150/50 flex items-center justify-between text-xs">
-                        <span className="text-slate-500 font-medium">Level bạn đấu</span>
-                        <span className="font-extrabold text-indigo-700">B ~ B+ / Vui vẻ</span>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Lịch sẵn sàng thi đấu & giao lưu */}
                   <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
                     <div className="flex items-center justify-between mb-4">
@@ -1122,7 +1130,7 @@ export default function ProfilePage() {
                       <button
                         type="button"
                         onClick={() => setActiveTab('tournaments')}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         {translate("viewAllSchedule")}
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -1182,14 +1190,16 @@ export default function ProfilePage() {
                         </div>
                         <p className="text-xs text-slate-400 font-medium mt-0.5">{translate("frequentOpponentsSub")}</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('matches')}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
-                      >
-                        {translate("viewAllOpponents")}
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                      {frequentOpponents.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('matches')}
+                          className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          {translate("viewAllOpponents")}
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
 
                     {frequentOpponents.length > 0 ? (
@@ -1215,75 +1225,11 @@ export default function ProfilePage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
-                            CLB
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-bold text-slate-900 truncate">VĐV Sporto Pickleball</h4>
-                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Cùng cụm sân</p>
-                          </div>
-                        </div>
-                        <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
-                            HN
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-bold text-slate-900 truncate">Cộng đồng Giao lưu</h4>
-                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Sẵn sàng nhận kèo</p>
-                          </div>
-                        </div>
-                        <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">
-                            HCM
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-bold text-slate-900 truncate">Hội Đánh Đôi Sài Gòn</h4>
-                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Thành viên năng nổ</p>
-                          </div>
-                        </div>
+                      <div className="text-center py-6 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                        <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-xs text-slate-500 font-semibold">Chưa ghi nhận đối thủ thường xuyên qua các trận đấu gần đây.</p>
                       </div>
                     )}
-                  </div>
-
-                  {/* Chỉ số Uy tín & Tinh thần thể thao */}
-                  <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                        {translate("sportsmanshipTitle")}
-                      </h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 text-center">
-                        <div className="flex items-center justify-center gap-1 text-emerald-600 mb-1">
-                          <ThumbsUp className="w-4 h-4" />
-                          <span className="text-lg font-black">100%</span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-800">{translate("fairPlayRate")}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{translate("fairPlayVoteDesc")}</p>
-                      </div>
-
-                      <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 text-center">
-                        <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
-                          <Clock className="w-4 h-4" />
-                          <span className="text-lg font-black">98%</span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-800">{translate("onTimeRate")}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{translate("onTimeDesc")}</p>
-                      </div>
-
-                      <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 text-center">
-                        <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
-                          <Star className="w-4 h-4 fill-amber-400" />
-                          <span className="text-lg font-black">5.0</span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-800">{translate("communityRating")}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{translate("communityRatingDesc")}</p>
-                      </div>
-                    </div>
                   </div>
 
                   {/* Câu lạc bộ của tôi */}

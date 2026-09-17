@@ -453,54 +453,48 @@ export function ClubMatchSessionDetailView({
         </Link>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        {/* ── Header ── */}
-        <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-7 lg:col-start-1">
-          <div className="flex flex-wrap items-start justify-between gap-5">
-            <div className="min-w-0">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
-                <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
-                <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{t('sessionType')}</Badge>
+          {/* ── Left Column: Header + Tabs content ── */}
+          <div className="min-w-0 space-y-5">
+            {/* Header */}
+            <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-7">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="min-w-0">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
+                    <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
+                    <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{t('sessionType')}</Badge>
+                  </div>
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{session.resolvedName}</h1>
+                  {session.description ? (
+                    <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">{session.description}</p>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-400">{t('noDescription')}</p>
+                  )}
+                </div>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{session.resolvedName}</h1>
-              {session.description ? (
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">{session.description}</p>
-              ) : (
-                <p className="mt-2 text-sm text-slate-400">{t('noDescription')}</p>
-              )}
-            </div>
-          </div>
 
-          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
-            {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
-            {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
-            <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
-          </div>
+              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
+                {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
+                {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
+                <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
+              </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
-            {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
-            {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
-            {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
-          </div>
-        </section>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
+                {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
+                {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
+                {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
+              </div>
+            </section>
 
-        <aside className="self-start rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
-          <div className="mt-4 flex items-center gap-3">
-            <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-12 w-12" />
-            <div className="min-w-0"><p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p><p className="mt-1 text-xs text-slate-500">{t('clubContextHint')}</p></div>
-          </div>
-        </aside>
-
-        <div className="min-w-0 space-y-4 lg:col-start-1 lg:row-start-2">
-        <nav className="flex h-fit min-w-0 overflow-x-auto rounded-xl border border-slate-200/80 bg-white px-2 shadow-xs" aria-label={t('tabNavigation')}>
-          {tabs.map((tab) => (
-            <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
-              {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
-            </SessionTabButton>
-          ))}
-        </nav>
+            {/* Tab navigation */}
+            <nav className="flex h-fit min-w-0 overflow-x-auto rounded-xl border border-slate-200/80 bg-white px-2 shadow-xs" aria-label={t('tabNavigation')}>
+              {tabs.map((tab) => (
+                <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
+                  {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
+                </SessionTabButton>
+              ))}
+            </nav>
 
         <div className="space-y-4">
 
@@ -599,7 +593,19 @@ export function ClubMatchSessionDetailView({
         />
         </div>
         </div>
-        <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
+
+        {/* ── Right Column: Club Context + Registration Roster ── */}
+        <div className="min-w-0 space-y-5">
+          <aside className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
+            <div className="mt-4 flex items-center gap-3">
+              <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-12 w-12" />
+              <div className="min-w-0"><p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p><p className="mt-1 text-xs text-slate-500">{t('clubContextHint')}</p></div>
+            </div>
+          </aside>
+
+          <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
+        </div>
       </div>
           {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={() => { setPairingOpen(false); onCreateMatch(setScoreMatch); }} />}
       </div>
@@ -636,7 +642,7 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   const currentPage = Math.min(page, pageCount - 1);
   const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  return <aside className="self-start rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs lg:col-start-2 lg:row-start-2">
+  return <aside className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
     {/* Header */}
     <div className="flex items-center justify-between gap-3">
       <h2 className="text-sm font-bold text-slate-900">{t('registrationTitle')}</h2>

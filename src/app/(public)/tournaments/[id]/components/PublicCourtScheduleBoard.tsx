@@ -687,7 +687,7 @@ export default function PublicCourtScheduleBoard({
           {/* Right: Step Interval, Search, Zoom Controls, Navigation, Fullscreen */}
           <div className="flex items-center gap-1.5 flex-wrap ml-auto">
             {/* Step Interval Switcher */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 p-0.5 rounded-lg text-[11px] font-bold text-slate-700">
+            <div className="flex items-center bg-slate-50 border border-slate-200 p-0.5 rounded-lg text-[11px] font-bold text-slate-700 shrink-0">
               <span className="px-1.5 text-slate-400 font-semibold flex items-center gap-1">
                 <SlidersHorizontal className="h-3 w-3" />
                 <span className="hidden sm:inline">Khung:</span>
@@ -709,19 +709,19 @@ export default function PublicCourtScheduleBoard({
             </div>
 
             {/* Quick Search */}
-            <div className="relative w-32 sm:w-44">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <div className="relative w-28 sm:w-36 md:w-44 shrink-0">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={translate('timelineSearchPlaceholder')}
-                className="h-7 pl-7 pr-2.5 text-xs rounded-lg border font-medium bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="h-7 w-full pl-6.5 pr-2 text-xs rounded-lg border font-medium bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-slate-400"
               />
             </div>
 
             {/* Zoom Controls */}
-            <div className="flex items-center gap-0.5 p-0.5 rounded-lg border shadow-2xs bg-slate-50 border-slate-200">
+            <div className="flex items-center gap-0.5 p-0.5 rounded-lg border shadow-2xs bg-slate-50 border-slate-200 shrink-0">
               <button
                 type="button"
                 onClick={() => handleZoom(-0.1)}
@@ -734,7 +734,7 @@ export default function PublicCourtScheduleBoard({
               <button
                 type="button"
                 onClick={() => setZoomLevel(1.0)}
-                className="h-6 min-w-[42px] px-1.5 rounded text-[11px] font-bold text-slate-700 hover:bg-white transition-all cursor-pointer text-center"
+                className="h-6 min-w-[38px] px-1 rounded text-[11px] font-bold text-slate-700 hover:bg-white transition-all cursor-pointer text-center"
                 title={translate('timelineZoomReset')}
               >
                 {Math.round(zoomLevel * 100)}%

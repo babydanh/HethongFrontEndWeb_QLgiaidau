@@ -1852,24 +1852,10 @@ const commonTranslate = useTranslations('Common');
                                 aria-current={isActive ? 'true' : undefined}
                                 aria-expanded={isActive}
                                 onClick={() => handleDivisionSelect(division.id)}
-                                className="group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 hover:bg-slate-50/70"
+                                className={`group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2.5 text-left transition-all sm:px-4 ${
+                                  isActive ? 'bg-slate-50/90' : 'hover:bg-slate-50/70'
+                                }`}
                               >
-                            {(() => {
-                              const divisionObj = division as unknown as Record<string, unknown>;
-                              const tournamentObj = tournament as unknown as Record<string, unknown>;
-                              const divTourObj = divisionTournament as unknown as Record<string, unknown>;
-                              const bracketFormat = (division.bracketType || divisionObj.format || divTourObj?.bracketType || divTourObj?.format || tournamentObj?.bracketType || tournament?.format) as string | undefined;
-                              const BracketIcon = getBracketFormatIcon(bracketFormat);
-                              return (
-                                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                                  isActive
-                                    ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs'
-                                    : 'bg-slate-50 text-slate-500 border border-slate-200/80'
-                                }`}>
-                                  <BracketIcon className="h-4 w-4" aria-hidden="true" />
-                                </span>
-                              );
-                            })()}
                               {/* Title */}
                               {(() => {
                                 let displayName = division.name;
@@ -1889,8 +1875,8 @@ const commonTranslate = useTranslations('Common');
                                   <span className="min-w-0 flex-1">
                                     <span className={`inline-block truncate text-sm sm:text-base ${
                                       isActive
-                                        ? 'font-bold text-blue-600'
-                                        : 'font-semibold text-slate-700'
+                                        ? 'font-bold text-slate-900'
+                                        : 'font-semibold text-slate-700 group-hover:text-slate-900'
                                     }`}>
                                       {displayName}
                                     </span>

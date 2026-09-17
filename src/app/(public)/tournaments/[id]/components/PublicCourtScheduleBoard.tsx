@@ -639,9 +639,9 @@ export default function PublicCourtScheduleBoard({
               <div className="flex items-center bg-slate-100/90 p-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-md text-xs font-bold bg-white text-blue-600 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1 rounded-md text-xs font-bold bg-white text-slate-900 shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Calendar className="h-3.5 w-3.5" />
+                  <Calendar className="h-3.5 w-3.5 text-slate-700" />
                   <span>{translate('viewModeTimeline')}</span>
                 </button>
                 <button
@@ -667,14 +667,14 @@ export default function PublicCourtScheduleBoard({
                     onClick={() => setSelectedDate(dateStr)}
                     className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                       isActive
-                        ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-xs'
-                        : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
-                    <Calendar className={`h-3 w-3 ${isActive ? 'text-blue-500' : 'text-slate-400'}`} />
+                    <Calendar className={`h-3 w-3 ${isActive ? 'text-slate-200' : 'text-slate-400'}`} />
                     <span>{formatDayLabel(dateStr)}</span>
                     {matchCount > 0 && (
-                      <span className={`px-1 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                      <span className={`px-1 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'}`}>
                         {matchCount}
                       </span>
                     )}
@@ -699,7 +699,7 @@ export default function PublicCourtScheduleBoard({
                   onClick={() => setStepMinutes(step)}
                   className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
                     stepMinutes === step
-                      ? 'bg-white text-blue-600 shadow-xs'
+                      ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
@@ -858,18 +858,38 @@ export default function PublicCourtScheduleBoard({
             })}
 
             {/* Time Column (Sticky Left with Soft Yellow Sidebar Background #fef08a z-10) */}
-            <div className="sticky left-0 z-10 border-r border-amber-300 bg-[#fef08a]">
-              {timeSlots.map((slot) => {
+            <div className="sticky left-0 z-10 border-r border-amber-300 bg-[#fef08a] relative" style={{ height: `${gridTotalHeight}px` }}>
+              {timeSlots.map((slot, idx) => {
                 return (
-                  <div
-                    key={slot.label}
-                    className="flex items-center justify-center border-b border-amber-300/80 text-[10px] sm:text-[11px] font-black text-slate-900"
-                    style={{ height: `${cellHeight}px` }}
-                  >
-                    <span className="font-black tracking-tight">{slot.label}</span>
-                  </div>
+                  <React.Fragment key={slot.label}>
+                    {/* Background slot border */}
+                    <div
+                      className="absolute inset-x-0 border-b border-amber-300/80"
+                      style={{ top: `${slot.topPx}px`, height: `${cellHeight}px` }}
+                    />
+                    {/* Time Label on the mark line */}
+                    <div
+                      className={`absolute ${idx === 0 ? 'top-1' : '-translate-y-1/2'} left-0 right-0 px-0.5 text-center font-extrabold text-[11px] text-slate-800 pointer-events-none select-none z-10`}
+                      style={idx === 0 ? undefined : { top: `${slot.topPx}px` }}
+                    >
+                      <span className="inline-block bg-amber-100/95 px-1 py-0.5 rounded text-[10px] sm:text-[11px] font-black text-slate-900 border border-amber-300/80 shadow-2xs">
+                        {slot.label}
+                      </span>
+                    </div>
+                  </React.Fragment>
                 );
               })}
+              {/* Bottom end time mark */}
+              {timeSlots.length > 0 && (
+                <div
+                  className="absolute inset-x-0 -translate-y-1/2 flex items-center justify-center pointer-events-none z-10 px-0.5"
+                  style={{ top: `${gridTotalHeight}px` }}
+                >
+                  <span className="inline-block bg-amber-100/95 px-1 py-0.5 rounded text-[10px] sm:text-[11px] font-black text-slate-900 border border-amber-300/80 shadow-2xs">
+                    {formatTimeLabel(operatingEndHour, 0)}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Court Grid Columns & Cells */}

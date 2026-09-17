@@ -1115,95 +1115,238 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
 
   const inputClass = 'h-11 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]" onClick={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }} role="dialog" aria-modal="true" aria-labelledby="create-personal-pickup-title">
-      <form onSubmit={handleSubmit} className="max-h-[94vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">Bảng tin hoạt động</p>
-            <h2 id="create-personal-pickup-title" className="mt-1 text-lg font-bold text-slate-950">Tạo trận giao lưu phong trào</h2>
-            <p className="mt-1 text-xs text-slate-500">Trận mở cho cộng đồng, không thuộc CLB và không tính ELO.</p>
-          </div>
-          <button type="button" onClick={onClose} disabled={isSubmitting} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-5 w-5" /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-3 sm:p-4 backdrop-blur-[2px]" onClick={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }} role="dialog" aria-modal="true" aria-labelledby="create-personal-pickup-title">
+      <form onSubmit={handleSubmit} className="w-full max-w-4xl max-h-[96vh] flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        {/* Header: Đã bỏ bớt chữ dài dòng */}
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-3 sm:px-6">
+          <h2 id="create-personal-pickup-title" className="text-base sm:text-lg font-bold text-slate-950">
+            Tạo trận giao lưu phong trào
+          </h2>
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors" aria-label="Đóng"><X className="h-5 w-5" /></button>
         </div>
 
-        <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
-          <div className="sm:col-span-2">
-            <span className="mb-1.5 block text-xs font-bold text-slate-700">Môn thể thao</span>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-label="Môn thể thao">
-              {categories.map((category) => (
-                <button key={category.id} type="button" onClick={() => setCategoryId(category.id)} className={`rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition ${categoryId === category.id ? 'border-blue-600 bg-blue-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50/40'}`}>
-                  {category.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Tiêu đề</span><input value={title} onChange={(event) => setTitle(event.target.value)} minLength={3} maxLength={255} required placeholder="Ví dụ: Giao lưu Pickleball buổi tối" className={inputClass} /></label>
-
-          <div className="sm:col-span-2">
-            <DateTimePicker
-              name="playDateTime"
-              label="Ngày chơi và giờ bắt đầu"
-              value={startDateTime}
-              onChange={setStartDateTime}
-              placeholder="dd/mm/yyyy hh:mm"
-              className="h-11"
-            />
-          </div>
-
-          <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-            <div className="mb-2 flex items-center justify-between gap-2"><span className="text-xs font-bold text-slate-700">Thời lượng</span><span className="text-[11px] text-slate-400">Chọn nhanh hoặc nhập số phút</span></div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {PERSONAL_PICKUP_DURATION_PRESETS.map((preset) => <button key={preset.value} type="button" onClick={() => { setDurationMinutes(preset.value); setCustomDuration(''); }} className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold transition ${durationMinutes === preset.value && !customDuration ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300'}`}>{preset.label}</button>)}
-              <label className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-500">Khác (phút)<input type="number" min={10} max={720} step={5} value={customDuration} onChange={(event) => { setCustomDuration(event.target.value); setDurationMinutes(Number(event.target.value) || 0); }} className="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500" /></label>
-            </div>
-            <p className="mt-2 text-xs text-blue-700">Kết thúc dự kiến: <strong>{endTime || 'chưa xác định'}</strong></p>
-          </div>
-
-          <div className="sm:col-span-2 space-y-3 rounded-xl border border-slate-200 bg-white p-3">
-            <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold text-slate-700">Địa điểm</span><span className="text-[11px] text-slate-400">Có thể nhập tay, không bắt buộc chọn sân</span></div>
-            <select value={venueId} onChange={(event) => handleVenueChange(event.target.value)} className={`${inputClass} bg-white`} disabled={isLoadingVenues}>
-              <option value="">{isLoadingVenues ? 'Đang tải địa điểm...' : 'Chọn địa điểm có sẵn (không bắt buộc)'}</option>
-              {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name} · {venue.locationAddress}</option>)}
-            </select>
-            {venueId && <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white`}><option value="">Chọn tên sân (tùy chọn)</option>{courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}</select>}
-            <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Địa điểm hiển thị <span className="text-rose-500">*</span></span><input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Nhập địa điểm, ví dụ: D-Sport Quận 7 · Sân 3" className={inputClass} /></label>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <SearchableRegionSelect
-                value={provinceCode}
-                options={provinces}
-                inputName="pickup-province"
-                placeholder="Tỉnh/thành phố"
-                onChange={handleProvinceChange}
-              />
-              <SearchableRegionSelect
-                value={wardCode}
-                options={wards}
-                inputName="pickup-ward"
-                disabled={!provinceCode || wards.length === 0}
-                placeholder={!provinceCode ? 'Chọn tỉnh/thành phố trước' : wards.length === 0 ? 'Đang tải phường/xã...' : 'Phường/xã'
-                }
-                onChange={setWardCode}
-              />
-            </div>
-            {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
-              <div className="flex items-center gap-1 text-[11px] font-medium text-blue-600">
-                <Sparkles className="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true" />
-                <span className="truncate">
-                  Gợi ý khu vực: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
-                  {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ' > đang dò phường/xã'}
-                </span>
+        {/* Content: 2 cột rộng rãi, không cần scroll */}
+        <div className="p-5 sm:p-6 overflow-y-auto max-h-[calc(96vh-120px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3.5">
+            {/* Cột trái: Môn thể thao, Tiêu đề, Thời gian, Thời lượng */}
+            <div className="space-y-3.5">
+              {/* Môn thể thao - style hover nhạt / active chuẩn như QuickTournamentCreate */}
+              <div>
+                <span className="mb-1.5 block text-xs font-bold text-slate-700">Môn thể thao</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5" role="group" aria-label="Môn thể thao">
+                  {categories.map((category) => {
+                    const isSelected = categoryId === category.id;
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => setCategoryId(category.id)}
+                        className={`flex items-center justify-center rounded-xl border px-3 py-2 text-center text-xs cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-semibold'
+                            : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="truncate">{category.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            )}
+
+              {/* Tiêu đề */}
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold text-slate-700">Tiêu đề</span>
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  minLength={3}
+                  maxLength={255}
+                  required
+                  placeholder="Ví dụ: Giao lưu Pickleball buổi tối"
+                  className={inputClass}
+                />
+              </label>
+
+              {/* Ngày chơi và giờ bắt đầu */}
+              <div>
+                <DateTimePicker
+                  name="playDateTime"
+                  label="Ngày chơi và giờ bắt đầu"
+                  value={startDateTime}
+                  onChange={setStartDateTime}
+                  placeholder="dd/mm/yyyy hh:mm"
+                  className="h-10"
+                />
+              </div>
+
+              {/* Thời lượng */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-700">Thời lượng</span>
+                  <span className="text-xs text-blue-700 font-semibold">Kết thúc dự kiến: <strong>{endTime || 'chưa xác định'}</strong></span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {PERSONAL_PICKUP_DURATION_PRESETS.map((preset) => {
+                    const isSelected = durationMinutes === preset.value && !customDuration;
+                    return (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        onClick={() => { setDurationMinutes(preset.value); setCustomDuration(''); }}
+                        className={`rounded-lg border px-2.5 py-1.5 text-xs cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-semibold'
+                            : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                  <label className="ml-auto flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                    Khác:
+                    <input
+                      type="number"
+                      min={10}
+                      max={720}
+                      step={5}
+                      value={customDuration}
+                      onChange={(event) => { setCustomDuration(event.target.value); setDurationMinutes(Number(event.target.value) || 0); }}
+                      placeholder="phút"
+                      className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Chi phí và số người */}
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-bold text-slate-700">Phí mỗi người <span className="font-normal text-slate-400">(tùy chọn)</span></span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={10000000}
+                    step={1000}
+                    value={feePerSlot}
+                    onChange={(event) => setFeePerSlot(event.target.value)}
+                    placeholder="Miễn phí"
+                    className={inputClass}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-bold text-slate-700">Tổng số người <span className="text-rose-500">*</span></span>
+                  <input
+                    type="number"
+                    min={2}
+                    max={128}
+                    value={maxSlots}
+                    onChange={(event) => setMaxSlots(event.target.value)}
+                    required
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Cột phải: Địa điểm và Mô tả */}
+            <div className="space-y-3.5">
+              {/* Box Địa điểm */}
+              <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-700">Địa điểm</span>
+                  <span className="text-[11px] text-slate-400">Chọn sân hoặc nhập tay</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <select value={venueId} onChange={(event) => handleVenueChange(event.target.value)} className={`${inputClass} bg-white text-xs`} disabled={isLoadingVenues}>
+                    <option value="">{isLoadingVenues ? 'Đang tải địa điểm...' : 'Chọn địa điểm có sẵn'}</option>
+                    {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
+                  </select>
+                  {venueId ? (
+                    <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white text-xs`}>
+                      <option value="">Chọn sân (tùy chọn)</option>
+                      {courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}
+                    </select>
+                  ) : (
+                    <div className="hidden sm:block" />
+                  )}
+                </div>
+
+                <label className="block">
+                  <span className="mb-1 block text-xs font-bold text-slate-700">Địa điểm hiển thị <span className="text-rose-500">*</span></span>
+                  <input
+                    value={location}
+                    onChange={(event) => setLocation(event.target.value)}
+                    minLength={2}
+                    maxLength={255}
+                    required
+                    placeholder="Ví dụ: D-Sport Quận 7 · Sân 3"
+                    className={`${inputClass} bg-white`}
+                  />
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <SearchableRegionSelect
+                    value={provinceCode}
+                    options={provinces}
+                    inputName="pickup-province"
+                    placeholder="Tỉnh/thành phố"
+                    onChange={handleProvinceChange}
+                  />
+                  <SearchableRegionSelect
+                    value={wardCode}
+                    options={wards}
+                    inputName="pickup-ward"
+                    disabled={!provinceCode || wards.length === 0}
+                    placeholder={!provinceCode ? 'Tỉnh/TP trước' : wards.length === 0 ? 'Đang tải...' : 'Phường/xã'}
+                    onChange={setWardCode}
+                  />
+                </div>
+                {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+                  <div className="flex items-center gap-1 text-[11px] font-medium text-blue-600">
+                    <Sparkles className="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true" />
+                    <span className="truncate">
+                      Gợi ý: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                      {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Mô tả */}
+              <div>
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                  label="Mô tả (tùy chọn)"
+                  placeholder="Nói thêm về trình độ, luật chơi hoặc cách chia sân..."
+                  compact
+                />
+              </div>
+            </div>
           </div>
-
-          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Phí mỗi người <span className="font-normal text-slate-400">(không bắt buộc)</span></span><input type="number" min={0} max={10000000} step={1000} value={feePerSlot} onChange={(event) => setFeePerSlot(event.target.value)} placeholder="Để trống nếu miễn phí" className={inputClass} /></label>
-          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Tổng số người</span><input type="number" min={2} max={128} value={maxSlots} onChange={(event) => setMaxSlots(event.target.value)} required className={inputClass} /></label>
-
-          <div className="sm:col-span-2"><RichTextEditor value={description} onChange={setDescription} label="Mô tả (không bắt buộc)" placeholder="Nói thêm về trình độ, luật chơi hoặc cách chia sân..." compact /></div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-6"><button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Hủy</button><button type="submit" disabled={isSubmitting || categories.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? 'Đang tạo...' : 'Tạo trận giao lưu'}{!isSubmitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}</button></div>
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 bg-slate-50/50 px-5 py-3 sm:px-6">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting || categories.length === 0}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? 'Đang tạo...' : 'Tạo trận giao lưu'}
+            {!isSubmitting && <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}
+          </button>
+        </div>
       </form>
     </div>
   );

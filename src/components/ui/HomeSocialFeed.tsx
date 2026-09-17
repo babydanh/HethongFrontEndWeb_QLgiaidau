@@ -25,7 +25,6 @@ import toast from 'react-hot-toast';
 import { api } from '@/lib/axios';
 import { DateTimePicker } from '@/components/ui/Input';
 import RichTextEditor from '@/components/ui/RichTextEditor';
-import { venuesApi, type VenueCourtOption, type VenueOption } from '@/features/venues/api';
 import { regionsApi } from '@/features/regions/api';
 import { removeVietnameseTones, useAutoAddressParser } from '@/utils/vietnamAddressParser';
 import type { Region } from '@/types/region';
@@ -943,21 +942,14 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   const [durationMinutes, setDurationMinutes] = useState(120);
   const [customDuration, setCustomDuration] = useState('');
   const [location, setLocation] = useState('');
-  const [venueId, setVenueId] = useState('');
-  const [courtId, setCourtId] = useState('');
-  const [venues, setVenues] = useState<VenueOption[]>([]);
-  const [courts, setCourts] = useState<VenueCourtOption[]>([]);
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
   const [provinceCode, setProvinceCode] = useState('');
   const [wardCode, setWardCode] = useState('');
-  const [isLoadingVenues, setIsLoadingVenues] = useState(true);
   const [feePerSlot, setFeePerSlot] = useState('');
   const [maxSlots, setMaxSlots] = useState('4');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const autoLocationRef = useRef('');
 
-  const selectedVenue = venues.find((venue) => venue.id === venueId);
   const { playDate, startTime } = splitPickupDateTime(startDateTime);
   const selectedDuration = Number.isInteger(durationMinutes) && durationMinutes > 0 ? durationMinutes : 0;
   const endTime = getPickupEndTime(startTime, selectedDuration);
@@ -973,21 +965,6 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
     onWardsLoaded: setWards,
     enabled: location.trim().length >= 3,
   });
-
-  useEffect(() => {
-    let mounted = true;
-    venuesApi.list({ limit: 100 })
-      .then((response) => {
-        if (mounted) setVenues(Array.isArray(response) ? response : []);
-      })
-      .catch(() => {
-        if (mounted) toast.error('Không thể tải danh sách địa điểm. Bạn có thể nhập địa điểm thủ công.');
-      })
-      .finally(() => {
-        if (mounted) setIsLoadingVenues(false);
-      });
-    return () => { mounted = false; };
-  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -1013,53 +990,15 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   }, [provinceCode]);
 
   useEffect(() => {
-    if (!venueId) return;
-    let mounted = true;
-    venuesApi.get(venueId)
-      .then((venue) => {
-        if (!mounted) return;
-        setCourts((venue.courts ?? []).filter((court) => court.status !== 'UNAVAILABLE'));
-        setCourtId('');
-        const generatedLocation = [venue.name, venue.locationAddress].filter(Boolean).join(' · ');
-        const previousAutoLocation = autoLocationRef.current;
-        setLocation((current) => current.trim() && current.trim() !== previousAutoLocation ? current : generatedLocation);
-        autoLocationRef.current = generatedLocation;
-      })
-      .catch(() => {
-        if (mounted) setCourts([]);
-      });
-    return () => { mounted = false; };
-  }, [venueId]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !isSubmitting) onClose(); };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSubmitting, onClose]);
 
-  const handleVenueChange = (nextVenueId: string) => {
-    setVenueId(nextVenueId);
-    setCourts([]);
-    setCourtId('');
-    if (!nextVenueId && location.trim() === autoLocationRef.current) {
-      setLocation('');
-      autoLocationRef.current = '';
-    }
-  };
-
   const handleProvinceChange = (nextProvinceCode: string) => {
     setProvinceCode(nextProvinceCode);
     setWardCode('');
     setWards([]);
-  };
-
-  const handleCourtChange = (nextCourtId: string) => {
-    setCourtId(nextCourtId);
-    if (!selectedVenue) return;
-    const court = courts.find((item) => item.id === nextCourtId);
-    const generatedLocation = [selectedVenue.name, court?.courtName, selectedVenue.locationAddress].filter(Boolean).join(' · ');
-    autoLocationRef.current = generatedLocation;
-    setLocation(generatedLocation);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -1092,8 +1031,6 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
         startTime,
         endTime,
         location: pickupLocation,
-        venueId: venueId || undefined,
-        courtId: courtId || undefined,
         ...(fee !== undefined ? { feePerSlot: fee } : {}),
         maxSlots: slots,
         levelRequirement: 'Mọi trình độ',
@@ -1254,34 +1191,15 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
             <div className="space-y-3.5">
               {/* Box Địa điểm */}
               <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50/50 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-slate-700">Địa điểm</span>
-                  <span className="text-[11px] text-slate-400">Chọn sân hoặc nhập tay</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <select value={venueId} onChange={(event) => handleVenueChange(event.target.value)} className={`${inputClass} bg-white text-xs`} disabled={isLoadingVenues}>
-                    <option value="">{isLoadingVenues ? 'Đang tải địa điểm...' : 'Chọn địa điểm có sẵn'}</option>
-                    {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
-                  </select>
-                  {venueId ? (
-                    <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white text-xs`}>
-                      <option value="">Chọn sân (tùy chọn)</option>
-                      {courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}
-                    </select>
-                  ) : (
-                    <div className="hidden sm:block" />
-                  )}
-                </div>
-
                 <label className="block">
-                  <span className="mb-1 block text-xs font-bold text-slate-700">Địa điểm hiển thị <span className="text-rose-500">*</span></span>
+                  <span className="mb-1.5 block text-xs font-bold text-slate-700">Địa điểm thi đấu / Giao lưu <span className="text-rose-500">*</span></span>
                   <input
                     value={location}
                     onChange={(event) => setLocation(event.target.value)}
                     minLength={2}
                     maxLength={255}
                     required
-                    placeholder="Ví dụ: D-Sport Quận 7 · Sân 3"
+                    placeholder="Ví dụ: Sân Pickleball D-Sport Quận 7, số 123 Nguyễn Thị Thập"
                     className={`${inputClass} bg-white`}
                   />
                 </label>

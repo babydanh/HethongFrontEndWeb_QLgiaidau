@@ -1887,13 +1887,8 @@ const commonTranslate = useTranslations('Common');
               {activeTab !== 'overview' && activeTab !== 'sponsors' && (
                 <div className="mb-4" aria-label={translate('competitionContentTitle')}>
                   {divisionsList.length > 0 && (
-                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 sm:p-3">
-                      <div className="flex items-center justify-between gap-2 mb-2 px-1">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          {translate('competitionContentTitle') || 'Nội dung thi đấu'}
-                        </span>
-                      </div>
-                      <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-lg bg-white border border-slate-200/60">
+                    <div>
+                      <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-lg bg-white border border-slate-200/80">
                         {divisionsList.map((division) => {
                           const isActive = division.id === openDivisionId;
                           const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;

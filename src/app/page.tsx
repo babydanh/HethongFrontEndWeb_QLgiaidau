@@ -720,12 +720,11 @@ export default function HomePage() {
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
 
-        // Fetch the public feed once. Separate status requests caused a burst of
-        // identical /matches calls (and 429s behind the production proxy).
+        // Fetch only a lightweight preview for the homepage (not full matches list)
         const matchCategoryParams = selectedCategoryId ? { categoryId: selectedCategoryId } : {};
         const publicMatchesPromise = matchesApi.getMatches({
           status: 'ONGOING,SCHEDULED,COMPLETED,FINISHED,DONE,ENDED',
-          limit: 100,
+          limit: 20,
           publicOnly: true,
           ...matchCategoryParams,
         });
@@ -1870,7 +1869,7 @@ export default function HomePage() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Sắp diễn ra {upcomingMatches.length > 0 && `(${upcomingMatches.length})`}
+                  Sắp diễn ra
                 </button>
                 <button
                   type="button"
@@ -1884,7 +1883,7 @@ export default function HomePage() {
                   {liveMatches.length > 0 && (
                     <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
                   )}
-                  Đang diễn ra {liveMatches.length > 0 && `(${liveMatches.length})`}
+                  Đang diễn ra
                 </button>
                 <button
                   type="button"
@@ -1895,7 +1894,7 @@ export default function HomePage() {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Đã kết thúc {completedMatches.length > 0 && `(${completedMatches.length})`}
+                  Đã kết thúc
                 </button>
               </div>
 

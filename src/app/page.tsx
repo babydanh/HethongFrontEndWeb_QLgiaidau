@@ -1789,6 +1789,7 @@ export default function HomePage() {
               <HomeSocialFeed
                 categories={categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat))}
                 selectedCategoryId={selectedCategoryId}
+                isAuthenticated={isAuthenticated}
               />
             </div>
           ) : (

@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Clock3,
   Flame,
-  Info,
   MapPin,
   Send,
   Share2,
@@ -24,6 +23,9 @@ import {
 import { motion, useReducedMotion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/axios';
+import { DatePicker } from '@/components/ui/Input';
+import RichTextEditor from '@/components/ui/RichTextEditor';
+import { venuesApi, type VenueCourtOption, type VenueOption } from '@/features/venues/api';
 
 export type ActivityEventType =
   | 'CLUB_RECRUITING'
@@ -251,6 +253,16 @@ function formatFee(value: number | null) {
   return value == null ? 'Theo thỏa thuận' : `${new Intl.NumberFormat('vi-VN').format(value)}đ`;
 }
 
+function getDescriptionPreview(value: string | null) {
+  if (!value) return '';
+  return value
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function mapApiActivity(item: ApiActivityFeedItem): ActivityFeedItem {
   const initials = getInitials(item.community.name) || 'CLB';
   return {
@@ -263,7 +275,7 @@ function mapApiActivity(item: ApiActivityFeedItem): ActivityFeedItem {
     endTime: getVietnamTime(item.endTime) || undefined,
     location: item.location ?? 'Đang cập nhật địa điểm',
     title: item.title,
-    description: item.description ?? '',
+    description: getDescriptionPreview(item.description),
     bannerUrl: item.tournament?.bannerUrl ?? undefined,
     club: {
       id: item.community.id,
@@ -307,7 +319,7 @@ function mapPersonalPickup(item: PersonalPickupApiItem): ActivityFeedItem {
     endTime: item.endTime,
     location: item.location,
     title: item.title,
-    description: item.description ?? '',
+    description: getDescriptionPreview(item.description),
     personalHost: {
       id: item.personalHost.id,
       name: item.personalHost.name,
@@ -491,7 +503,7 @@ function SessionDetailModal({
                   <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-label="Đã xác minh" />
                 )}
               </div>
-              <p className="text-xs text-slate-500">{isPersonal ? 'Kèo cá nhân' : `${item.sport} · ${item.sportTier}`}</p>
+              <p className="text-xs text-slate-500">{isPersonal ? 'Giao lưu cá nhân' : `${item.sport} · ${item.sportTier}`}</p>
             </div>
           </div>
 
@@ -889,21 +901,74 @@ function TournamentCard({
   );
 }
 
+const PERSONAL_PICKUP_DURATION_PRESETS = [
+  { value: 30, label: '30 phút' },
+  { value: 60, label: '1 giờ' },
+  { value: 90, label: '1 giờ 30' },
+  { value: 120, label: '2 giờ' },
+  { value: 180, label: '3 giờ' },
+];
+
+function getPickupEndTime(startTime: string, durationMinutes: number) {
+  const match = startTime.match(/^(\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const totalMinutes = Number(match[1]) * 60 + Number(match[2]) + durationMinutes;
+  if (totalMinutes > 23 * 60 + 59) return null;
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+}
+
 function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated }: { categories: HomeFeedCategory[]; initialDate: string; onClose: () => void; onCreated: () => void }) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [playDate, setPlayDate] = useState(initialDate);
   const [startTime, setStartTime] = useState('19:30');
-  const [endTime, setEndTime] = useState('21:30');
+  const [durationMinutes, setDurationMinutes] = useState(120);
+  const [customDuration, setCustomDuration] = useState('');
   const [location, setLocation] = useState('');
-  const [feePerSlot, setFeePerSlot] = useState('0');
+  const [venueId, setVenueId] = useState('');
+  const [courtId, setCourtId] = useState('');
+  const [venues, setVenues] = useState<VenueOption[]>([]);
+  const [courts, setCourts] = useState<VenueCourtOption[]>([]);
+  const [isLoadingVenues, setIsLoadingVenues] = useState(true);
+  const [feePerSlot, setFeePerSlot] = useState('');
   const [maxSlots, setMaxSlots] = useState('4');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const selectedVenue = venues.find((venue) => venue.id === venueId);
+  const selectedDuration = Number.isInteger(durationMinutes) && durationMinutes > 0 ? durationMinutes : 0;
+  const endTime = getPickupEndTime(startTime, selectedDuration);
+
   useEffect(() => {
-    if (!categoryId && categories[0]?.id) setCategoryId(categories[0].id);
-  }, [categories, categoryId]);
+    let mounted = true;
+    venuesApi.list({ limit: 100 })
+      .then((response) => {
+        if (mounted) setVenues(Array.isArray(response) ? response : []);
+      })
+      .catch(() => {
+        if (mounted) toast.error('Không thể tải danh sách địa điểm. Bạn có thể nhập địa điểm thủ công.');
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingVenues(false);
+      });
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!venueId) return;
+    let mounted = true;
+    venuesApi.get(venueId)
+      .then((venue) => {
+        if (!mounted) return;
+        setCourts((venue.courts ?? []).filter((court) => court.status !== 'UNAVAILABLE'));
+        setCourtId('');
+        setLocation([venue.name, venue.locationAddress].filter(Boolean).join(' · '));
+      })
+      .catch(() => {
+        if (mounted) setCourts([]);
+      });
+    return () => { mounted = false; };
+  }, [venueId]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !isSubmitting) onClose(); };
@@ -911,40 +976,127 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSubmitting, onClose]);
 
+  const handleVenueChange = (nextVenueId: string) => {
+    setVenueId(nextVenueId);
+    setCourts([]);
+    setCourtId('');
+    if (!nextVenueId) {
+      setLocation('');
+    }
+  };
+
+  const handleCourtChange = (nextCourtId: string) => {
+    setCourtId(nextCourtId);
+    if (!selectedVenue) return;
+    const court = courts.find((item) => item.id === nextCourtId);
+    setLocation([selectedVenue.name, court?.courtName, selectedVenue.locationAddress].filter(Boolean).join(' · '));
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!categoryId) return toast.error('Chưa có môn thể thao khả dụng');
+    if (title.trim().length < 3) return toast.error('Vui lòng nhập tiêu đề trận giao lưu');
+    if (!playDate || !startTime || !endTime) return toast.error('Vui lòng chọn ngày và giờ chơi');
+    if (!location.trim()) return toast.error('Vui lòng chọn hoặc nhập địa điểm');
+    if (selectedDuration < 10 || selectedDuration > 720 || !endTime) return toast.error('Thời lượng không hợp lệ hoặc vượt qua ngày mới');
+    if (description.length > 2000) return toast.error('Mô tả không được vượt quá 2000 ký tự');
+
+    const slots = Number(maxSlots);
+    if (!Number.isInteger(slots) || slots < 2 || slots > 128) return toast.error('Tổng số người phải từ 2 đến 128');
+
     setIsSubmitting(true);
     try {
       const idempotencyKey = globalThis.crypto?.randomUUID?.() ?? `pickup-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      await api.post('/social/pickups', { categoryId, title: title.trim(), description: description.trim() || undefined, playDate, startTime, endTime, location: location.trim(), feePerSlot: Math.max(0, Number(feePerSlot) || 0), maxSlots: Math.min(128, Math.max(2, Number(maxSlots) || 2)), levelRequirement: 'Mọi trình độ', genderRequirement: 'ANY' }, { headers: { 'Idempotency-Key': idempotencyKey } });
-      toast.success('Đã tạo kèo cá nhân và đăng lên bảng tin');
+      const fee = feePerSlot.trim() ? Math.max(0, Number(feePerSlot) || 0) : undefined;
+      await api.post('/social/pickups', {
+        categoryId,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        playDate,
+        startTime,
+        endTime,
+        location: location.trim(),
+        venueId: venueId || undefined,
+        courtId: courtId || undefined,
+        ...(fee !== undefined ? { feePerSlot: fee } : {}),
+        maxSlots: slots,
+        levelRequirement: 'Mọi trình độ',
+        genderRequirement: 'ANY',
+      }, { headers: { 'Idempotency-Key': idempotencyKey } });
+      toast.success('Đã tạo trận giao lưu phong trào và đăng lên bảng tin');
       onCreated();
-    } catch { toast.error('Không thể tạo kèo. Kiểm tra thời gian và địa điểm rồi thử lại.'); } finally { setIsSubmitting(false); }
+    } catch (error) {
+      const responseMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(responseMessage || 'Không thể tạo trận giao lưu. Kiểm tra thời gian và địa điểm rồi thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClass = 'h-11 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]" onClick={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }} role="dialog" aria-modal="true" aria-labelledby="create-personal-pickup-title">
-      <form onSubmit={handleSubmit} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6"><div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">Bảng tin hoạt động</p><h2 id="create-personal-pickup-title" className="mt-1 text-lg font-bold text-slate-950">Tạo giao lưu cá nhân</h2><p className="mt-1 text-xs text-slate-500">Kèo này độc lập, không thuộc CLB và không tạo giải đấu.</p></div><button type="button" onClick={onClose} disabled={isSubmitting} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-5 w-5" /></button></div>
-        <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Môn thể thao</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} required className={`${inputClass} bg-white`}>{categories.length === 0 ? <option value="">Chưa có môn thể thao</option> : categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Tiêu đề kèo</span><input value={title} onChange={(event) => setTitle(event.target.value)} minLength={3} maxLength={255} required placeholder="Ví dụ: Tìm 2 bạn đánh pickleball buổi tối" className={inputClass} /></label>
-          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Ngày chơi</span><input type="date" value={playDate} onChange={(event) => setPlayDate(event.target.value)} required className={inputClass} /></label>
-          <div className="grid grid-cols-2 gap-3"><label><span className="mb-1.5 block text-xs font-bold text-slate-700">Bắt đầu</span><input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} required className={inputClass} /></label><label><span className="mb-1.5 block text-xs font-bold text-slate-700">Kết thúc</span><input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} required className={inputClass} /></label></div>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Địa điểm / cụm sân</span><input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Ví dụ: D-Sport Quận 7, sân 3" className={inputClass} /></label>
-          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Phí mỗi người</span><input type="number" min={0} step={1000} value={feePerSlot} onChange={(event) => setFeePerSlot(event.target.value)} className={inputClass} /></label>
-          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Tổng số người</span><input type="number" min={2} max={128} value={maxSlots} onChange={(event) => setMaxSlots(event.target.value)} required className={inputClass} /></label>
-          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Mô tả <span className="font-normal text-slate-400">(không bắt buộc)</span></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="Nói thêm về trình độ, luật chơi hoặc cách chia sân..." className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+      <form onSubmit={handleSubmit} className="max-h-[94vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">Bảng tin hoạt động</p>
+            <h2 id="create-personal-pickup-title" className="mt-1 text-lg font-bold text-slate-950">Tạo trận giao lưu phong trào</h2>
+            <p className="mt-1 text-xs text-slate-500">Trận mở cho cộng đồng, không thuộc CLB và không tính ELO.</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-5 w-5" /></button>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-6"><button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Hủy</button><button type="submit" disabled={isSubmitting || categories.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? 'Đang đăng...' : 'Đăng lên bảng tin'}{!isSubmitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}</button></div>
+
+        <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
+          <div className="sm:col-span-2">
+            <span className="mb-1.5 block text-xs font-bold text-slate-700">Môn thể thao</span>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-label="Môn thể thao">
+              {categories.map((category) => (
+                <button key={category.id} type="button" onClick={() => setCategoryId(category.id)} className={`rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition ${categoryId === category.id ? 'border-blue-600 bg-blue-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50/40'}`}>
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Tiêu đề</span><input value={title} onChange={(event) => setTitle(event.target.value)} minLength={3} maxLength={255} required placeholder="Ví dụ: Giao lưu Pickleball buổi tối" className={inputClass} /></label>
+
+          <div>
+            <DatePicker label="Ngày chơi" value={playDate} onChange={setPlayDate} className="h-11" />
+          </div>
+          <label><span className="mb-1.5 flex items-center gap-1 text-xs font-bold text-slate-700"><Clock3 className="h-3.5 w-3.5 text-slate-400" /> Giờ bắt đầu</span><input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} required className={inputClass} /></label>
+
+          <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2"><span className="text-xs font-bold text-slate-700">Thời lượng</span><span className="text-[11px] text-slate-400">Chọn nhanh hoặc nhập số phút</span></div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {PERSONAL_PICKUP_DURATION_PRESETS.map((preset) => <button key={preset.value} type="button" onClick={() => { setDurationMinutes(preset.value); setCustomDuration(''); }} className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold transition ${durationMinutes === preset.value && !customDuration ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300'}`}>{preset.label}</button>)}
+              <label className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-500">Khác (phút)<input type="number" min={10} max={720} step={5} value={customDuration} onChange={(event) => { setCustomDuration(event.target.value); setDurationMinutes(Number(event.target.value) || 0); }} className="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-center text-xs font-bold text-slate-800 outline-none focus:border-blue-500" /></label>
+            </div>
+            <p className="mt-2 text-xs text-blue-700">Kết thúc dự kiến: <strong>{endTime || 'chưa xác định'}</strong></p>
+          </div>
+
+          <div className="sm:col-span-2 space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+            <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold text-slate-700">Địa điểm / cụm sân</span><span className="text-[11px] text-slate-400">Lấy từ danh sách địa điểm</span></div>
+            <select value={venueId} onChange={(event) => handleVenueChange(event.target.value)} className={`${inputClass} bg-white`} disabled={isLoadingVenues}>
+              <option value="">{isLoadingVenues ? 'Đang tải địa điểm...' : 'Chọn địa điểm (hoặc nhập bên dưới)'}</option>
+              {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name} · {venue.locationAddress}</option>)}
+            </select>
+            {venueId && <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white`}><option value="">Chọn tên sân (không bắt buộc)</option>{courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}</select>}
+            <input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Ví dụ: D-Sport Quận 7 · Sân 3" className={inputClass} />
+          </div>
+
+          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Phí mỗi người <span className="font-normal text-slate-400">(không bắt buộc)</span></span><input type="number" min={0} max={10000000} step={1000} value={feePerSlot} onChange={(event) => setFeePerSlot(event.target.value)} placeholder="Để trống nếu miễn phí" className={inputClass} /></label>
+          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Tổng số người</span><input type="number" min={2} max={128} value={maxSlots} onChange={(event) => setMaxSlots(event.target.value)} required className={inputClass} /></label>
+
+          <div className="sm:col-span-2"><RichTextEditor value={description} onChange={setDescription} label="Mô tả (không bắt buộc)" placeholder="Nói thêm về trình độ, luật chơi hoặc cách chia sân..." compact /></div>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-6"><button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Hủy</button><button type="submit" disabled={isSubmitting || categories.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? 'Đang tạo...' : 'Tạo trận giao lưu'}{!isSubmitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}</button></div>
       </form>
     </div>
   );
 }
 
-export default function HomeSocialFeed({ categories = [], selectedCategoryId = '' }: { categories?: HomeFeedCategory[]; selectedCategoryId?: string }) {
+export default function HomeSocialFeed({ categories = [], selectedCategoryId = '', isAuthenticated = false }: { categories?: HomeFeedCategory[]; selectedCategoryId?: string; isAuthenticated?: boolean }) {
   const reducedMotion = Boolean(useReducedMotion());
   const today = useMemo(() => startOfLocalDay(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(() => formatDateKey(today));
@@ -1047,7 +1199,7 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
       return false;
     }
     if (item.slots.current >= item.slots.max) {
-      toast.error('Kèo này đã đủ người');
+      toast.error('Buổi giao lưu này đã đủ người');
       return false;
     }
 
@@ -1072,7 +1224,7 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
     try {
       if (isPersonal) {
         await api.post(`/social/pickups/${item.id}/participants/self`);
-        toast.success(`Đã vào kèo của ${item.personalHost?.name ?? 'người tạo'}`);
+        toast.success(`Đã vào buổi giao lưu của ${item.personalHost?.name ?? 'người tạo'}`);
       } else {
         await api.post(`/club-match-sessions/${item.clubMatchSessionId}/participants/self`);
         toast.success(`Đã vào slot của ${item.club?.name ?? 'CLB'}`);
@@ -1104,7 +1256,7 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
 
   const handleShare = useCallback(async (item: ActivityFeedItem) => {
     if (!item.club) {
-      toast.error('Kèo cá nhân đã hiển thị trên bảng tin, chưa hỗ trợ chia sẻ thêm');
+      toast.error('Buổi giao lưu cá nhân đã hiển thị trên bảng tin, chưa hỗ trợ chia sẻ thêm');
       return;
     }
     const target = item.clubMatchSessionId
@@ -1137,7 +1289,11 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
       <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-2.5 py-2">
           <div><p className="text-sm font-bold text-slate-900">Bảng tin hoạt động</p><p className="text-[11px] text-slate-500">Tìm người chơi cho buổi giao lưu sắp tới</p></div>
-          <button type="button" onClick={() => setIsCreateOpen(true)} className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700"><UserPlus className="h-3.5 w-3.5" aria-hidden="true" />Tạo kèo cá nhân</button>
+          {isAuthenticated ? (
+            <button type="button" onClick={() => setIsCreateOpen(true)} className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700"><UserPlus className="h-3.5 w-3.5" aria-hidden="true" />Tạo trận giao lưu phong trào</button>
+          ) : (
+            <Link href="/login?redirect=/" className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-700 hover:bg-blue-100"><UserPlus className="h-3.5 w-3.5" aria-hidden="true" />Đăng nhập để tạo trận</Link>
+          )}
         </div>
         <div
           ref={dateStripRef}
@@ -1237,7 +1393,7 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
           </div>
           <h3 className="mt-4 text-base font-bold text-slate-900">Chưa có hoạt động trong ngày này</h3>
           <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-slate-500">
-            Thử kéo sang ngày khác để tìm kèo giao lưu hoặc giải đấu đang mở đăng ký.
+            Thử kéo sang ngày khác để tìm buổi giao lưu hoặc giải đấu đang mở đăng ký.
           </p>
         </div>
       )}

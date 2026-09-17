@@ -1010,24 +1010,18 @@ export default function QuickTournamentCreate() {
                   <h2 className="text-sm font-bold text-slate-900">{translate('scheduleTitle')} & {translate('locationTitle')}</h2>
                 </div>
 
-                {/* Ngày thi đấu là thông tin chính; đăng ký chỉ là tùy chọn */}
-                <div className="grid items-start gap-2.5 sm:grid-cols-2">
-                  <div className="rounded-lg bg-white p-2.5 border border-slate-200">
-                    <DateTimePicker
-                      name="startDate"
-                      label={<>{translate('startDateLabel')} <span className="text-rose-500">*</span></>}
-                      value={startDate || ''}
-                      onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
-                      error={errors.startDate?.message}
-                      className="border-slate-300 bg-white shadow-xs focus:border-blue-500"
-                      placeholder={translate('startDatePlaceholder')}
-                      defaultTimeOnEmptySelection="00:00"
-                      roundToHour
-                    />
-                    <p className="mt-1 text-[11px] font-medium text-slate-500">
-                      {translate('startDatePriorityHint')}
-                    </p>
-                  </div>
+                {/* Ngày thi đấu & Đăng ký */}
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  <DateTimePicker
+                    name="startDate"
+                    label={<>{translate('startDateLabel')} <span className="text-rose-500">*</span></>}
+                    value={startDate || ''}
+                    onChange={(val) => setValue('startDate', val, { shouldValidate: true })}
+                    error={errors.startDate?.message}
+                    placeholder={translate('startDatePlaceholder')}
+                    defaultTimeOnEmptySelection="00:00"
+                    roundToHour
+                  />
 
                   <DateTimePicker
                     name="endDate"
@@ -1220,14 +1214,14 @@ export default function QuickTournamentCreate() {
                         onClick={() => setValue('bracketType', opt.id, { shouldValidate: true })}
                         className={`group flex items-center gap-2.5 rounded-xl border p-2.5 text-left cursor-pointer transition-colors ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-50/40'
+                            ? 'border-blue-500 bg-blue-50/50'
                             : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
                         <div
                           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-none ${
                             isSelected
-                              ? 'border-blue-600 bg-blue-600 text-white'
+                              ? 'border-blue-200 bg-blue-100 text-blue-700'
                               : 'border-slate-200 bg-slate-50 text-slate-500'
                           }`}
                         >
@@ -1235,7 +1229,7 @@ export default function QuickTournamentCreate() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <span className={`block text-xs truncate ${
-                            isSelected ? 'font-semibold text-blue-900' : 'font-medium text-slate-700'
+                            isSelected ? 'font-bold text-blue-900' : 'font-medium text-slate-700'
                           }`}>
                             {translate(opt.labelKey)}
                           </span>
@@ -1270,7 +1264,7 @@ export default function QuickTournamentCreate() {
                           onClick={() => setValue('maxTeams', num, { shouldValidate: true })}
                           className={`rounded-lg border px-2.5 py-1 text-xs cursor-pointer transition-colors ${
                             isCurrent
-                              ? 'border-blue-600 bg-blue-600 text-white font-semibold shadow-xs'
+                              ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold shadow-2xs'
                               : 'border-slate-200 bg-white text-slate-700 font-medium hover:border-slate-300 hover:bg-slate-50'
                           }`}
                         >

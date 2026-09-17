@@ -713,8 +713,8 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* Spacer: banner background height */}
-        <div className="h-28 sm:h-36 md:h-44" />
+        {/* Spacer: banner background height — card overlaps this area with -mt */}
+        <div className="h-52 sm:h-60 md:h-72" />
 
         {/* Content sits inside hero, on top of banner */}
         <div className="relative z-10 px-4 sm:px-6 pb-6">
@@ -740,8 +740,8 @@ export default function ProfilePage() {
       {/* Main 2-Column Bento Grid */}
       <div className="min-h-[400px]">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
-          <div className="lg:col-span-1 flex flex-col gap-5 relative z-20">
+          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes – floats UP into banner */}
+          <div className="lg:col-span-1 flex flex-col gap-5 relative z-20 -mt-28 sm:-mt-32 md:-mt-40">
             {/* Primary Athlete Card (Left Card with Avatar, Name, Badges, ELO Stats & Actions) */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
               {/* Top Accent Gradient Line */}

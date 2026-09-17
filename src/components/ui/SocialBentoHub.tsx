@@ -207,11 +207,11 @@ export function AthleteProfileCard({
           </div>
         </div>
         <div className="border-l border-slate-100">
-          <div className="text-sm font-bold text-emerald-600 leading-none">
-            {credibility ?? 100}%
+          <div className="text-sm font-bold text-blue-600 leading-none">
+            {winRate}%
           </div>
           <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">
-            {translate('credibility')}
+            {translate('wins')}
           </div>
         </div>
       </div>

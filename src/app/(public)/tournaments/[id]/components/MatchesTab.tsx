@@ -1017,7 +1017,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                                         onClick={() => setSelectedRoundKey(roundOption.key)}
                                         className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                                           isActive
-                                            ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                                            ? 'bg-sky-500 text-white border-transparent shadow-xs'
                                             : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                                         }`}
                                       >
@@ -1046,7 +1046,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                                           onClick={() => setSelectedRoundKey(roundOption.key)}
                                           className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                                             isActive
-                                              ? 'bg-blue-600 text-white border-transparent shadow-sm'
+                                              ? 'bg-sky-500 text-white border-transparent shadow-xs'
                                               : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                                           }`}
                                         >
@@ -1120,8 +1120,8 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                   onClick={() => setStatusFilter(filter)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
                     isActive
-                      ? 'bg-blue-600 text-white border-transparent shadow-sm'
-                      : 'bg-slate-50 text-slate-650 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'bg-sky-500 text-white border-transparent shadow-xs'
+                      : 'bg-slate-50 text-slate-650 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
                   }`}
                 >
                   {label} ({count})
@@ -1278,7 +1278,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                               key={idx}
                               className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
                                 hasScores && isSetWinner
-                                  ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
+                                  ? 'bg-sky-500 text-white shadow-2xs font-bold'
                                   : hasScores
                                     ? 'bg-slate-100 text-slate-700 font-semibold'
                                     : 'bg-slate-50 text-slate-400 border border-slate-200'
@@ -1319,7 +1319,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                               key={idx}
                               className={`w-7 h-7 flex items-center justify-center text-xs font-bold rounded ${
                                 hasScores && isSetWinner
-                                  ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
+                                  ? 'bg-sky-500 text-white shadow-2xs font-bold'
                                   : hasScores
                                     ? 'bg-slate-100 text-slate-700 font-semibold'
                                     : 'bg-slate-50 text-slate-400 border border-slate-200'

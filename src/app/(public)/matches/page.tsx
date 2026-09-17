@@ -1317,7 +1317,7 @@ export default function MatchesListPage() {
                                             isLeadingOrWon
                                               ? isLive
                                                 ? 'bg-rose-600 text-white font-bold border-rose-600 shadow-xs scale-105 animate-pulse'
-                                                : 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
+                                                : 'bg-sky-500 text-white font-bold border-sky-400 shadow-xs scale-105'
                                               : isLosing
                                               ? 'bg-slate-100 text-slate-500 border-slate-200 font-medium'
                                               : isLive
@@ -1402,7 +1402,7 @@ export default function MatchesListPage() {
                                             isLeadingOrWon
                                               ? isLive
                                                 ? 'bg-rose-600 text-white font-bold border-rose-600 shadow-xs scale-105 animate-pulse'
-                                                : 'bg-blue-600 text-white font-bold border-blue-600 shadow-xs scale-105'
+                                                : 'bg-sky-500 text-white font-bold border-sky-400 shadow-xs scale-105'
                                               : isLosing
                                               ? 'bg-slate-100 text-slate-500 border-slate-200 font-medium'
                                               : isLive

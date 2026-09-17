@@ -952,13 +952,13 @@ export default function PublicCourtScheduleBoard({
                       <div
                         key={match.id}
                         onClick={() => onOpenMatchDetail?.(match)}
-                        className={`absolute inset-x-1 z-[5] flex flex-col justify-between rounded-xl border p-2.5 shadow-2xs transition-all cursor-pointer hover:shadow-md hover:ring-2 hover:ring-blue-400 select-none ${
+                        className={`absolute inset-x-1 z-[5] flex flex-col justify-between rounded-xl border p-2.5 shadow-2xs transition-all cursor-pointer hover:shadow-xs hover:border-slate-300 select-none ${
                           isLive
-                            ? 'border-amber-400 bg-amber-50/95 text-amber-950 ring-2 ring-amber-400/40 shadow-md'
+                            ? 'border-amber-400 bg-amber-50/95 text-amber-950 ring-1 ring-amber-400/40 shadow-xs'
                             : isCompleted
-                            ? 'border-slate-300 bg-slate-100/95 text-slate-700 shadow-2xs'
-                            : 'border-slate-200 bg-white text-slate-900 hover:border-blue-400 shadow-xs'
-                        } ${isHighlighted ? 'ring-3 ring-amber-400 scale-[1.01] z-[6]' : ''}`}
+                            ? 'border-slate-200 bg-slate-50/80 text-slate-700'
+                            : 'border-slate-200 bg-white text-slate-900'
+                        } ${isHighlighted ? 'ring-2 ring-amber-400 scale-[1.01] z-[6]' : ''}`}
                         style={{
                           top: `${topPos + 2}px`,
                           height: `${cardHeight}px`,
@@ -966,27 +966,27 @@ export default function PublicCourtScheduleBoard({
                         title={`Trận #${match.matchOrder || ''} • ${formatMatchTime(match.scheduledAt)} • Bấm để xem chi tiết`}
                       >
                         {/* 1. Header: Division Name + Format Badge + Time + Duration */}
-                        <div className="flex items-center justify-between gap-1 border-b border-slate-200/80 pb-1 text-xs font-black shrink-0">
+                        <div className="flex items-center justify-between gap-1 border-b border-slate-100 pb-1 text-xs font-black shrink-0">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="truncate uppercase tracking-tight text-[11px] text-blue-700 font-black">
+                            <span className="truncate uppercase tracking-tight text-[11px] text-slate-600 font-bold">
                               {divTitle}
                             </span>
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-black shrink-0 bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 bg-slate-100 text-slate-600 border border-slate-200">
                               {boFormat}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-1 shrink-0 text-[10px]">
                             {isLive && (
-                              <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-black text-[9px] flex items-center gap-0.5 animate-pulse">
+                              <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-bold text-[9px] flex items-center gap-0.5 animate-pulse">
                                 <Flame className="h-2.5 w-2.5" />
                                 LIVE
                               </span>
                             )}
-                            <span className="font-bold px-1.5 py-0.2 rounded border text-blue-800 bg-blue-50 border-blue-200">
+                            <span className="font-bold px-1.5 py-0.2 rounded border text-slate-700 bg-slate-50 border-slate-200">
                               {formatMatchTime(match.scheduledAt)}
                             </span>
-                            <span className="text-slate-700 font-bold bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                            <span className="text-slate-600 font-bold bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
                               {duration}p
                             </span>
                           </div>
@@ -1013,7 +1013,7 @@ export default function PublicCourtScheduleBoard({
                                     <span
                                       key={idx}
                                       className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10 ${
-                                        isP1Winner ? 'bg-blue-600 text-white border-blue-700' : av.bg
+                                        isP1Winner ? 'bg-sky-500 text-white border-sky-400' : av.bg
                                       }`}
                                     >
                                       {av.initial}
@@ -1021,7 +1021,7 @@ export default function PublicCourtScheduleBoard({
                                   )
                                 ))}
                               </div>
-                              <span className={`truncate text-xs font-bold ${isP1Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`} title={c1.fullName}>
+                              <span className={`truncate text-xs font-bold ${isP1Winner ? 'text-sky-700 font-black' : 'text-slate-900'}`} title={c1.fullName}>
                                 {c1.displayLabel}
                               </span>
                             </div>
@@ -1048,8 +1048,8 @@ export default function PublicCourtScheduleBoard({
                                   return (
                                     <span
                                       key={idx}
-                                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
-                                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-bold border shadow-2xs ${
+                                        isWinner ? 'bg-sky-500 text-white border-sky-400' : 'bg-white text-slate-700 border-slate-200'
                                       }`}
                                     >
                                       {s.s1}
@@ -1083,7 +1083,7 @@ export default function PublicCourtScheduleBoard({
                                     <span
                                       key={idx}
                                       className={`h-5 w-5 rounded-full border flex items-center justify-center text-[10px] shrink-0 font-black shadow-2xs z-10 ${
-                                        isP2Winner ? 'bg-blue-600 text-white border-blue-700' : av.bg
+                                        isP2Winner ? 'bg-sky-500 text-white border-sky-400' : av.bg
                                       }`}
                                     >
                                       {av.initial}
@@ -1091,7 +1091,7 @@ export default function PublicCourtScheduleBoard({
                                   )
                                 ))}
                               </div>
-                              <span className={`truncate text-xs font-bold ${isP2Winner ? 'text-blue-700 font-black' : 'text-slate-900'}`} title={c2.fullName}>
+                              <span className={`truncate text-xs font-bold ${isP2Winner ? 'text-sky-700 font-black' : 'text-slate-900'}`} title={c2.fullName}>
                                 {c2.displayLabel}
                               </span>
                             </div>
@@ -1119,7 +1119,7 @@ export default function PublicCourtScheduleBoard({
                                     <span
                                       key={idx}
                                       className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
-                                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                                        isWinner ? 'bg-sky-500 text-white border-sky-400' : 'bg-white text-slate-800 border-slate-300'
                                       }`}
                                     >
                                       {s.s2}

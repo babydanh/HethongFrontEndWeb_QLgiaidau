@@ -352,7 +352,7 @@ const RowSide = memo(function RowSide({
                   'inline-block text-[10.5px] font-extrabold w-4.5 h-4.5 leading-4.5 rounded text-center ' +
                   (val
                     ? isSetWinner
-                      ? 'bg-blue-600 text-white shadow-2xs font-black'
+                      ? 'bg-sky-500 text-white shadow-2xs font-bold'
                       : 'bg-slate-100 text-slate-700 border border-slate-200/80 font-semibold'
                     : 'text-slate-300 font-normal')
                 }

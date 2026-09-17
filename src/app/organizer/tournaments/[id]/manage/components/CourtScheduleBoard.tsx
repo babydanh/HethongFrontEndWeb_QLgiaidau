@@ -3593,8 +3593,8 @@ export function CourtScheduleBoard({
                   return (
                     <span
                       key={idx}
-                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
-                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-bold border shadow-2xs ${
+                        isWinner ? 'bg-sky-500 text-white border-sky-400' : 'bg-white text-slate-700 border-slate-200'
                       }`}
                     >
                       {s.s1}
@@ -3649,8 +3649,8 @@ export function CourtScheduleBoard({
                   return (
                     <span
                       key={idx}
-                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-black border shadow-2xs ${
-                        isWinner ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-800 border-slate-300'
+                      className={`min-w-[20px] h-[20px] px-1 flex items-center justify-center rounded text-[11px] font-bold border shadow-2xs ${
+                        isWinner ? 'bg-sky-500 text-white border-sky-400' : 'bg-white text-slate-700 border-slate-200'
                       }`}
                     >
                       {s.s2}

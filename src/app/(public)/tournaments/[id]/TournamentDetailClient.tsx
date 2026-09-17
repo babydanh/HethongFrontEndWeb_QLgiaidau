@@ -1799,15 +1799,15 @@ const commonTranslate = useTranslations('Common');
                     className={`px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
                       tab.isLive
                         ? isActive
-                          ? 'border-rose-600 text-rose-600 font-black'
-                          : 'border-transparent text-rose-700 font-bold hover:text-rose-900 hover:border-rose-300'
+                          ? 'border-rose-600 text-rose-600 font-bold'
+                          : 'border-transparent text-rose-600/80 font-medium hover:text-rose-700 hover:border-rose-200'
                         : tab.isGolden
                           ? isActive
-                            ? 'border-amber-500 text-amber-600 font-black'
-                            : 'border-transparent text-amber-800 font-bold hover:text-amber-950 hover:border-amber-300'
+                            ? 'border-amber-500 text-amber-600 font-bold'
+                            : 'border-transparent text-amber-700/80 font-medium hover:text-amber-800 hover:border-amber-200'
                           : isActive
-                            ? 'border-blue-600 text-blue-600 font-black'
-                            : 'border-transparent text-slate-800 font-bold hover:text-black hover:border-slate-400'
+                            ? 'border-sky-500 text-sky-600 font-bold'
+                            : 'border-transparent text-slate-600 font-medium hover:text-slate-900 hover:border-slate-300'
                     }`}
                   >
                     {tab.isLive && (

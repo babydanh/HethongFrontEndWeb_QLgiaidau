@@ -955,6 +955,7 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   const [feePerSlot, setFeePerSlot] = useState('');
   const [maxSlots, setMaxSlots] = useState('4');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const autoLocationRef = useRef('');
 
   const selectedVenue = venues.find((venue) => venue.id === venueId);
   const { playDate, startTime } = splitPickupDateTime(startDateTime);
@@ -1019,7 +1020,10 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
         if (!mounted) return;
         setCourts((venue.courts ?? []).filter((court) => court.status !== 'UNAVAILABLE'));
         setCourtId('');
-        setLocation([venue.name, venue.locationAddress].filter(Boolean).join(' · '));
+        const generatedLocation = [venue.name, venue.locationAddress].filter(Boolean).join(' · ');
+        const previousAutoLocation = autoLocationRef.current;
+        setLocation((current) => current.trim() && current.trim() !== previousAutoLocation ? current : generatedLocation);
+        autoLocationRef.current = generatedLocation;
       })
       .catch(() => {
         if (mounted) setCourts([]);
@@ -1037,10 +1041,9 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
     setVenueId(nextVenueId);
     setCourts([]);
     setCourtId('');
-    if (!nextVenueId) {
+    if (!nextVenueId && location.trim() === autoLocationRef.current) {
       setLocation('');
-      setProvinceCode('');
-      setWardCode('');
+      autoLocationRef.current = '';
     }
   };
 
@@ -1054,7 +1057,9 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
     setCourtId(nextCourtId);
     if (!selectedVenue) return;
     const court = courts.find((item) => item.id === nextCourtId);
-    setLocation([selectedVenue.name, court?.courtName, selectedVenue.locationAddress].filter(Boolean).join(' · '));
+    const generatedLocation = [selectedVenue.name, court?.courtName, selectedVenue.locationAddress].filter(Boolean).join(' · ');
+    autoLocationRef.current = generatedLocation;
+    setLocation(generatedLocation);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -1097,8 +1102,12 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
       toast.success('Đã tạo trận giao lưu phong trào và đăng lên bảng tin');
       onCreated();
     } catch (error) {
-      const responseMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(responseMessage || 'Không thể tạo trận giao lưu. Kiểm tra thời gian và địa điểm rồi thử lại.');
+      const responseData = (error as { response?: { status?: number; data?: { message?: string | string[]; code?: string } } })?.response;
+      const rawMessage = responseData?.data?.message;
+      const responseMessage = Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage;
+      toast.error(responseMessage || (responseData?.status && responseData.status >= 500
+        ? 'Máy chủ đang lỗi khi tạo trận. Vui lòng thử lại sau khi hệ thống được cập nhật.'
+        : 'Không thể tạo trận giao lưu. Kiểm tra thời gian và địa điểm rồi thử lại.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -1152,13 +1161,13 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
           </div>
 
           <div className="sm:col-span-2 space-y-3 rounded-xl border border-slate-200 bg-white p-3">
-            <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold text-slate-700">Địa điểm / cụm sân</span><span className="text-[11px] text-slate-400">Lấy từ danh sách địa điểm</span></div>
+            <div className="flex items-center justify-between gap-2"><span className="text-xs font-bold text-slate-700">Địa điểm</span><span className="text-[11px] text-slate-400">Có thể nhập tay, không bắt buộc chọn sân</span></div>
             <select value={venueId} onChange={(event) => handleVenueChange(event.target.value)} className={`${inputClass} bg-white`} disabled={isLoadingVenues}>
-              <option value="">{isLoadingVenues ? 'Đang tải địa điểm...' : 'Chọn địa điểm (hoặc nhập bên dưới)'}</option>
+              <option value="">{isLoadingVenues ? 'Đang tải địa điểm...' : 'Chọn địa điểm có sẵn (không bắt buộc)'}</option>
               {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name} · {venue.locationAddress}</option>)}
             </select>
-            {venueId && <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white`}><option value="">Chọn tên sân (không bắt buộc)</option>{courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}</select>}
-            <input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Ví dụ: D-Sport Quận 7 · Sân 3" className={inputClass} />
+            {venueId && <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white`}><option value="">Chọn tên sân (tùy chọn)</option>{courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}</select>}
+            <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Địa điểm hiển thị <span className="text-rose-500">*</span></span><input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Nhập địa điểm, ví dụ: D-Sport Quận 7 · Sân 3" className={inputClass} /></label>
             <div className="grid gap-2 sm:grid-cols-2">
               <SearchableRegionSelect
                 value={provinceCode}

@@ -9,6 +9,7 @@ import { useAuthStore } from "@/lib/zustand/authStore";
 import { Shield, Users, Trophy, MapPin, Search, Star, Loader2 } from "lucide-react";
 import { CommunityGridSkeleton } from "@/components/skeletons/CommunityCardSkeleton";
 import { getSportLogo } from "@/constants/sports";
+import { normalizeCommunityMediaSources } from "@/features/communities/media";
 
 import { BRAND } from "@/constants/brand";
 
@@ -58,13 +59,16 @@ function CommunityMediaImage({
   className: string;
   fallback: ReactNode;
 }) {
-  const normalizedSources = [src, fallbackSrc]
-    .map((value) => value?.split(',')[0]?.trim() || null)
-    .filter((value): value is string => Boolean(value));
-  const [failedSource, setFailedSource] = useState<string | null>(null);
-  const normalizedSource = normalizedSources.find((source) => source !== failedSource) || null;
+  const normalizedSources = normalizeCommunityMediaSources(src, fallbackSrc);
+  const sourceKey = normalizedSources.join('\u0000');
+  const [failureState, setFailureState] = useState<{ key: string; sources: string[] }>({
+    key: '',
+    sources: [],
+  });
+  const failedSources = failureState.key === sourceKey ? failureState.sources : [];
+  const normalizedSource = normalizedSources.find((source) => !failedSources.includes(source)) || null;
 
-  if (!normalizedSource || failedSource === normalizedSource) return <>{fallback}</>;
+  if (!normalizedSource) return <>{fallback}</>;
 
   return (
     // Community media URLs come from the API and cannot be assumed to match next/image remote patterns.
@@ -73,7 +77,14 @@ function CommunityMediaImage({
       src={normalizedSource}
       alt={alt}
       className={className}
-      onError={() => setFailedSource(normalizedSource)}
+      onError={() => setFailureState((previous) => {
+        const previousSources = previous.key === sourceKey ? previous.sources : [];
+        if (previousSources.includes(normalizedSource)) return previous;
+        return {
+          key: sourceKey,
+          sources: [...previousSources, normalizedSource],
+        };
+      })}
     />
   );
 }
@@ -230,8 +241,8 @@ export default function CommunitiesPage() {
             const provinceName = provinces.find(p => p.code === community.provinceCode)?.name || t('vietnam');
             const rawLogo = community.logoUrl?.trim() || null;
             const communityLogo = (rawLogo && !rawLogo.includes('sporto_v1') && !rawLogo.includes('defaultFallback')) ? rawLogo : null;
-            const communityBanner = community.bannerUrl?.split(',')[0]?.trim() || null;
-            const communityCover = community.coverImageUrl?.split(',')[0]?.trim() || null;
+            const communityBanner = community.bannerUrl?.trim() || null;
+            const communityCover = community.coverImageUrl?.trim() || null;
 
             return (
               <div

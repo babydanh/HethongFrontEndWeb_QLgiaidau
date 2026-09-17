@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { BRAND } from '@/constants/brand';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
-import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark, Share2, Check, Compass, Sparkles, Target, Clock, Star, ThumbsUp, Swords } from 'lucide-react';
+import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark, Share2, Check, CheckCircle2, Compass, Sparkles, Target, Clock, Star, ThumbsUp, Swords } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/Avatar';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from "next-intl";
@@ -598,6 +598,37 @@ export default function ProfilePage() {
   const totalMatchesWon = userRankings?.publicRanks?.reduce((sum, r) => sum + (r.matchesWon || 0), 0) || featuredRank?.matchesWon || matches.filter(m => m.status === 'COMPLETED' && m.winnerId && ((m.winnerId === m.participant1Id && m.participant1?.members?.some(mem => mem.userId === loadedProfileUserId)) || (m.winnerId === m.participant2Id && m.participant2?.members?.some(mem => mem.userId === loadedProfileUserId)))).length;
   const overallWinRate = totalMatchesPlayed > 0 ? Math.round((totalMatchesWon / totalMatchesPlayed) * 100) : 0;
 
+  // Lấy danh sách thứ hạng theo từng bộ môn duy nhất (Pickleball, Cầu lông,...) để hiển thị hết
+  const distinctSportRanks = (() => {
+    const allRanks = (eligiblePublicRanks && eligiblePublicRanks.length > 0)
+      ? eligiblePublicRanks
+      : (userRankings?.publicRanks || []);
+    const seen = new Set<string>();
+    const results: PlayerRanking[] = [];
+    allRanks.forEach(r => {
+      const cat = (r.categoryName || r.categoryId || '').toLowerCase();
+      if (!seen.has(cat)) {
+        seen.add(cat);
+        results.push(r);
+      }
+    });
+    // Nếu chưa có rank nào từ publicRanks nhưng có latestEloHistory / featuredRank
+    if (results.length === 0 && (featuredRank || latestEloHistory)) {
+      results.push({
+        id: 'default-rank',
+        categoryId: latestEloHistory?.categoryId || '',
+        categoryName: featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined),
+        eloPoints: featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? 1500,
+        tierName: featuredRank?.tierName || featuredRank?.tier?.name,
+        matchesPlayed: featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0),
+        matchesWon: featuredRank?.matchesWon || 0,
+        winStreak: 0,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    return results;
+  })();
+
   // Frequent opponents extracted from actual user matches
   const frequentOpponents = (() => {
     if (!loadedProfileUserId || matches.length === 0) return [];
@@ -769,25 +800,14 @@ export default function ProfilePage() {
                   </span>
                 )}
                 {displayUser?.isVerified && (
-                  <span title={translate("verified")} className="bg-blue-600 p-0.5 rounded-full text-white inline-flex items-center shadow-xs">
-                    <Check className="w-3 h-3 stroke-[3]" />
+                  <span title={translate("verified")} className="inline-flex items-center text-blue-500 shrink-0">
+                    <CheckCircle2 className="w-4 h-4 fill-blue-500 text-white" />
                   </span>
                 )}
               </h1>
 
-              {/* Email & Location */}
-              <div className="mt-1 space-y-0.5 text-xs text-slate-500 font-medium">
-                <p className="truncate max-w-[220px] text-slate-400">{displayUser?.email}</p>
-                {displayUser?.createdAt && (
-                  <p className="flex items-center justify-center gap-1 text-slate-400 text-[11px] pt-0.5">
-                    <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-                    <span>{translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}</span>
-                  </p>
-                )}
-              </div>
-
               {/* Role Tags với chữ màu trắng */}
-              <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5">
                 {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
                   let roleLabel = role;
                   let roleColor = 'bg-blue-600 text-white border-blue-700';
@@ -809,8 +829,23 @@ export default function ProfilePage() {
                 })}
               </div>
 
+              {/* Tag / Badge các môn thể thao có hạng (hiện môn nào có hiện hết) */}
+              {distinctSportRanks.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3 pt-3 border-t border-slate-100 w-full">
+                  {distinctSportRanks.map((rank, idx) => (
+                    <EloTierBadge
+                      key={`${rank.categoryName || 'cat'}-${rank.matchType || idx}`}
+                      elo={rank.eloPoints}
+                      tierName={rank.tierName || rank.tier?.name}
+                      categoryName={rank.categoryName}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* Action Buttons in Left Profile Card: Bỏ thách đấu, Card trái có Chỉnh sửa hồ sơ / Chia sẻ */}
-              <div className="w-full flex flex-col gap-2 mt-5">
+              <div className="w-full flex flex-col gap-2 mt-4">
                 {isOwner ? (
                   <Link href="/profile/edit" className="w-full">
                     <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg font-bold transition-all shadow-2xs h-9 px-4 text-xs cursor-pointer">
@@ -828,6 +863,14 @@ export default function ProfilePage() {
                   </button>
                 )}
               </div>
+
+              {/* Ngày tham gia - Giấu ở dưới bé tí */}
+              {displayUser?.createdAt && (
+                <div className="mt-3 pt-2 text-[10px] text-slate-400 flex items-center justify-center gap-1">
+                  <Calendar className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                  <span>{translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}</span>
+                </div>
+              )}
             </div>
 
             {/* Giới thiệu bản thân (Bio) */}

@@ -757,6 +757,7 @@ export default function ProfilePage() {
                   categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
                   matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
                   size="lg"
+                  className="!h-20 !w-20"
                   ringClassName="ring-4 ring-white shadow-xl transition-transform duration-300 hover:scale-[1.02]"
                 />
                 <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-2 ring-white" title={translate("onlineNow")}>
@@ -1965,6 +1966,8 @@ export default function ProfilePage() {
           </div>
         )}
           </div>
+        </div>
+      </div>
         </div>
       </div>
 

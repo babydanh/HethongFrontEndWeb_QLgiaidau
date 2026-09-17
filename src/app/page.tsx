@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -1529,7 +1529,7 @@ export default function HomePage() {
                     key={idx}
                     className={`w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-md flex items-center justify-center text-xs tabular-nums transition-colors ${
                       isSetWin
-                        ? 'bg-blue-600 text-white font-bold shadow-2xs'
+                        ? 'bg-sky-500 text-white font-bold shadow-xs border border-sky-400'
                         : 'bg-slate-100 text-slate-700 font-semibold'
                     }`}
                   >
@@ -2099,3 +2099,4 @@ export default function HomePage() {
     </div>
   );
 }
+

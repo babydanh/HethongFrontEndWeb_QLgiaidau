@@ -1142,20 +1142,19 @@ export default function HomeSocialFeed({ categories = [] }: { categories?: HomeF
                 key={tab.key}
                 type="button"
                 onClick={() => handleDateClick(tab.key)}
-                className={`relative flex min-w-[76px] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2.5 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
+                className={`relative flex min-w-[76px] shrink-0 flex-col items-center justify-center rounded-xl px-2.5 py-2 text-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 ${
                   isSelected
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'text-slate-500 hover:bg-slate-100/80 hover:text-slate-900'
                 }`}
                 aria-current={isSelected ? 'date' : undefined}
               >
-                <span className={`whitespace-nowrap text-xs font-bold ${isSelected ? 'text-blue-700' : 'text-slate-700'}`}>
+                <span className={`whitespace-nowrap text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-700'}`}>
                   {tab.dayLabel}
                 </span>
-                <span className={`mt-0.5 text-[11px] ${isSelected ? 'font-bold text-blue-600' : 'text-slate-400'}`}>
+                <span className={`mt-0.5 text-[11px] ${isSelected ? 'font-medium text-slate-300' : 'text-slate-400'}`}>
                   {tab.dateLabel}
                 </span>
-                {isSelected && <span className="absolute inset-x-5 bottom-1 h-0.5 rounded-full bg-blue-600" aria-hidden="true" />}
               </button>
             );
           })}

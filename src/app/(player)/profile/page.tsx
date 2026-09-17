@@ -35,6 +35,7 @@ import { tournamentsApi, Tournament, BracketMatch, BracketStage, WorkspaceRefere
 import { matchesApi, Match } from '@/features/matches/api';
 import { EloTierBadge } from '@/components/ui/EloTierBadge';
 import { RankAvatar } from '@/components/ui/RankAvatar';
+import ShareModal from '@/components/common/ShareModal';
 import { normalizeProfileGender } from '@/utils/gender';
 
 import { categoriesApi, Category } from '@/features/categories/api';
@@ -281,6 +282,7 @@ export default function ProfilePage() {
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const getFormatLabel = (matchType?: string, genderRestriction?: string | null) => {
     const mt = matchType || '';
@@ -631,13 +633,17 @@ export default function ProfilePage() {
     }
   };
 
+  const shareUrl = typeof window !== 'undefined'
+    ? (loadedProfileUserId ? `${window.location.origin}/users/${loadedProfileUserId}` : window.location.href)
+    : `${BRAND.domain}/profile`;
+
   const isOwner = Boolean(user?.id && (!loadedProfileUserId || loadedProfileUserId === user.id));
 
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
       {/* ─── Cover Banner (Độc lập ở trên cùng) ─── */}
-      <div className="relative h-60 sm:h-72 md:h-80 bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-md select-none">
+      <div className="relative h-60 sm:h-72 md:h-80 bg-slate-950 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 shadow-md select-none">
         <input
           type="file"
           accept="image/*"
@@ -680,56 +686,17 @@ export default function ProfilePage() {
         {/* Vignette overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Action buttons on top-right of banner */}
-        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 flex gap-2">
-          {isOwner ? (
-            <>
-              <Link href="/profile/edit">
-                <Button
-                  type="button"
-                  className="bg-black/40 hover:bg-black/60 text-white border border-white/20 font-bold text-xs h-8 sm:h-9 px-3 rounded-xl shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all duration-200 active:scale-95 cursor-pointer"
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-blue-300" />
-                  <span>{translate("editProfile")}</span>
-                </Button>
-              </Link>
-              <button
-                type="button"
-                onClick={handleCopyProfileLink}
-                className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
-                title={translate("shareProfile")}
-              >
-                <Share2 className="w-3.5 h-3.5 text-sky-400" />
-                <span className="hidden sm:inline">{translate("shareProfile")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleCoverClick}
-                disabled={isUploadingCover}
-                className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
-                title={translate("editCover")}
-              >
-                {isUploadingCover ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
-                ) : (
-                  <Camera className="w-3.5 h-3.5 text-blue-400" />
-                )}
-                <span className="hidden md:inline">{translate("editCover")}</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={handleCopyProfileLink}
-                className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
-                title={translate("shareProfile")}
-              >
-                <Share2 className="w-3.5 h-3.5 text-sky-400" />
-                <span className="hidden sm:inline">{translate("shareProfile")}</span>
-              </button>
-            </>
-          )}
+        {/* Compact Share Button on top-right of banner (Gọn gàng icon chia sẻ mở modal) */}
+        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsShareModalOpen(true)}
+            className="w-9 h-9 rounded-lg bg-black/45 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-md active:scale-95 cursor-pointer transition-all duration-200"
+            title={translate("shareProfile")}
+            aria-label={translate("shareProfile")}
+          >
+            <Share2 className="w-4 h-4 text-white" />
+          </button>
         </div>
       </div>
 
@@ -756,9 +723,9 @@ export default function ProfilePage() {
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* LEFT COLUMN: Identity Profile Card & Personal Attributes (thụt vô trong lề banner) */}
           <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-5 -mt-24 sm:-mt-28 md:-mt-32">
-            {/* Primary Athlete Card (Left Card with Avatar, Name, Badges & Actions - Bỏ khối ELO theo Figma) */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
-              {/* Avatar with Ring & Online Status */}
+            {/* Primary Athlete Card (Left Card with Avatar, Name, Badges & Actions) */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center relative overflow-hidden">
+              {/* Avatar with Ring, Online Status & Tier Emblem */}
               <div className="relative mt-2 mb-3">
                 <RankAvatar
                   src={displayUser?.avatarUrl}
@@ -768,28 +735,41 @@ export default function ProfilePage() {
                   categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
                   matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
                   size="lg"
-                  className="!h-24 !w-24 border-4 border-white shadow-lg transition-transform duration-300 hover:scale-[1.02]"
+                  className="!h-24 !w-24 border-4 border-white shadow-md transition-transform duration-300 hover:scale-[1.02]"
                   ringClassName="ring-2 ring-slate-100"
                 />
                 <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-2 ring-white" title={translate("onlineNow")}>
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 </span>
+
+                {/* Tier Badge Icon như trong Popup */}
+                {(featuredRank?.eloPoints || latestEloHistory?.newElo) && (
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10">
+                    <EloTierBadge
+                      elo={featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? 1500}
+                      tierName={featuredRank?.tierName || featuredRank?.tier?.name}
+                      categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
+                      size="sm"
+                      className="shadow-sm border border-white"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Athlete Name & Badges */}
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center justify-center gap-1.5 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center justify-center gap-1.5 tracking-tight mt-1">
                 {isLoading ? (
-                  <span className="w-32 h-6 bg-slate-200 animate-pulse rounded-lg inline-block"></span>
+                  <span className="w-32 h-6 bg-slate-200 animate-pulse rounded inline-block"></span>
                 ) : (
                   displayUser?.fullName || translate("anonymousUser")
                 )}
                 {displayUser?.roles?.includes('ADMIN') && (
-                  <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
-                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                  <span title={translate("systemAdmin")} className="bg-blue-600 text-white p-1 rounded-full inline-flex items-center shadow-xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-white" />
                   </span>
                 )}
                 {displayUser?.isVerified && (
-                  <span title={translate("verified")} className="bg-blue-500 p-0.5 rounded-full text-white inline-flex items-center">
+                  <span title={translate("verified")} className="bg-blue-600 p-0.5 rounded-full text-white inline-flex items-center shadow-xs">
                     <Check className="w-3 h-3 stroke-[3]" />
                   </span>
                 )}
@@ -806,62 +786,46 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Role Tags */}
+              {/* Role Tags với chữ màu trắng */}
               <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
                 {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
                   let roleLabel = role;
-                  let roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                  let roleColor = 'bg-blue-600 text-white border-blue-700';
                   if (role === 'PLAYER') {
                     roleLabel = translate("rolePlayer");
-                    roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    roleColor = 'bg-blue-600 text-white border-blue-700 shadow-2xs';
                   } else if (role === 'ORGANIZER') {
                     roleLabel = translate("roleOrganizer");
-                    roleColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                    roleColor = 'bg-indigo-600 text-white border-indigo-700 shadow-2xs';
                   } else if (role === 'ADMIN') {
                     roleLabel = translate("roleModerator");
-                    roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                    roleColor = 'bg-purple-600 text-white border-purple-700 shadow-2xs';
                   }
                   return (
-                    <span key={role} className={`px-2 py-0.5 text-[10px] font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
+                    <span key={role} className={`px-2.5 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider text-white ${roleColor}`}>
                       {roleLabel}
                     </span>
                   );
                 })}
               </div>
 
-              {/* Action Buttons in Left Profile Card */}
+              {/* Action Buttons in Left Profile Card: Bỏ thách đấu, Card trái có Chỉnh sửa hồ sơ / Chia sẻ */}
               <div className="w-full flex flex-col gap-2 mt-5">
                 {isOwner ? (
-                  <>
-                    <Link href="/tournaments" className="w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs cursor-pointer">
-                        <Zap className="w-3.5 h-3.5 mr-1.5" />
-                        {translate("quickChallenge")}
-                      </Button>
-                    </Link>
-                    <Link href="/profile/edit" className="w-full">
-                      <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs cursor-pointer">
-                        <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
-                      </Button>
-                    </Link>
-                  </>
+                  <Link href="/profile/edit" className="w-full">
+                    <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-lg font-bold transition-all shadow-2xs h-9 px-4 text-xs cursor-pointer">
+                      <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
+                    </Button>
+                  </Link>
                 ) : (
-                  <>
-                    <Link href={`/tournaments?challengeUser=${loadedProfileUserId || ''}`} className="w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs cursor-pointer">
-                        <Swords className="w-3.5 h-3.5 mr-1.5" />
-                        {translate("quickChallenge")}
-                      </Button>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleCopyProfileLink}
-                      className="w-full h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
-                    >
-                      <Share2 className="w-3.5 h-3.5 text-slate-500" />
-                      {translate("shareProfile")}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="w-full h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                    {translate("shareProfile")}
+                  </button>
                 )}
               </div>
             </div>
@@ -1973,6 +1937,15 @@ export default function ProfilePage() {
           </div>
         </ModalContent>
       </Modal>
+
+      {/* Profile Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        shareUrl={shareUrl}
+        title={displayUser?.fullName || 'Hồ sơ người chơi SportO'}
+        shareText={`Xem hồ sơ của ${displayUser?.fullName || 'vận động viên'} trên hệ thống thể thao SportO`}
+      />
     </div>
   );
 }

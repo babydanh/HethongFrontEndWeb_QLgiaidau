@@ -3239,6 +3239,8 @@
     "shareMatchTitleWithTeams": "Trận đấu: {p1} vs {p2}",
     "registrationClosed": "Đã đóng đăng ký",
     "upcoming": "Sắp diễn ra",
+    "inProgress": "Đang diễn ra",
+    "finished": "Đã kết thúc",
     "daysRemaining": "Còn {days} ngày",
     "joinMatch": "Vào xem trận",
     "roundFinal": "Chung kết",

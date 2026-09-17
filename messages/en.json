@@ -3244,6 +3244,8 @@
     "shareMatchTitleWithTeams": "Match: {p1} vs {p2}",
     "registrationClosed": "Registration closed",
     "upcoming": "Upcoming",
+    "inProgress": "In Progress",
+    "finished": "Completed",
     "daysRemaining": "{days} days left",
     "joinMatch": "Join match",
     "roundFinal": "Final",

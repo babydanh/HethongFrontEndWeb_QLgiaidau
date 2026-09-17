@@ -251,7 +251,7 @@ function ResultAwardCard({
   );
 }
 
-function selectTopFourAwards(awards: TournamentResultAward[]): TournamentResultAward[] {
+function selectPodiumAwards(awards: TournamentResultAward[]): TournamentResultAward[] {
   const seenParticipantIds = new Set<string>();
 
   const validAwards = awards
@@ -265,10 +265,10 @@ function selectTopFourAwards(awards: TournamentResultAward[]): TournamentResultA
     })
     .slice(0, 4);
 
-  // If there are awards at index 2 & 3 (3rd & 4th teams):
-  // In single elimination / knockout without 3rd place playoff, or where backend marked them shared / rank 3,
-  // both are tied 3rd (Đồng Hạng Ba) with rank = 3.
-  const hasExplicitRankFour = validAwards.some((a) => a.rank === 4 && !a.shared);
+  // The public podium has three places. When two teams occupy the bronze
+  // slot (the API may encode the second team as rank 4), render both as tied
+  // third instead of exposing a standalone fourth-place award.
+  const hasSharedThirdPlace = validAwards.length > 3;
 
   return validAwards.map((award, index) => {
     if (index === 0) {
@@ -277,15 +277,11 @@ function selectTopFourAwards(awards: TournamentResultAward[]): TournamentResultA
     if (index === 1) {
       return { ...award, rank: 2, shared: false };
     }
-    // For index 2 and index 3:
-    // If backend marked award as rank 3 or if there's no explicit 3rd-place decider separating them,
-    // they are both Tied 3rd Place (Đồng hạng 3).
     if (index === 2 || index === 3) {
-      const isTiedThird = !hasExplicitRankFour || award.rank === 3 || award.shared;
       return {
         ...award,
-        rank: isTiedThird ? 3 : award.rank,
-        shared: isTiedThird ? true : award.shared,
+        rank: 3,
+        shared: hasSharedThirdPlace,
       };
     }
     return award;
@@ -329,9 +325,9 @@ export default function ResultsTab({
     );
   }
 
-  const topFourAwards = selectTopFourAwards(result?.awards ?? []);
+  const podiumAwards = selectPodiumAwards(result?.awards ?? []);
 
-  if (!result || !hasPublishedTournamentResults(result) || topFourAwards.length === 0) {
+  if (!result || !hasPublishedTournamentResults(result) || podiumAwards.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
         <p className="text-sm font-bold text-slate-700">{translate('resultsTabPendingTitle')}</p>
@@ -357,7 +353,7 @@ export default function ResultsTab({
   };
 
   const resultShareTitle = `${statusTitle}: ${tournamentName || translate('resultsTabLabel')}`;
-  const resultShareText = `${resultShareTitle}\n` + topFourAwards.map(a => `${getRankLabel(a)}: ${a.participant?.teamName ?? ''}`).join('\n');
+  const resultShareText = `${resultShareTitle}\n` + podiumAwards.map(a => `${getRankLabel(a)}: ${a.participant?.teamName ?? ''}`).join('\n');
   const shareUrl = typeof window !== 'undefined'
     ? (() => {
       const url = new URL(window.location.href);
@@ -391,7 +387,7 @@ export default function ResultsTab({
         </div>
 
         <div className="flex flex-col gap-2 sm:gap-2.5">
-          {topFourAwards.map((award, index) => (
+          {podiumAwards.map((award, index) => (
             <ResultAwardCard
               key={award.participant?.participantId || `${award.rank}-${index}`}
               award={award}

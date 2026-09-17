@@ -1719,7 +1719,10 @@ export default function HomePage() {
   };
 
   const filteredCommunities = selectedCategoryId
-    ? communities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
+    ? communities.filter(c => c.categories?.some(cat => matchesSelectedCategory(
+      [cat.id, cat.slug, cat.name],
+      selectedCategoryId,
+    )))
     : communities;
 
   const publicRanks = userRankings?.publicRanks || [];

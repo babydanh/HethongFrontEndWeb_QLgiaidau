@@ -27,8 +27,9 @@ import { DateTimePicker } from '@/components/ui/Input';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { venuesApi, type VenueCourtOption, type VenueOption } from '@/features/venues/api';
 import { regionsApi } from '@/features/regions/api';
-import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import { removeVietnameseTones, useAutoAddressParser } from '@/utils/vietnamAddressParser';
 import type { Region } from '@/types/region';
+import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 
 export type ActivityEventType =
   | 'CLUB_RECRUITING'
@@ -925,6 +926,15 @@ function splitPickupDateTime(value: string) {
   return { playDate, startTime };
 }
 
+function buildPickupLocation(location: string, province?: Region, ward?: Region) {
+  const base = location.trim();
+  const normalizedBase = removeVietnameseTones(base);
+  const suffixes = [ward?.fullName || ward?.name, province?.fullName || province?.name]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .filter((value) => !normalizedBase.includes(removeVietnameseTones(value)));
+  return [base, ...suffixes].join(', ').slice(0, 255);
+}
+
 function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated }: { categories: HomeFeedCategory[]; initialDate: string; onClose: () => void; onCreated: () => void }) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '');
   const [title, setTitle] = useState('');
@@ -939,6 +949,8 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   const [courts, setCourts] = useState<VenueCourtOption[]>([]);
   const [provinces, setProvinces] = useState<Region[]>([]);
   const [wards, setWards] = useState<Region[]>([]);
+  const [provinceCode, setProvinceCode] = useState('');
+  const [wardCode, setWardCode] = useState('');
   const [isLoadingVenues, setIsLoadingVenues] = useState(true);
   const [feePerSlot, setFeePerSlot] = useState('');
   const [maxSlots, setMaxSlots] = useState('4');
@@ -952,8 +964,11 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
     addressValue: location,
     provinces,
     wards,
-    onSelectProvince: () => undefined,
-    onSelectWard: () => undefined,
+    onSelectProvince: (nextProvinceCode) => {
+      setProvinceCode(nextProvinceCode);
+      setWardCode('');
+    },
+    onSelectWard: (nextWardCode) => setWardCode(nextWardCode),
     onWardsLoaded: setWards,
     enabled: location.trim().length >= 3,
   });
@@ -984,6 +999,19 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   }, []);
 
   useEffect(() => {
+    if (!provinceCode) return;
+    let mounted = true;
+    regionsApi.getWardsByProvince(provinceCode)
+      .then((response) => {
+        if (mounted) setWards(response ?? []);
+      })
+      .catch(() => {
+        if (mounted) setWards([]);
+      });
+    return () => { mounted = false; };
+  }, [provinceCode]);
+
+  useEffect(() => {
     if (!venueId) return;
     let mounted = true;
     venuesApi.get(venueId)
@@ -1011,7 +1039,15 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
     setCourtId('');
     if (!nextVenueId) {
       setLocation('');
+      setProvinceCode('');
+      setWardCode('');
     }
+  };
+
+  const handleProvinceChange = (nextProvinceCode: string) => {
+    setProvinceCode(nextProvinceCode);
+    setWardCode('');
+    setWards([]);
   };
 
   const handleCourtChange = (nextCourtId: string) => {
@@ -1030,6 +1066,12 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
     if (selectedDuration < 10 || selectedDuration > 720 || !endTime) return toast.error('Thời lượng không hợp lệ hoặc vượt qua ngày mới');
     if (description.length > 2000) return toast.error('Mô tả không được vượt quá 2000 ký tự');
 
+    const pickupLocation = buildPickupLocation(
+      location,
+      provinces.find((province) => province.code === provinceCode),
+      wards.find((ward) => ward.code === wardCode),
+    );
+
     const slots = Number(maxSlots);
     if (!Number.isInteger(slots) || slots < 2 || slots > 128) return toast.error('Tổng số người phải từ 2 đến 128');
 
@@ -1044,7 +1086,7 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
         playDate,
         startTime,
         endTime,
-        location: location.trim(),
+        location: pickupLocation,
         venueId: venueId || undefined,
         courtId: courtId || undefined,
         ...(fee !== undefined ? { feePerSlot: fee } : {}),
@@ -1117,12 +1159,30 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
             </select>
             {venueId && <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white`}><option value="">Chọn tên sân (không bắt buộc)</option>{courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}</select>}
             <input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Ví dụ: D-Sport Quận 7 · Sân 3" className={inputClass} />
+            <div className="grid gap-2 sm:grid-cols-2">
+              <SearchableRegionSelect
+                value={provinceCode}
+                options={provinces}
+                inputName="pickup-province"
+                placeholder="Tỉnh/thành phố"
+                onChange={handleProvinceChange}
+              />
+              <SearchableRegionSelect
+                value={wardCode}
+                options={wards}
+                inputName="pickup-ward"
+                disabled={!provinceCode || wards.length === 0}
+                placeholder={!provinceCode ? 'Chọn tỉnh/thành phố trước' : wards.length === 0 ? 'Đang tải phường/xã...' : 'Phường/xã'
+                }
+                onChange={setWardCode}
+              />
+            </div>
             {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
               <div className="flex items-center gap-1 text-[11px] font-medium text-blue-600">
                 <Sparkles className="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true" />
                 <span className="truncate">
                   Gợi ý khu vực: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
-                  {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                  {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ' > đang dò phường/xã'}
                 </span>
               </div>
             )}

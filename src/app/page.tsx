@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -1988,12 +1988,49 @@ export default function HomePage() {
                     const group = rawGroup as GroupMatchesData;
                     const displayMatches = group.matches;
                     const matchedTournament = tournaments.find((t) => t.id === group.id);
+                    const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                     return (
                       <div
                         key={tournamentName}
                         className="bg-slate-50/50 rounded-xl p-2.5 sm:p-3.5 flex flex-col gap-2.5"
                       >
+                        <Link
+                          href={group.id ? `/tournaments/${group.id}` : '#'}
+                          className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
+                        >
+                          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200/80 bg-white relative shrink-0 shadow-xs">
+                            <TournamentLogoAvatar
+                              src={group.logoUrl || matchedTournament?.logoUrl}
+                              alt={group.name}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                              <span
+                                className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
+                                  isRanked
+                                    ? 'text-white bg-sky-600'
+                                    : 'text-white bg-slate-600'
+                                }`}
+                              >
+                                {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                              </span>
+                              <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white bg-violet-600">
+                                <LiveMatchSportLabel
+                                  match={group.matches[0]}
+                                  tournament={matchedTournament}
+                                  tournamentName={group.name}
+                                  translate={translate}
+                                />
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-900 group-hover/header:text-blue-600 truncate">
+                              {group.name}
+                            </h4>
+                          </div>
+                        </Link>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {displayMatches.map((m) =>
                             renderMatchCard(m, false, group.matches, matchedTournament ?? null)
@@ -2018,12 +2055,49 @@ export default function HomePage() {
                     const group = rawGroup as GroupMatchesData;
                     const displayMatches = group.matches;
                     const matchedTournament = tournaments.find((t) => t.id === group.id);
+                    const isRanked = getMatchRankedStatus(group.matches[0], matchedTournament);
 
                     return (
                       <div
                         key={tournamentName}
                         className="bg-slate-50/50 rounded-xl p-2.5 sm:p-3.5 flex flex-col gap-2.5"
                       >
+                        <Link
+                          href={group.id ? `/tournaments/${group.id}` : '#'}
+                          className="flex items-center gap-2.5 group/header hover:opacity-90 transition-opacity"
+                        >
+                          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200/80 bg-white relative shrink-0 shadow-xs">
+                            <TournamentLogoAvatar
+                              src={group.logoUrl || matchedTournament?.logoUrl}
+                              alt={group.name}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                              <span
+                                className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
+                                  isRanked
+                                    ? 'text-white bg-sky-600'
+                                    : 'text-white bg-slate-600'
+                                }`}
+                              >
+                                {isRanked ? translate('rankedBadge') : translate('communityBadge')}
+                              </span>
+                              <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded text-white bg-violet-600">
+                                <LiveMatchSportLabel
+                                  match={group.matches[0]}
+                                  tournament={matchedTournament}
+                                  tournamentName={group.name}
+                                  translate={translate}
+                                />
+                              </span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-900 group-hover/header:text-blue-600 truncate">
+                              {group.name}
+                            </h4>
+                          </div>
+                        </Link>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {displayMatches.map((m) =>
                             renderCompletedMatchRow(m, group.matches, matchedTournament ?? null)

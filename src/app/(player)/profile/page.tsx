@@ -1058,9 +1058,9 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex-1 min-w-0 w-full space-y-5">
-              {/* Navigation Tabs Bar: Underline Style, Không đè lên banner */}
-              <div className="bg-white rounded-xl border border-slate-200 px-3 sm:px-6 flex items-center overflow-x-auto no-scrollbar shadow-2xs">
-                <div className="flex gap-4 sm:gap-8">
+              {/* Navigation Tabs Bar: Underline Style, Chuẩn hoá width đều nhau, Responsive hoàn hảo */}
+              <div className="bg-white rounded-xl border border-slate-200 px-2 sm:px-4 shadow-2xs overflow-x-auto no-scrollbar">
+                <div className="flex sm:grid sm:grid-cols-5 min-w-full">
                   {([
                     { id: 'overview', label: translate("overview") },
                     { id: 'tournaments', label: translate("following") },
@@ -1073,10 +1073,10 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
                       className={cn(
-                        "py-3 text-xs sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer whitespace-nowrap",
+                        "flex-1 sm:w-full py-3.5 px-3 text-center text-xs sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer whitespace-nowrap",
                         activeTab === tab.id
                           ? "border-blue-600 text-blue-600"
-                          : "border-transparent text-slate-500 hover:text-slate-800"
+                          : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
                       )}
                     >
                       {tab.label}

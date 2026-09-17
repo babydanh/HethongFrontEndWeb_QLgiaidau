@@ -1882,38 +1882,39 @@ const commonTranslate = useTranslations('Common');
             </div>
 
             {/* Tab Content Container */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3.5 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-3.5 sm:p-6 md:p-7 min-h-[400px] min-w-0 max-w-full overflow-hidden">
               {/* Compact vertical content rows with inline selected detail */}
               {activeTab !== 'overview' && activeTab !== 'sponsors' && (
-                <div className="mb-3" aria-label={translate('competitionContentTitle')}>
-                    <div className="flex items-center justify-between gap-2 mb-2 px-1">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                        {translate('competitionContentTitle') || 'Nội dung thi đấu'}
-                      </span>
-                    </div>
+                <div className="mb-4" aria-label={translate('competitionContentTitle')}>
                   {divisionsList.length > 0 && (
-                  <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-xl">
-                    {divisionsList.map((division) => {
-                      const isActive = division.id === openDivisionId;
-                      const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
-                      const liveCount = liveCountsByDivision[division.id] ?? 0;
-                      const participantCount = division._count?.participants ?? 0;
-                      const maxParticipants = division.maxParticipants ?? 0;
-                      const participantCapacity = maxParticipants > 0
-                        ? `${participantCount} / ${maxParticipants}`
-                        : `${participantCount}`;
-                      return (
-                        <div
-                          key={division.id}
-                          className="scroll-mt-[calc(var(--app-header-height)+1rem)]"
-                        >
-                          <button
-                            type="button"
-                            aria-current={isActive ? 'true' : undefined}
-                            aria-expanded={isActive}
-                            onClick={() => handleDivisionSelect(division.id)}
-                            className="group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2 text-left transition-all rounded-xl sm:px-3.5 sm:py-2.5 bg-transparent"
-                          >
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 sm:p-3">
+                      <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {translate('competitionContentTitle') || 'Nội dung thi đấu'}
+                        </span>
+                      </div>
+                      <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-lg bg-white border border-slate-200/60">
+                        {divisionsList.map((division) => {
+                          const isActive = division.id === openDivisionId;
+                          const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
+                          const liveCount = liveCountsByDivision[division.id] ?? 0;
+                          const participantCount = division._count?.participants ?? 0;
+                          const maxParticipants = division.maxParticipants ?? 0;
+                          const participantCapacity = maxParticipants > 0
+                            ? `${participantCount} / ${maxParticipants}`
+                            : `${participantCount}`;
+                          return (
+                            <div
+                              key={division.id}
+                              className="scroll-mt-[calc(var(--app-header-height)+1rem)]"
+                            >
+                              <button
+                                type="button"
+                                aria-current={isActive ? 'true' : undefined}
+                                aria-expanded={isActive}
+                                onClick={() => handleDivisionSelect(division.id)}
+                                className="group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2 text-left transition-all sm:px-3.5 sm:py-2.5 hover:bg-slate-50/70"
+                              >
                             {(() => {
                               const divisionObj = division as unknown as Record<string, unknown>;
                               const tournamentObj = tournament as unknown as Record<string, unknown>;
@@ -2044,7 +2045,8 @@ const commonTranslate = useTranslations('Common');
                         </div>
                       );
                     })}
-                  </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

@@ -650,10 +650,10 @@ export default function PublicCourtScheduleBoard({
             )}
 
             {onSwitchToList && (
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shadow-2xs">
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-600 text-white shadow-2xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Calendar className="h-3.5 w-3.5" />
                   <span>{translate('viewModeTimeline')}</span>
@@ -661,7 +661,7 @@ export default function PublicCourtScheduleBoard({
                 <button
                   type="button"
                   onClick={onSwitchToList}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <Layers className="h-3.5 w-3.5" />
                   <span>{translate('viewModeList')}</span>
@@ -682,13 +682,13 @@ export default function PublicCourtScheduleBoard({
                     className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
-                    <Calendar className="h-3 w-3" />
+                    <Calendar className="h-3 w-3 text-slate-400" />
                     <span>{formatDayLabel(dateStr)}</span>
                     {matchCount > 0 && (
-                      <span className={`px-1 py-0.2 rounded text-[10px] font-black ${isActive ? 'bg-blue-500/80 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                      <span className={`px-1 py-0.2 rounded text-[10px] font-black ${isActive ? 'bg-blue-500/80 text-white' : 'bg-slate-100 text-slate-600'}`}>
                         {matchCount}
                       </span>
                     )}
@@ -714,7 +714,7 @@ export default function PublicCourtScheduleBoard({
                   className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition-all cursor-pointer ${
                     stepMinutes === step
                       ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   {step}p
@@ -766,11 +766,11 @@ export default function PublicCourtScheduleBoard({
 
             {/* Court Scroll Buttons */}
             {displayedCourts.length > 2 && (
-              <div className="flex items-center gap-0.5 bg-blue-50/80 border border-blue-200 rounded-lg p-0.5 shadow-2xs">
+              <div className="flex items-center gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5 shadow-2xs">
                 <button
                   type="button"
                   onClick={() => handleScroll('left')}
-                  className="h-6 px-2 rounded text-[11px] font-bold text-blue-800 hover:bg-blue-600 hover:text-white flex items-center gap-0.5 transition-all cursor-pointer"
+                  className="h-6 px-2 rounded text-[11px] font-semibold text-slate-700 hover:bg-white hover:text-slate-900 flex items-center gap-0.5 transition-all cursor-pointer"
                   title={translate('timelinePrevCourtTitle')}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -779,7 +779,7 @@ export default function PublicCourtScheduleBoard({
                 <button
                   type="button"
                   onClick={() => handleScroll('right')}
-                  className="h-6 px-2 rounded text-[11px] font-bold text-blue-800 hover:bg-blue-600 hover:text-white flex items-center gap-0.5 transition-all cursor-pointer"
+                  className="h-6 px-2 rounded text-[11px] font-semibold text-slate-700 hover:bg-white hover:text-slate-900 flex items-center gap-0.5 transition-all cursor-pointer"
                   title={translate('timelineNextCourtTitle')}
                 >
                   <span className="hidden sm:inline">{translate('timelineNextCourts')}</span>

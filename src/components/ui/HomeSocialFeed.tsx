@@ -1142,19 +1142,23 @@ export default function HomeSocialFeed({ categories = [] }: { categories?: HomeF
                 key={tab.key}
                 type="button"
                 onClick={() => handleDateClick(tab.key)}
-                className={`relative flex min-w-[72px] shrink-0 flex-col items-center justify-center rounded-lg px-2.5 py-2 text-center transition-colors cursor-pointer border-b-2 -mb-[1px] focus-visible:outline-none ${
-                  isSelected
-                    ? 'border-slate-900 text-slate-900 bg-transparent'
-                    : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300 bg-transparent'
-                }`}
+                className={`group relative flex min-w-[72px] shrink-0 flex-col items-center justify-center rounded-lg px-2.5 pt-2 pb-2.5 text-center transition-all cursor-pointer bg-transparent focus-visible:outline-none`}
                 aria-current={isSelected ? 'date' : undefined}
               >
-                <span className={`whitespace-nowrap text-xs ${isSelected ? 'font-semibold text-slate-900' : 'font-normal text-slate-600'}`}>
+                <span className={`whitespace-nowrap text-xs transition-colors ${
+                  isSelected ? 'font-black text-slate-950' : 'font-medium text-slate-500 group-hover:text-slate-800'
+                }`}>
                   {tab.dayLabel}
                 </span>
-                <span className={`mt-0.5 text-[11px] ${isSelected ? 'font-medium text-slate-700' : 'text-slate-400'}`}>
+                <span className={`mt-0.5 text-[11px] transition-colors ${
+                  isSelected ? 'font-bold text-slate-900' : 'text-slate-400 group-hover:text-slate-600'
+                }`}>
                   {tab.dateLabel}
                 </span>
+                {/* Visible underline indicator */}
+                {isSelected && (
+                  <span className="absolute bottom-0 inset-x-2 h-0.5 rounded-full bg-slate-900" aria-hidden="true" />
+                )}
               </button>
             );
           })}

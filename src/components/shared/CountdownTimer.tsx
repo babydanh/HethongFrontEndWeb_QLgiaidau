@@ -65,24 +65,24 @@ export default function CountdownTimer({
   if (!display) return null;
 
   const colors = {
-    info: 'bg-blue-50 border-blue-200 text-blue-700',
-    warning: 'bg-amber-50 border-amber-200 text-amber-800',
-    danger: 'bg-rose-50 border-rose-200 text-rose-700',
+    info: 'bg-sky-50/70 border-sky-200/60 text-sky-800',
+    warning: 'bg-amber-50/70 border-amber-200/60 text-amber-800',
+    danger: 'bg-rose-50/70 border-rose-200/60 text-rose-800',
   };
 
   const dotColors = {
-    info: 'bg-blue-500',
+    info: 'bg-sky-500',
     warning: 'bg-amber-500',
     danger: 'bg-rose-500 animate-pulse',
   };
 
-  const padding = size === 'sm' ? 'py-1.5 px-2.5' : size === 'lg' ? 'py-3 px-4' : 'py-2.5 px-3';
+  const padding = size === 'sm' ? 'py-1 px-2' : size === 'lg' ? 'py-2 px-3.5' : 'py-1.5 px-2.5';
 
   return (
-    <div className={`mt-2 ${padding} border rounded-lg shadow-2xs ${colors[variant]}`}>
+    <div className={`mt-2 ${padding} border rounded-lg ${colors[variant]}`}>
       <div className="flex items-center gap-1.5">
         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[variant]}`} />
-        <span className={`font-bold tracking-tight ${size === 'sm' ? 'text-[11px]' : size === 'lg' ? 'text-base' : 'text-xs sm:text-sm'}`}>
+        <span className={`font-semibold tracking-normal ${size === 'sm' ? 'text-[11px]' : size === 'lg' ? 'text-base' : 'text-xs sm:text-xs'}`}>
           {display}
         </span>
       </div>

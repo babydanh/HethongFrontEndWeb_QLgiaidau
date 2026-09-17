@@ -1117,7 +1117,7 @@ const commonTranslate = useTranslations('Common');
         // 1. Chưa tới ngày mở đăng ký -> CHỈ ĐẾM NGƯỢC THỜI GIAN MỞ ĐĂNG KÝ
         if (regStart && now < regStart) {
           return (
-            <div className="pt-2 border-t border-slate-100">
+            <div>
               <CountdownTimer
                 targetDate={activeTournament.registrationStartDate!}
                 labels={{
@@ -1135,7 +1135,7 @@ const commonTranslate = useTranslations('Common');
         // 2. Đang mở đăng ký, chưa đóng -> CHỈ ĐẾM NGƯỢC HẠN ĐÓNG ĐĂNG KÝ
         if (regEnd && now < regEnd && !isRegistrationLocked) {
           return (
-            <div className="pt-2 border-t border-slate-100">
+            <div>
               <CountdownTimer
                 targetDate={activeTournament.registrationEndDate!}
                 labels={{
@@ -1153,7 +1153,7 @@ const commonTranslate = useTranslations('Common');
         // 3. Đã đóng đăng ký, chưa khởi tranh -> Đếm ngược ngày khởi tranh
         if (tourStart && now < tourStart) {
           return (
-            <div className="pt-2 border-t border-slate-100">
+            <div>
               <CountdownTimer
                 targetDate={activeTournament.startDate!}
                 labels={{
@@ -1171,7 +1171,7 @@ const commonTranslate = useTranslations('Common');
         // 4. Đang diễn ra -> Đếm ngược ngày kết thúc
         if (isTournamentInProgress(activeTournament.status) && tourEnd && now < tourEnd) {
           return (
-            <div className="pt-2 border-t border-slate-100">
+            <div>
               <CountdownTimer
                 targetDate={activeTournament.endDate!}
                 labels={{
@@ -1427,7 +1427,7 @@ const commonTranslate = useTranslations('Common');
         )}
 
         {/* Show Creator — always visible regardless of contact info */}
-        <div className={hasContent ? "pt-3 border-t border-slate-100" : ""}>
+        <div className={hasContact ? "pt-3 border-t border-slate-100" : ""}>
           {renderOrganizerBlock()}
         </div>
       </div>

@@ -823,127 +823,13 @@ export default function UserProfilePopover({
             );
           })()}
 
-          {/* ELO Tier Badges for each sport with Smart Overflow (World/Public Rank) - ONLY when NOT in club */}
-          {!communityId && (
-            <div className="mt-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                Hạng hệ thống toàn cầu
-              </p>
-              {(() => {
-                const eligible = eligibleRanks.length > 0
-                  ? eligibleRanks
-                  : (profileData.ranks || []).filter((r) => (r.eloPoints || 0) > 0);
-
-                const seenCategories = new Set<string>();
-                const distinctRanks = eligible.filter((r) => {
-                  const cat = (r.categoryName || '').toLowerCase();
-                  if (seenCategories.has(cat)) return false;
-                  seenCategories.add(cat);
-                  return true;
-                });
-
-                if (distinctRanks.length === 0 && !eligibleHighlightRank) {
-                  return (
-                    <p className="text-[11px] text-slate-400 italic">Chưa tham gia xếp hạng toàn quốc</p>
-                  );
-                }
-
-                const maxVisible = 3;
-                const visibleRanks = distinctRanks.slice(0, maxVisible);
-                const hiddenRanks = distinctRanks.slice(maxVisible);
-                const remainingCount = hiddenRanks.length;
-                const hiddenTooltip = `${hiddenRanks.map(r => `${r.categoryName}: ${r.eloPoints} ELO (${r.tierName || '--'})`).join('\n')}\n(Bấm để xem thêm trong hồ sơ)`;
-
-                return (
-                  <div className="flex items-center flex-wrap gap-1.5">
-                    {visibleRanks.map((rank, idx) => (
-                      <EloTierBadge
-                        key={`${rank.categoryName || 'cat'}-${rank.matchType || idx}`}
-                        elo={rank.eloPoints}
-                        tierName={rank.tierName || undefined}
-                        categoryName={rank.categoryName || undefined}
-                        size="sm"
-                      />
-                    ))}
-
-                    {remainingCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onClose();
-                          if (profileData.id) {
-                            router.push(`/users/${profileData.id}`);
-                          }
-                        }}
-                        title={hiddenTooltip}
-                        className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-colors active:scale-95"
-                      >
-                        +{remainingCount} xem thêm
-                      </button>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
+          {/* Bio if available */}
+          {profileData.bio && (
+            <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
+              {profileData.bio}
+            </p>
           )}
         </div>
-
-        {/* Bio if available */}
-        {profileData.bio && (
-          <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-            {profileData.bio}
-          </p>
-        )}
-
-        {/* World Rank & ELO Section - ONLY when NOT in club */}
-        {!communityId && (
-          profileRanks.length > 0 ? (
-            <>
-              <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-slate-100 bg-slate-50 p-2">
-                {profileRanks.map((rank) => {
-                  const typeLabel = getRankTypeLabel(rank);
-                  const rankTitle = `${rank.categoryName || 'ELO'}${typeLabel ? ` (${typeLabel})` : ''}${rank.partnerName ? ` - Đôi với ${rank.partnerName}` : ''}`;
-                  return (
-                    <div
-                      key={`${rank.categoryId || ''}-${rank.categoryName}-${rank.matchType}-${rank.genderRestriction || ''}-${rank.partnerName || ''}`}
-                      className="min-w-0 text-center"
-                      title={rankTitle}
-                    >
-                      <div className="truncate text-[9px] font-semibold uppercase text-slate-500">
-                        {rank.categoryName || 'ELO'}
-                      </div>
-                      {typeLabel && (
-                        <div className="truncate text-[8px] font-medium text-blue-600">
-                          {typeLabel}
-                        </div>
-                      )}
-                      <div className="text-xs font-bold text-slate-800">{rank.eloPoints}</div>
-                      {rank.matchesPlayed > 0 && (
-                        <div className="text-[9px] text-slate-500">{rank.matchesWon}/{rank.matchesPlayed} {translate('winsShort')}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {totalMatches > 0 && (
-                <p className="mt-1 text-center text-[10px] text-slate-500">
-                  {translate('matchSummary', { matches: totalMatches, wins: totalWins, losses: Math.max(0, totalMatches - totalWins) })}
-                </p>
-              )}
-            </>
-          ) : (
-            <div className="mt-2.5 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-blue-500" />
-                <span className="font-semibold text-slate-700">{translate('currentElo')}</span>
-              </div>
-              <span className="font-extrabold text-blue-600">
-                {new Intl.NumberFormat(locale === 'vi' ? 'vi-VN' : 'en-US').format(primaryRank?.eloPoints ?? 1000)} ELO
-              </span>
-            </div>
-          )
-        )}
 
         {/* Compact club tags and tag management */}
         {communityId && (
@@ -971,79 +857,31 @@ export default function UserProfilePopover({
                           }
                     }
                   >
-                    <Tag className="h-3 w-3 opacity-60" strokeWidth={1.8} />
-                    {getPresetLabel(tag)}
+                    <Tag className="w-2.5 h-2.5 opacity-60" />
+                    {tag}
                   </span>
                 );
               })}
-
               {canManageTags && !isEditingTags && (
                 <button
                   type="button"
-                  onClick={handleStartEditTags}
-                  aria-label={translate('assignTags')}
-                  title={translate('assignTags')}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-dashed border-blue-300 bg-blue-50 text-blue-700 transition hover:bg-blue-100 hover:border-blue-400"
+                  onClick={() => {
+                    setSelectedTags(profileData.tags ?? []);
+                    setIsEditingTags(true);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md border border-dashed border-blue-300 bg-blue-50/60 px-2 py-0.5 text-[11px] font-medium text-blue-600 hover:bg-blue-100 transition cursor-pointer"
                 >
-                  <Tag className="h-3 w-3" strokeWidth={1.8} />
-                  <Plus className="-ml-1 h-2.5 w-2.5" strokeWidth={2.5} />
+                  <Plus className="w-2.5 h-2.5" />
+                  <span>{translate('tagMember')}</span>
                 </button>
               )}
             </div>
 
-            {!isEditingTags ? null : (
-              /* Inline Edit Mode */
-              <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 space-y-2 animate-in fade-in duration-150">
-                {/* Selected Tags Display */}
-                {selectedTags.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
-                      <span>{translate('selectedTagsChipsLabel')}</span>
-                      <span>{selectedTags.length}/{MAX_MEMBER_TAGS}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedTags.map((tag) => {
-                        const preset = tagPresets.find((p) => p.name.toLowerCase() === tag.toLowerCase());
-                        return (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold border shadow-2xs"
-                            style={
-                              preset
-                                ? {
-                                    backgroundColor: preset.color,
-                                    borderColor: `${preset.color}99`,
-                                    color: '#0f172a',
-                                  }
-                                : {
-                                    backgroundColor: '#f1f5f9',
-                                    borderColor: '#cbd5e1',
-                                    color: '#1e293b',
-                                  }
-                            }
-                          >
-                            <span>{getPresetLabel(tag)}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleTag(tag)}
-                              disabled={isSavingTags}
-                              className="text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
-                            >
-                              <X className="h-3 w-3" strokeWidth={2} />
-                            </button>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-[10px] font-semibold text-slate-500">
-                  {translate('chooseTagToAssign')}
-                </p>
-
-                {/* Preset Chips */}
-                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+            {/* Tag edit panel */}
+            {canManageTags && isEditingTags && (
+              <div className="mt-2.5 rounded-xl border border-blue-100 bg-blue-50/40 p-2.5 space-y-2">
+                <div className="text-[11px] font-semibold text-slate-700">{translate('choosePresetTags')}</div>
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
                   {tagPresets.map((preset) => {
                     const isSelected = selectedTags.includes(preset.name);
                     return (
@@ -1051,72 +889,70 @@ export default function UserProfilePopover({
                         key={preset.id}
                         type="button"
                         onClick={() => handleToggleTag(preset.name)}
-                        disabled={isSavingTags || (selectedTags.length >= MAX_MEMBER_TAGS && !isSelected)}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition cursor-pointer border ${
                           isSelected
-                            ? "ring-2 ring-blue-500 shadow-xs"
-                            : "opacity-60 hover:opacity-100"
+                            ? 'ring-2 ring-blue-500 font-bold shadow-xs'
+                            : 'opacity-70 hover:opacity-100'
                         }`}
                         style={{
                           backgroundColor: preset.color,
-                          borderColor: `${preset.color}99`,
-                          color: "#0f172a",
+                          borderColor: `${preset.color}cc`,
+                          color: '#0f172a',
                         }}
                       >
-                        {isSelected && <Check className="h-3 w-3 text-slate-900 shrink-0" />}
-                        <span>{getPresetLabel(preset.name)}</span>
+                        {isSelected && <Check className="w-2.5 h-2.5" />}
+                        {preset.name}
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Custom Tag Input */}
-                <div className="flex items-center gap-1.5">
+                {/* Custom tag input */}
+                <div className="flex gap-1.5 pt-1">
                   <input
                     type="text"
                     value={customTagInput}
                     onChange={(e) => setCustomTagInput(e.target.value)}
-                    maxLength={MAX_MEMBER_TAG_LENGTH}
-                    disabled={isSavingTags || selectedTags.length >= MAX_MEMBER_TAGS}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
+                      if (e.key === 'Enter') {
                         e.preventDefault();
                         handleAddCustomTag();
                       }
                     }}
                     placeholder={translate('customTagPlaceholder')}
-                    className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 placeholder-slate-400 outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    maxLength={30}
+                    className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-hidden"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomTag}
-                    disabled={isSavingTags || selectedTags.length >= MAX_MEMBER_TAGS || !customTagInput.trim()}
-                    className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+                    disabled={!customTagInput.trim()}
+                    className="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition cursor-pointer"
                   >
-                    + {translate('addTag')}
+                    {translate('addTag')}
                   </button>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-2 pt-1">
+                {/* Save / Cancel buttons */}
+                <div className="flex justify-end gap-1.5 pt-1 border-t border-blue-100">
                   <button
                     type="button"
-                    disabled={isSavingTags}
                     onClick={() => {
                       setIsEditingTags(false);
-                      if (profileData.tags) setSelectedTags(profileData.tags);
+                      setCustomTagInput('');
                     }}
-                    className="px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+                    disabled={isSavingTags}
+                    className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-40"
                   >
-                    {translate('cancelTagEdit')}
+                    {translate('cancel')}
                   </button>
                   <button
                     type="button"
-                    disabled={isSavingTags}
                     onClick={handleSaveTags}
-                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-xs hover:bg-blue-700 disabled:opacity-50"
+                    disabled={isSavingTags}
+                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
                   >
-                    {isSavingTags && <Loader2 className="h-3 w-3 animate-spin" />}
+                    {isSavingTags && <Loader2 className="w-3 h-3 animate-spin" />}
                     <span>{translate('saveTags')}</span>
                   </button>
                 </div>
@@ -1125,144 +961,196 @@ export default function UserProfilePopover({
           </div>
         )}
 
-        {!isSelf && currentUser?.id && (isFriendshipLoading || (friendshipContextKey === friendshipRequestContextKey && friendship)) && (
-          <div className="mt-3 border-t border-slate-100 pt-2.5">
-            {isFriendshipLoading ? (
-              <div className="flex h-9 items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500">
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                {translate('friendLoading')}
-              </div>
-            ) : friendship?.status === 'NONE' ? (
-              <button
-                type="button"
-                onClick={() => handleFriendshipAction('send')}
-                disabled={friendshipAction !== null}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {friendshipAction === 'send' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <UserPlus className="h-3.5 w-3.5" />
-                )}
-                {translate('friendAdd')}
-              </button>
-            ) : friendship?.status === 'PENDING' && friendship.direction === 'OUTGOING' ? (
-              <div className="flex gap-2">
+        {(() => {
+          const showFriendship = !isSelf && !!currentUser?.id && (isFriendshipLoading || (friendshipContextKey === friendshipRequestContextKey && !!friendship));
+          const showMessage = !isSelf && canMessage;
+
+          const renderFriendshipButton = (isFullWidth: boolean = false) => {
+            if (isFriendshipLoading) {
+              return (
+                <div className={`flex h-9 items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500 ${isFullWidth ? 'w-full' : 'flex-1'}`}>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  {translate('friendLoading')}
+                </div>
+              );
+            }
+
+            if (friendship?.status === 'NONE') {
+              return (
                 <button
                   type="button"
-                  disabled
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed"
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  {translate('friendRequestSent')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFriendshipAction('remove')}
+                  onClick={() => handleFriendshipAction('send')}
                   disabled={friendshipAction !== null}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 ${isFullWidth ? 'w-full' : 'flex-1'}`}
                 >
-                  {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {translate('friendCancel')}
+                  {friendshipAction === 'send' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <UserPlus className="h-3.5 w-3.5" />
+                  )}
+                  {translate('friendAdd')}
                 </button>
-              </div>
-            ) : friendship?.status === 'PENDING' && friendship.direction === 'INCOMING' ? (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleFriendshipAction('accept')}
-                  disabled={friendshipAction !== null}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {friendshipAction === 'accept' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserCheck className="h-3.5 w-3.5" />}
-                  {translate('friendAccept')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFriendshipAction('reject')}
-                  disabled={friendshipAction !== null}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {friendshipAction === 'reject' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {translate('friendReject')}
-                </button>
-              </div>
-            ) : friendship?.status === 'ACCEPTED' ? (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 disabled:cursor-not-allowed"
-                >
-                  <UserCheck className="h-3.5 w-3.5" />
-                  {translate('friendAccepted')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFriendshipAction('remove')}
-                  disabled={friendshipAction !== null}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  <UserRoundX className="h-3.5 w-3.5" />
-                  {translate('friendUnfriend')}
-                </button>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
+              );
+            }
+
+            if (friendship?.status === 'PENDING' && friendship.direction === 'OUTGOING') {
+              return (
+                <div className={`flex gap-1.5 ${isFullWidth ? 'w-full' : 'flex-1 min-w-0'}`}>
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-slate-100 px-2 py-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed min-w-0 truncate"
+                  >
+                    <Check className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{translate('friendRequestSent')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFriendshipAction('remove')}
+                    disabled={friendshipAction !== null}
+                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  >
+                    {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {translate('friendCancel')}
+                  </button>
+                </div>
+              );
+            }
+
+            if (friendship?.status === 'PENDING' && friendship.direction === 'INCOMING') {
+              return (
+                <div className={`flex gap-1.5 ${isFullWidth ? 'w-full' : 'flex-1 min-w-0'}`}>
+                  <button
+                    type="button"
+                    onClick={() => handleFriendshipAction('accept')}
+                    disabled={friendshipAction !== null}
+                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-blue-600 px-2 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 truncate"
+                  >
+                    {friendshipAction === 'accept' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserCheck className="h-3.5 w-3.5 shrink-0" />}
+                    <span className="truncate">{translate('friendAccept')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFriendshipAction('reject')}
+                    disabled={friendshipAction !== null}
+                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  >
+                    {friendshipAction === 'reject' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {translate('friendReject')}
+                  </button>
+                </div>
+              );
+            }
+
+            if (friendship?.status === 'ACCEPTED') {
+              return (
+                <div className={`flex gap-1.5 ${isFullWidth ? 'w-full' : 'flex-1 min-w-0'}`}>
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-emerald-50 px-2 py-2 text-xs font-semibold text-emerald-700 disabled:cursor-not-allowed min-w-0 truncate"
+                  >
+                    <UserCheck className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{translate('friendAccepted')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFriendshipAction('remove')}
+                    disabled={friendshipAction !== null}
+                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-2 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  >
+                    {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <UserRoundX className="h-3.5 w-3.5" />
+                    {translate('friendUnfriend')}
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className={`rounded-xl bg-slate-50 px-3 py-2 text-center text-xs text-slate-500 ${isFullWidth ? 'w-full' : 'flex-1'}`}>
                 {translate('friendUnavailable')}
               </div>
-            )}
-          </div>
-        )}
+            );
+          };
 
-        {/* Quick Action Buttons */}
-        <div className="mt-3.5 flex gap-2 pt-2.5 border-t border-slate-100">
-          {!isSelf && canMessage && (
+          const renderProfileButton = (isFullWidth: boolean = false) => (
             <button
               type="button"
-              disabled={isOpeningChat || !canMessage}
-              onClick={async () => {
-                if (!profileData.id || isOpeningChat) return;
-                if (!canMessage) {
-                  toast.error(translate('strangerMessagesDisabled'));
-                  return;
-                }
-                setIsOpeningChat(true);
-                try {
-                  window.dispatchEvent(
-                    new CustomEvent('sporto:open-direct-chat', {
-                      detail: { userId: profileData.id },
-                    }),
-                  );
-                  setIsOpeningChat(false);
-                  onClose();
-                } catch {
-                  setIsOpeningChat(false);
+              onClick={() => {
+                onClose();
+                if (profileData.id) {
+                  router.push(`/users/${profileData.id}`);
                 }
               }}
-              title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80 ${isFullWidth ? 'w-full' : 'flex-1'}`}
             >
-              <MessageCircle className="h-3.5 w-3.5" />
-              {isOpeningChat ? translate('chatOpening') : canMessage ? translate('message') : translate('strangerMessagesShort')}
+              <User className="h-3.5 w-3.5" />
+              {translate('profile')}
             </button>
-          )}
+          );
 
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              if (profileData.id) {
-                router.push(`/users/${profileData.id}`);
-              }
-            }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80"
-          >
-            <User className="h-3.5 w-3.5" />
-            {translate('profile')}
-          </button>
-        </div>
+          // CASE 1: With message button (keep existing 2-row layout: friendship row on top, [Nhắn tin] [Trang cá nhân] below)
+          if (showMessage) {
+            return (
+              <div className="mt-3 space-y-2">
+                {showFriendship && (
+                  <div>
+                    {renderFriendshipButton(true)}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={isOpeningChat || !canMessage}
+                    onClick={async () => {
+                      if (!profileData.id || isOpeningChat) return;
+                      if (!canMessage) {
+                        toast.error(translate('strangerMessagesDisabled'));
+                        return;
+                      }
+                      setIsOpeningChat(true);
+                      try {
+                        window.dispatchEvent(
+                          new CustomEvent('sporto:open-direct-chat', {
+                            detail: { userId: profileData.id },
+                          }),
+                        );
+                        setIsOpeningChat(false);
+                        onClose();
+                      } catch {
+                        setIsOpeningChat(false);
+                      }
+                    }}
+                    title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    {isOpeningChat ? translate('chatOpening') : translate('message')}
+                  </button>
+                  {renderProfileButton(false)}
+                </div>
+              </div>
+            );
+          }
+
+          // CASE 2: No message button, but has friendship (put Friendship and Profile side-by-side)
+          if (showFriendship) {
+            return (
+              <div className="mt-3 flex gap-2">
+                {renderFriendshipButton(false)}
+                {renderProfileButton(false)}
+              </div>
+            );
+          }
+
+          // CASE 3: Self profile or no friendship actions (Profile button only full width)
+          return (
+            <div className="mt-3">
+              {renderProfileButton(true)}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -27,7 +27,8 @@ import { api } from '@/lib/axios';
 
 export type ActivityEventType =
   | 'CLUB_RECRUITING'
-  | 'TOURNAMENT_OPENED';
+  | 'TOURNAMENT_OPENED'
+  | 'PERSONAL_PICKUP';
 
 interface ClubIdentity {
   id: string;
@@ -41,6 +42,20 @@ interface JoinedPlayer {
   name: string;
   initialsBg: string;
   avatarUrl?: string | null;
+}
+
+interface PersonalHostIdentity {
+  id: string;
+  name: string;
+  initials: string;
+  avatarUrl?: string | null;
+}
+
+export interface HomeFeedCategory {
+  id: string;
+  name: string;
+  slug?: string;
+  isActive?: boolean;
 }
 
 export interface ActivityFeedItem {
@@ -57,7 +72,9 @@ export interface ActivityFeedItem {
   title: string;
   description: string;
   bannerUrl?: string;
-  club: ClubIdentity;
+  club?: ClubIdentity;
+  personalHost?: PersonalHostIdentity;
+  isJoined?: boolean;
   courtDetails?: string;
   rules?: string[];
   slots?: {
@@ -173,6 +190,31 @@ type ActivityFeedApiResponse = {
   };
 };
 
+type PersonalPickupApiItem = {
+  id: string;
+  type: 'PERSONAL_PICKUP';
+  title: string;
+  description: string | null;
+  playDate: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  sport: string;
+  sportTier: string;
+  feePerSlot: number;
+  maxSlots: number;
+  currentSlots: number;
+  status: string;
+  personalHost: { id: string; name: string; avatarUrl: string | null };
+  isJoined: boolean;
+  joinedPlayers: Array<{ userId: string; name: string; avatarUrl: string | null }>;
+};
+
+type PersonalPickupApiResponse = {
+  data: PersonalPickupApiItem[] | { items: PersonalPickupApiItem[] };
+  meta?: { hasMore?: boolean; nextCursor?: string | null };
+};
+
 function getVietnamDateParts(value: string | null) {
   if (!value) return { year: '', month: '', day: '' };
   const parts = new Intl.DateTimeFormat('en-GB', {
@@ -189,12 +231,14 @@ function getVietnamDateParts(value: string | null) {
 }
 
 function getVietnamDateKey(value: string | null) {
+  if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const { year, month, day } = getVietnamDateParts(value);
   return year && month && day ? `${year}-${month}-${day}` : '';
 }
 
 function getVietnamTime(value: string | null) {
   if (!value) return '';
+  if (/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return value;
   return new Intl.DateTimeFormat('vi-VN', {
     timeZone: 'Asia/Ho_Chi_Minh',
     hour: '2-digit',
@@ -252,6 +296,38 @@ function mapApiActivity(item: ApiActivityFeedItem): ActivityFeedItem {
   };
 }
 
+function mapPersonalPickup(item: PersonalPickupApiItem): ActivityFeedItem {
+  return {
+    id: item.id,
+    type: 'PERSONAL_PICKUP',
+    sport: item.sport || 'Thể thao',
+    sportTier: item.sportTier || 'Mọi trình độ',
+    playDate: getVietnamDateKey(item.playDate),
+    startTime: item.startTime,
+    endTime: item.endTime,
+    location: item.location,
+    title: item.title,
+    description: item.description ?? '',
+    personalHost: {
+      id: item.personalHost.id,
+      name: item.personalHost.name,
+      initials: getInitials(item.personalHost.name) || 'Bạn',
+      avatarUrl: item.personalHost.avatarUrl,
+    },
+    isJoined: item.isJoined,
+    slots: {
+      current: item.currentSlots,
+      max: item.maxSlots,
+      feePerSlot: formatFee(item.feePerSlot),
+      joinedPlayers: item.joinedPlayers.map((player, index) => ({
+        name: player.name,
+        initialsBg: AVATAR_COLORS[index % AVATAR_COLORS.length],
+        avatarUrl: player.avatarUrl,
+      })),
+    },
+  };
+}
+
 function ClubAvatar({ club, size = 'default' }: { club: ClubIdentity; size?: 'default' | 'small' }) {
   const sizeClass = size === 'small' ? 'h-8 w-8 text-[10px]' : 'h-10 w-10 text-xs';
 
@@ -276,6 +352,8 @@ function ClubAvatar({ club, size = 'default' }: { club: ClubIdentity; size?: 'de
 }
 
 function ClubIdentityRow({ item }: { item: ActivityFeedItem }) {
+  if (!item.club) return null;
+
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <ClubAvatar club={item.club} />
@@ -372,6 +450,8 @@ function SessionDetailModal({
 }) {
   const slots = item.slots;
   const isFull = slots ? slots.current >= slots.max : false;
+  const isPersonal = item.type === 'PERSONAL_PICKUP';
+  const identity = item.club ?? item.personalHost;
   const [note, setNote] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -400,18 +480,18 @@ function SessionDetailModal({
           <div className="flex items-center gap-3 min-w-0">
             <div
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200"
-              style={item.club.avatarUrl ? { backgroundImage: `url(${item.club.avatarUrl})`, backgroundSize: 'cover' } : {}}
+              style={identity?.avatarUrl ? { backgroundImage: `url(${identity.avatarUrl})`, backgroundSize: 'cover' } : {}}
             >
-              {!item.club.avatarUrl && item.club.initials}
+              {!identity?.avatarUrl && identity?.initials}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-slate-900 truncate">{item.club.name}</span>
-                {item.club.verified && (
+                <span className="text-sm font-bold text-slate-900 truncate">{identity?.name ?? 'Người chơi'}</span>
+                {!isPersonal && item.club?.verified && (
                   <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-label="Đã xác minh" />
                 )}
               </div>
-              <p className="text-xs text-slate-500">{item.sport} · {item.sportTier}</p>
+              <p className="text-xs text-slate-500">{isPersonal ? 'Kèo cá nhân' : `${item.sport} · ${item.sportTier}`}</p>
             </div>
           </div>
 
@@ -697,6 +777,34 @@ function ClubSessionCard({
   );
 }
 
+function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin }: { item: ActivityFeedItem; reducedMotion: boolean; isJoined: boolean; onJoin: () => Promise<boolean> }) {
+  const [showModal, setShowModal] = useState(false);
+  if (!item.slots || !item.personalHost) return null;
+  const { current, max, feePerSlot, joinedPlayers } = item.slots;
+  const isFull = current >= max;
+  const identity = item.personalHost;
+
+  return (
+    <>
+      {showModal && <SessionDetailModal item={item} isJoined={isJoined} onClose={() => setShowModal(false)} onJoin={onJoin} />}
+      <EventShell reducedMotion={reducedMotion}>
+        <div className="space-y-3 p-3.5 sm:p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600" style={identity.avatarUrl ? { backgroundImage: `url(${identity.avatarUrl})`, backgroundPosition: 'center', backgroundSize: 'cover' } : undefined} role="img" aria-label={`Ảnh đại diện ${identity.name}`}>{!identity.avatarUrl && identity.initials}</div>
+              <div className="min-w-0"><div className="flex items-center gap-1.5"><span className="truncate text-sm font-bold text-slate-900">{identity.name}</span><span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">Cá nhân</span></div><div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500"><span>{item.sport}</span><span aria-hidden="true">•</span><span className="truncate font-medium text-slate-600">{item.sportTier}</span></div></div>
+            </div>
+            <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${isFull ? 'border-slate-200 bg-slate-100 text-slate-600' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{getMissingLabel(current, max)}</span>
+          </div>
+          <div className="space-y-1.5"><h3 className="text-sm font-bold leading-snug text-slate-950 sm:text-base">{item.title}</h3><div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600"><span className="inline-flex items-center gap-1.5 font-semibold text-slate-800"><Clock3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />{item.startTime} - {item.endTime}</span><span className="text-slate-300" aria-hidden="true">•</span><span className="inline-flex min-w-0 items-center gap-1.5"><MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" /><span className="truncate">{item.location}</span></span><span className="text-slate-300" aria-hidden="true">•</span><span className="font-bold text-slate-800">{feePerSlot}/người</span></div></div>
+          <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.description || 'Đang tìm người chơi phù hợp cho buổi giao lưu này.'}</p>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3"><div className="flex items-center gap-2.5" aria-label={`${current} trên ${max} người đã vào slot`}><div className="flex -space-x-2">{joinedPlayers.slice(0, max).map((player, index) => <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />)}</div><span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600"><UsersRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />{current}/{max} đã vào</span></div><button type="button" onClick={() => setShowModal(true)} disabled={isFull && !isJoined} className={`ml-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold ${isJoined ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : isFull ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'}`}>{isJoined ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />}{isJoined ? 'Đã vào slot' : isFull ? 'Đã đủ' : 'Vào slot'}</button></div>
+        </div>
+      </EventShell>
+    </>
+  );
+}
+
 function TournamentCard({
   item,
   reducedMotion,
@@ -706,7 +814,7 @@ function TournamentCard({
   reducedMotion: boolean;
   onShare: () => void;
 }) {
-  if (!item.tournament) return null;
+  if (!item.tournament || !item.club) return null;
 
   const { remainingSlots, totalSlots } = item.tournament;
   const bannerStyle = item.bannerUrl
@@ -781,7 +889,62 @@ function TournamentCard({
   );
 }
 
-export default function HomeSocialFeed() {
+function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated }: { categories: HomeFeedCategory[]; initialDate: string; onClose: () => void; onCreated: () => void }) {
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [playDate, setPlayDate] = useState(initialDate);
+  const [startTime, setStartTime] = useState('19:30');
+  const [endTime, setEndTime] = useState('21:30');
+  const [location, setLocation] = useState('');
+  const [feePerSlot, setFeePerSlot] = useState('0');
+  const [maxSlots, setMaxSlots] = useState('4');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!categoryId && categories[0]?.id) setCategoryId(categories[0].id);
+  }, [categories, categoryId]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !isSubmitting) onClose(); };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSubmitting, onClose]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!categoryId) return toast.error('Chưa có môn thể thao khả dụng');
+    setIsSubmitting(true);
+    try {
+      const idempotencyKey = globalThis.crypto?.randomUUID?.() ?? `pickup-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      await api.post('/social/pickups', { categoryId, title: title.trim(), description: description.trim() || undefined, playDate, startTime, endTime, location: location.trim(), feePerSlot: Math.max(0, Number(feePerSlot) || 0), maxSlots: Math.min(128, Math.max(2, Number(maxSlots) || 2)), levelRequirement: 'Mọi trình độ', genderRequirement: 'ANY' }, { headers: { 'Idempotency-Key': idempotencyKey } });
+      toast.success('Đã tạo kèo cá nhân và đăng lên bảng tin');
+      onCreated();
+    } catch { toast.error('Không thể tạo kèo. Kiểm tra thời gian và địa điểm rồi thử lại.'); } finally { setIsSubmitting(false); }
+  };
+
+  const inputClass = 'h-11 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]" onClick={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }} role="dialog" aria-modal="true" aria-labelledby="create-personal-pickup-title">
+      <form onSubmit={handleSubmit} className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6"><div><p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">Bảng tin hoạt động</p><h2 id="create-personal-pickup-title" className="mt-1 text-lg font-bold text-slate-950">Tạo giao lưu cá nhân</h2><p className="mt-1 text-xs text-slate-500">Kèo này độc lập, không thuộc CLB và không tạo giải đấu.</p></div><button type="button" onClick={onClose} disabled={isSubmitting} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Đóng"><X className="h-5 w-5" /></button></div>
+        <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Môn thể thao</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} required className={`${inputClass} bg-white`}>{categories.length === 0 ? <option value="">Chưa có môn thể thao</option> : categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Tiêu đề kèo</span><input value={title} onChange={(event) => setTitle(event.target.value)} minLength={3} maxLength={255} required placeholder="Ví dụ: Tìm 2 bạn đánh pickleball buổi tối" className={inputClass} /></label>
+          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Ngày chơi</span><input type="date" value={playDate} onChange={(event) => setPlayDate(event.target.value)} required className={inputClass} /></label>
+          <div className="grid grid-cols-2 gap-3"><label><span className="mb-1.5 block text-xs font-bold text-slate-700">Bắt đầu</span><input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} required className={inputClass} /></label><label><span className="mb-1.5 block text-xs font-bold text-slate-700">Kết thúc</span><input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} required className={inputClass} /></label></div>
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Địa điểm / cụm sân</span><input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Ví dụ: D-Sport Quận 7, sân 3" className={inputClass} /></label>
+          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Phí mỗi người</span><input type="number" min={0} step={1000} value={feePerSlot} onChange={(event) => setFeePerSlot(event.target.value)} className={inputClass} /></label>
+          <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Tổng số người</span><input type="number" min={2} max={128} value={maxSlots} onChange={(event) => setMaxSlots(event.target.value)} required className={inputClass} /></label>
+          <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Mô tả <span className="font-normal text-slate-400">(không bắt buộc)</span></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} rows={3} placeholder="Nói thêm về trình độ, luật chơi hoặc cách chia sân..." className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-6"><button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Hủy</button><button type="submit" disabled={isSubmitting || categories.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? 'Đang đăng...' : 'Đăng lên bảng tin'}{!isSubmitting && <ArrowRight className="h-4 w-4" aria-hidden="true" />}</button></div>
+      </form>
+    </div>
+  );
+}
+
+export default function HomeSocialFeed({ categories = [] }: { categories?: HomeFeedCategory[] }) {
   const reducedMotion = Boolean(useReducedMotion());
   const today = useMemo(() => startOfLocalDay(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(() => formatDateKey(today));
@@ -789,6 +952,8 @@ export default function HomeSocialFeed() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadError, setHasLoadError] = useState(false);
   const [joinedActivityIds, setJoinedActivityIds] = useState<Set<string>>(() => new Set());
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const dateStripRef = useRef<HTMLDivElement>(null);
 
   const dateTabs = useMemo<DateTab[]>(
@@ -810,25 +975,35 @@ export default function HomeSocialFeed() {
   useEffect(() => {
     let cancelled = false;
 
-    api
-      .get<ActivityFeedApiResponse>('/communities/activity-feed', {
-        params: { date: selectedDate, limit: 50 },
-      })
-      .then((response) => {
-        if (cancelled) return;
-        setActivities((response?.data?.items ?? []).map(mapApiActivity));
-      })
-      .catch(() => {
-        if (!cancelled) setHasLoadError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
+    Promise.allSettled([
+      api.get<ActivityFeedApiResponse>('/communities/activity-feed', { params: { date: selectedDate, limit: 50 } }),
+      api.get<PersonalPickupApiResponse>('/social/pickups', { params: { date: selectedDate, limit: 50 } }),
+    ]).then(([clubResult, personalResult]) => {
+      if (cancelled) return;
+      const clubItems = clubResult.status === 'fulfilled' ? (clubResult.value?.data?.items ?? []).map(mapApiActivity) : [];
+      const personalPayload = personalResult.status === 'fulfilled' ? personalResult.value : undefined;
+      const personalItems = personalPayload && Array.isArray(personalPayload.data)
+        ? personalPayload.data.map(mapPersonalPickup)
+        : personalPayload && !Array.isArray(personalPayload.data) && Array.isArray(personalPayload.data.items)
+          ? personalPayload.data.items.map(mapPersonalPickup)
+          : [];
+      if (clubResult.status === 'rejected' && personalResult.status === 'rejected') {
+        setHasLoadError(true);
+        setActivities([]);
+        return;
+      }
+      const nextActivities = [...clubItems, ...personalItems].sort((left, right) => left.startTime.localeCompare(right.startTime) || left.title.localeCompare(right.title, 'vi'));
+      setHasLoadError(false);
+      setActivities(nextActivities);
+      setJoinedActivityIds(new Set(nextActivities.filter((activity) => activity.isJoined).map((activity) => activity.id)));
+    }).finally(() => {
+      if (!cancelled) setIsLoading(false);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [selectedDate]);
+  }, [refreshVersion, selectedDate]);
 
   const activeActivities = useMemo(
     () =>
@@ -856,7 +1031,8 @@ export default function HomeSocialFeed() {
 
   const handleJoinSlot = useCallback(async (item: ActivityFeedItem) => {
     if (!item.slots) return false;
-    if (!item.clubMatchSessionId) {
+    const isPersonal = item.type === 'PERSONAL_PICKUP';
+    if (!isPersonal && !item.clubMatchSessionId) {
       toast.error('Hoạt động này chưa sẵn sàng nhận đăng ký');
       return false;
     }
@@ -884,8 +1060,13 @@ export default function HomeSocialFeed() {
     );
     setJoinedActivityIds((currentIds) => new Set(currentIds).add(item.id));
     try {
-      await api.post(`/club-match-sessions/${item.clubMatchSessionId}/participants/self`);
-      toast.success(`Đã vào slot của ${item.club.name}`);
+      if (isPersonal) {
+        await api.post(`/social/pickups/${item.id}/participants/self`);
+        toast.success(`Đã vào kèo của ${item.personalHost?.name ?? 'người tạo'}`);
+      } else {
+        await api.post(`/club-match-sessions/${item.clubMatchSessionId}/participants/self`);
+        toast.success(`Đã vào slot của ${item.club?.name ?? 'CLB'}`);
+      }
       return true;
     } catch {
       setActivities((currentActivities) =>
@@ -912,6 +1093,10 @@ export default function HomeSocialFeed() {
   }, []);
 
   const handleShare = useCallback(async (item: ActivityFeedItem) => {
+    if (!item.club) {
+      toast.error('Kèo cá nhân đã hiển thị trên bảng tin, chưa hỗ trợ chia sẻ thêm');
+      return;
+    }
     const target = item.clubMatchSessionId
       ? { clubMatchSessionId: item.clubMatchSessionId }
       : item.tournamentId
@@ -940,6 +1125,10 @@ export default function HomeSocialFeed() {
       </h2>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-2.5 py-2">
+          <div><p className="text-sm font-bold text-slate-900">Bảng tin hoạt động</p><p className="text-[11px] text-slate-500">Tìm người chơi cho buổi giao lưu sắp tới</p></div>
+          <button type="button" onClick={() => setIsCreateOpen(true)} className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700"><UserPlus className="h-3.5 w-3.5" aria-hidden="true" />Tạo kèo cá nhân</button>
+        </div>
         <div
           ref={dateStripRef}
           className="no-scrollbar flex items-stretch gap-1 overflow-x-auto px-0.5 py-0.5 select-none"
@@ -997,12 +1186,21 @@ export default function HomeSocialFeed() {
               <div className="space-y-3 border-l-2 border-blue-100 pl-3 sm:pl-4">
                 {group.items.map((item) => {
                   const isTournament = item.type === 'TOURNAMENT_OPENED';
+                  const isPersonal = item.type === 'PERSONAL_PICKUP';
                   return isTournament ? (
                     <TournamentCard
                       key={item.id}
                       item={item}
                       reducedMotion={reducedMotion}
                       onShare={() => handleShare(item)}
+                    />
+                  ) : isPersonal ? (
+                    <PersonalPickupCard
+                      key={item.id}
+                      item={item}
+                      reducedMotion={reducedMotion}
+                      isJoined={joinedActivityIds.has(item.id)}
+                      onJoin={() => handleJoinSlot(item)}
                     />
                   ) : (
                     <ClubSessionCard
@@ -1029,6 +1227,21 @@ export default function HomeSocialFeed() {
             Thử kéo sang ngày khác để tìm kèo giao lưu hoặc giải đấu đang mở đăng ký.
           </p>
         </div>
+      )}
+
+      {isCreateOpen && (
+        <CreatePersonalPickupModal
+          categories={categories}
+          initialDate={activeDate.key}
+          onClose={() => setIsCreateOpen(false)}
+          onCreated={() => {
+            setIsCreateOpen(false);
+            setIsLoading(true);
+            setHasLoadError(false);
+            setActivities([]);
+            setRefreshVersion((version) => version + 1);
+          }}
+        />
       )}
     </section>
   );

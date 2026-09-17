@@ -27,6 +27,40 @@ import { getTournamentLocationLabel, getTournamentShortLocation } from '@/utils/
 import AdBannerCard from '@/components/ui/AdBannerCard';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 
+function TournamentCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" aria-hidden="true">
+      <div className="aspect-[2.1/1] w-full animate-pulse bg-slate-200" />
+      <div className="flex min-h-[150px] gap-5 p-5">
+        <div className="flex w-[78px] shrink-0 items-center justify-center border-r border-slate-100 pr-4">
+          <div className="flex w-full flex-col items-center gap-2">
+            <div className="h-7 w-12 animate-pulse rounded bg-slate-200" />
+            <div className="h-2.5 w-8 animate-pulse rounded bg-slate-100" />
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />
+              <div className="h-4 w-16 animate-pulse rounded bg-slate-100" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 w-full animate-pulse rounded bg-slate-200" />
+              <div className="h-4 w-4/5 animate-pulse rounded bg-slate-200" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-4">
+            <div className="h-3 w-8 animate-pulse rounded bg-slate-100" />
+            <div className="h-5 w-20 animate-pulse rounded bg-slate-100" />
+            <div className="h-5 w-20 animate-pulse rounded bg-slate-100" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TournamentsListPage() {
   const locale = useLocale();
   const translate = useTranslations("TournamentList");
@@ -742,7 +776,15 @@ export default function TournamentsListPage() {
 
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64 text-slate-500 font-medium">{translate("loadingAll")}</div>
+        <div
+          className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2"
+          role="status"
+          aria-label={translate("loadingAll")}
+        >
+          {Array.from({ length: 4 }, (_, index) => (
+            <TournamentCardSkeleton key={index} />
+          ))}
+        </div>
       ) : tournaments.length === 0 ? (
         <div className="flex justify-center items-center h-64 text-slate-500 font-medium">{translate("empty")}</div>
       ) : (

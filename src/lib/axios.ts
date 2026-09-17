@@ -104,6 +104,7 @@ function isSharedGetEligible(config: AxiosRequestConfig): boolean {
   return !path.startsWith('/live') &&
     !path.startsWith('/chat') &&
     !path.startsWith('/notifications') &&
+    !path.startsWith('/social/friendships/status/') &&
     !path.startsWith('/matches/');
 }
 

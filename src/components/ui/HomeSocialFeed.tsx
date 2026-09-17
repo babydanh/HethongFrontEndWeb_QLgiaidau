@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -13,8 +13,6 @@ import {
   Flame,
   Info,
   MapPin,
-  MessageCircle,
-  Phone,
   Send,
   Share2,
   ShieldCheck,
@@ -26,13 +24,11 @@ import {
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { api } from '@/lib/axios';
 
 export type ActivityEventType =
-  | 'PICKUP_NEED_PLAYER'
   | 'CLUB_RECRUITING'
   | 'TOURNAMENT_OPENED';
-
-type TimeSlot = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'NIGHT';
 
 interface ClubIdentity {
   id: string;
@@ -48,21 +44,14 @@ interface JoinedPlayer {
   avatarUrl?: string | null;
 }
 
-interface HostContact {
-  name: string;
-  phone?: string;
-  zalo?: string;
-  avatarUrl?: string | null;
-  role?: string;
-}
-
 export interface ActivityFeedItem {
   id: string;
   type: ActivityEventType;
+  clubMatchSessionId?: string;
+  tournamentId?: string;
   sport: string;
   sportTier: string;
   playDate: string;
-  timeSlot: TimeSlot;
   startTime: string;
   endTime?: string;
   location: string;
@@ -70,7 +59,6 @@ export interface ActivityFeedItem {
   description: string;
   bannerUrl?: string;
   club: ClubIdentity;
-  host?: HostContact;
   courtDetails?: string;
   rules?: string[];
   slots?: {
@@ -147,150 +135,130 @@ function getMissingLabel(current: number, max: number) {
   return missing === 0 ? 'Đã đủ người' : `Thiếu ${missing} người`;
 }
 
-function createMockActivities(today: Date): ActivityFeedItem[] {
-  const todayKey = formatDateKey(today);
-  const tomorrowKey = formatDateKey(addDays(today, 1));
+type ApiActivityFeedItem = {
+  id: string;
+  type: 'CLUB_RECRUITING' | 'TOURNAMENT_OPENED';
+  sport: string | null;
+  sportTier: string | null;
+  playDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+  title: string;
+  description: string | null;
+  community: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+  };
+  clubMatchSessionId: string | null;
+  tournamentId: string | null;
+  verified: boolean;
+  slots: {
+    current: number;
+    max: number;
+    feePerSlot: number | null;
+    joinedPlayers: Array<{
+      userId: string;
+      name: string;
+      avatarUrl: string | null;
+    }>;
+  } | null;
+  tournament: {
+    id: string;
+    remainingSlots: number;
+    totalSlots: number;
+    bannerUrl: string | null;
+  } | null;
+};
 
-  return [
-    {
-      id: 'activity-dsport-opened',
-      type: 'TOURNAMENT_OPENED',
-      sport: 'Pickleball',
-      sportTier: 'Đôi Nam Nữ phong trào',
-      playDate: todayKey,
-      timeSlot: 'MORNING',
-      startTime: '09:00',
-      location: 'Cụm sân D-Sport Q7',
-      title: 'Giải Pickleball D-Sport Autumn Cup 2026',
-      description: 'Mở cổng cho 32 cặp phong trào. Đăng ký trước khi đủ suất.',
-      bannerUrl:
-        'https://images.unsplash.com/photo-1599474924187-334a4ae5bd3c?w=1200&auto=format&fit=crop&q=80',
-      club: {
-        id: 'club-dsport',
-        name: 'D-Sport Pickleball Club',
-        initials: 'DS',
-        verified: true,
-      },
-      tournament: {
-        id: 'tournament-dsport-autumn',
-        remainingSlots: 12,
-        totalSlots: 32,
-        prize: 'Tổng thưởng 30 triệu',
-      },
+type ActivityFeedApiResponse = {
+  data: {
+    items: ApiActivityFeedItem[];
+  };
+  meta?: {
+    hasMore?: boolean;
+    nextCursor?: string | null;
+  };
+};
+
+function getVietnamDateParts(value: string | null) {
+  if (!value) return { year: '', month: '', day: '' };
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(value));
+  return Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value])) as {
+    year: string;
+    month: string;
+    day: string;
+  };
+}
+
+function getVietnamDateKey(value: string | null) {
+  const { year, month, day } = getVietnamDateParts(value);
+  return year && month && day ? `${year}-${month}-${day}` : '';
+}
+
+function getVietnamTime(value: string | null) {
+  if (!value) return '';
+  return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(value));
+}
+
+function formatFee(value: number | null) {
+  return value == null ? 'Theo thỏa thuận' : `${new Intl.NumberFormat('vi-VN').format(value)}đ`;
+}
+
+function mapApiActivity(item: ApiActivityFeedItem): ActivityFeedItem {
+  const initials = getInitials(item.community.name) || 'CLB';
+  return {
+    id: item.id,
+    type: item.type,
+    sport: item.sport ?? 'Thể thao',
+    sportTier: item.sportTier ?? 'Chưa cập nhật trình độ',
+    playDate: getVietnamDateKey(item.playDate),
+    startTime: getVietnamTime(item.startTime),
+    endTime: getVietnamTime(item.endTime) || undefined,
+    location: item.location ?? 'Đang cập nhật địa điểm',
+    title: item.title,
+    description: item.description ?? '',
+    bannerUrl: item.tournament?.bannerUrl ?? undefined,
+    club: {
+      id: item.community.id,
+      name: item.community.name,
+      initials,
+      avatarUrl: item.community.logoUrl,
+      verified: item.verified,
     },
-    {
-      id: 'activity-haanh-pickup',
-      type: 'PICKUP_NEED_PLAYER',
-      sport: 'Pickleball',
-      sportTier: 'Trình 2.5 - 3.0',
-      playDate: todayKey,
-      timeSlot: 'EVENING',
-      startTime: '19:30',
-      endTime: '21:30',
-      location: 'Sân D-Sport Q7, sân 3',
-      title: 'Giao lưu đôi vui vẻ, thiếu 1 slot',
-      description:
-        'Kèo định kỳ của CLB, ưu tiên tinh thần vui vẻ và cọ xát. Chia tiền sân nhẹ nhàng.',
-      club: {
-        id: 'club-haanh',
-        name: 'CLB Pickleball Hà Anh',
-        initials: 'HA',
-        verified: true,
-      },
-      host: {
-        name: 'Trần Hà Anh',
-        role: 'Chủ nhiệm CLB',
-        phone: '0908 123 456',
-        zalo: '0908123456',
-        avatarUrl: null,
-      },
-      courtDetails: 'Sân 3 cụm thảm tiêu chuẩn, bóng Wilson Dura Fast 40, nước uống miễn phí.',
-      rules: [
-        'Vui vẻ, hòa đồng, tôn trọng quyết định của trọng tài tự do.',
-        'Đến trước giờ khởi động 10 phút.',
-        'Thanh toán tiền sân cuối buổi qua chuyển khoản hoặc tiền mặt.',
-      ],
-      slots: {
-        current: 3,
-        max: 4,
-        feePerSlot: '55.000đ',
-        joinedPlayers: [
-          { name: 'Minh Danh', initialsBg: AVATAR_COLORS[0] },
-          { name: 'Tuấn Hùng', initialsBg: AVATAR_COLORS[3] },
-          { name: 'Hải Nam', initialsBg: AVATAR_COLORS[1] },
-        ],
-      },
-    },
-    {
-      id: 'activity-lananh-recruiting',
-      type: 'CLUB_RECRUITING',
-      sport: 'Tennis',
-      sportTier: 'NTRP 3.0 - 3.5',
-      playDate: todayKey,
-      timeSlot: 'EVENING',
-      startTime: '20:00',
-      endTime: '22:00',
-      location: 'CLB Quần vợt Lan Anh, sân 2',
-      title: 'Mở 2 slot giao lưu tennis tối nay',
-      description:
-        'Nhóm đã có 6 người. Mời thêm anh em cùng trình vào đánh vui và làm quen CLB.',
-      club: {
-        id: 'club-lananh',
-        name: 'CLB Quần Vợt Lan Anh',
-        initials: 'LA',
-        verified: true,
-      },
-      host: {
-        name: 'Nguyễn Quốc Hùng',
-        role: 'Đội trưởng / Host',
-        phone: '0912 345 678',
-        zalo: '0912345678',
-        avatarUrl: null,
-      },
-      courtDetails: 'Sân cứng Lan Anh sân số 2, đèn chuẩn thi đấu, bóng mới Head Pro.',
-      rules: [
-        'Trình độ tương đương NTRP 3.0 - 3.5 để giao lưu cân kèo.',
-        'Chơi đôi xoay tua, mỗi trận 1 set chạm 6.',
-        'Chia sẻ chi phí sân và banh đều nhau.',
-      ],
-      slots: {
-        current: 6,
-        max: 8,
-        feePerSlot: '80.000đ',
-        joinedPlayers: [
-          { name: 'Hoàng Bách', initialsBg: AVATAR_COLORS[2] },
-          { name: 'Thành Trung', initialsBg: AVATAR_COLORS[3] },
-          { name: 'Đình Trọng', initialsBg: AVATAR_COLORS[0] },
-        ],
-      },
-    },
-    {
-      id: 'activity-kyhoa-opened',
-      type: 'TOURNAMENT_OPENED',
-      sport: 'Cầu lông',
-      sportTier: 'Đôi Nam Nữ mở rộng',
-      playDate: tomorrowKey,
-      timeSlot: 'MORNING',
-      startTime: '08:00',
-      location: 'Sân Cầu Lông Kỳ Hòa Q10',
-      title: 'Giải Cầu Lông Kỳ Hòa Autumn Cup',
-      description: '32 đôi phong trào tranh tài cùng CLB Cầu Lông Kỳ Hòa.',
-      bannerUrl:
-        'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
-      club: {
-        id: 'club-kyhoa',
-        name: 'CLB Cầu Lông Kỳ Hòa',
-        initials: 'KH',
-        verified: true,
-      },
-      tournament: {
-        id: 'tournament-kyhoa-autumn',
-        remainingSlots: 10,
-        totalSlots: 32,
-        prize: '20 triệu và cúp',
-      },
-    },
-  ];
+    slots: item.slots
+      ? {
+          current: item.slots.current,
+          max: item.slots.max,
+          feePerSlot: formatFee(item.slots.feePerSlot),
+          joinedPlayers: item.slots.joinedPlayers.map((player, index) => ({
+            name: player.name,
+            initialsBg: AVATAR_COLORS[index % AVATAR_COLORS.length],
+            avatarUrl: player.avatarUrl,
+          })),
+        }
+      : undefined,
+    tournament: item.tournament
+      ? {
+          id: item.tournament.id,
+          remainingSlots: item.tournament.remainingSlots,
+          totalSlots: item.tournament.totalSlots,
+        }
+      : undefined,
+    clubMatchSessionId: item.clubMatchSessionId ?? undefined,
+    tournamentId: item.tournamentId ?? item.tournament?.id ?? undefined,
+  };
 }
 
 function ClubAvatar({ club, size = 'default' }: { club: ClubIdentity; size?: 'default' | 'small' }) {
@@ -409,23 +377,21 @@ function SessionDetailModal({
   item: ActivityFeedItem;
   isJoined: boolean;
   onClose: () => void;
-  onJoin: () => void;
+  onJoin: () => Promise<boolean>;
 }) {
   const slots = item.slots;
   const isFull = slots ? slots.current >= slots.max : false;
   const [note, setNote] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSendRequest = () => {
+  const handleSendRequest = async () => {
     if (!isFull && !isJoined) {
-      onJoin();
+      const didJoin = await onJoin();
+      if (!didJoin) return;
     }
     setSubmitted(true);
     toast.success('Đã gửi yêu cầu tham gia thành công!');
   };
-
-  const initials = (name: string) =>
-    name.split(' ').filter(Boolean).slice(-2).map((p) => p[0]).join('').toUpperCase();
 
   return (
     // Backdrop
@@ -501,7 +467,7 @@ function SessionDetailModal({
         <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_220px] divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
 
-            {/* Left column: details + host + note */}
+              {/* Left column: details + note */}
             <div className="px-5 py-4 space-y-4">
 
               {/* Location + fee */}
@@ -533,49 +499,6 @@ function SessionDetailModal({
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-
-              {/* Host contact */}
-              {item.host && (
-                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3.5">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-blue-600 mb-2.5">Liên hệ với host</p>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-blue-200 bg-blue-600 text-sm font-bold text-white shadow-sm"
-                      style={item.host.avatarUrl ? { backgroundImage: `url(${item.host.avatarUrl})`, backgroundSize: 'cover' } : {}}
-                    >
-                      {!item.host.avatarUrl && initials(item.host.name)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">{item.host.name}</p>
-                      {item.host.role && <p className="text-xs text-slate-500 mt-0.5">{item.host.role}</p>}
-                    </div>
-                  </div>
-                  {(item.host.phone || item.host.zalo) && (
-                    <div className="flex gap-2">
-                      {item.host.phone && (
-                        <a
-                          href={`tel:${item.host.phone.replace(/\s/g, '')}`}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-700 transition-colors"
-                        >
-                          <Phone className="h-3.5 w-3.5" />
-                          Gọi điện
-                        </a>
-                      )}
-                      {item.host.zalo && (
-                        <a
-                          href={`https://zalo.me/${item.host.zalo}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition-colors"
-                        >
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          Nhắn Zalo
-                        </a>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -685,19 +608,7 @@ function SessionDetailModal({
   );
 }
 
-// Inline club avatar for modal (no "size" prop needed)
-function ClubAvatarInline({ club }: { club: ClubIdentity }) {
-  return (
-    <div
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-700"
-      style={club.avatarUrl ? { backgroundImage: `url(${club.avatarUrl})`, backgroundSize: 'cover' } : {}}
-    >
-      {!club.avatarUrl && club.initials}
-    </div>
-  );
-}
-
-function PickupCard({
+function ClubSessionCard({
   item,
   reducedMotion,
   isJoined,
@@ -707,11 +618,11 @@ function PickupCard({
   item: ActivityFeedItem;
   reducedMotion: boolean;
   isJoined: boolean;
-  onJoin: () => void;
+  onJoin: () => Promise<boolean>;
   onShare: () => void;
 }) {
-  if (!item.slots) return null;
   const [showModal, setShowModal] = useState(false);
+  if (!item.slots) return null;
 
   const { current, max, feePerSlot, joinedPlayers } = item.slots;
   const isFull = current >= max;
@@ -725,7 +636,7 @@ function PickupCard({
           item={item}
           isJoined={isJoined}
           onClose={() => setShowModal(false)}
-          onJoin={() => { onJoin(); }}
+          onJoin={onJoin}
         />
       )}
       <EventShell reducedMotion={reducedMotion}>
@@ -888,7 +799,9 @@ export default function HomeSocialFeed() {
   const reducedMotion = Boolean(useReducedMotion());
   const today = useMemo(() => startOfLocalDay(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(() => formatDateKey(today));
-  const [activities, setActivities] = useState<ActivityFeedItem[]>(() => createMockActivities(today));
+  const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadError, setHasLoadError] = useState(false);
   const [joinedActivityIds, setJoinedActivityIds] = useState<Set<string>>(() => new Set());
   const [isDragging, setIsDragging] = useState(false);
   const dateStripRef = useRef<HTMLDivElement>(null);
@@ -916,6 +829,30 @@ export default function HomeSocialFeed() {
   );
 
   const activeDate = dateTabs.find((tab) => tab.key === selectedDate) ?? dateTabs[0];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    api
+      .get<ActivityFeedApiResponse>('/communities/activity-feed', {
+        params: { date: selectedDate, limit: 50 },
+      })
+      .then((response) => {
+        if (cancelled) return;
+        setActivities((response?.data?.items ?? []).map(mapApiActivity));
+      })
+      .catch(() => {
+        if (!cancelled) setHasLoadError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate]);
+
   const activeActivities = useMemo(
     () =>
       activities
@@ -982,14 +919,21 @@ export default function HomeSocialFeed() {
       dragStateRef.current.hasMoved = false;
       return;
     }
+    setIsLoading(true);
+    setHasLoadError(false);
+    setActivities([]);
     setSelectedDate(dateKey);
   }, []);
 
-  const handleJoinSlot = useCallback((item: ActivityFeedItem) => {
-    if (!item.slots) return;
+  const handleJoinSlot = useCallback(async (item: ActivityFeedItem) => {
+    if (!item.slots) return false;
+    if (!item.clubMatchSessionId) {
+      toast.error('Hoạt động này chưa sẵn sàng nhận đăng ký');
+      return false;
+    }
     if (item.slots.current >= item.slots.max) {
       toast.error('Kèo này đã đủ người');
-      return;
+      return false;
     }
 
     setActivities((currentActivities) =>
@@ -1010,11 +954,54 @@ export default function HomeSocialFeed() {
       }),
     );
     setJoinedActivityIds((currentIds) => new Set(currentIds).add(item.id));
-    toast.success(`Đã vào slot của ${item.club.name}`);
+    try {
+      await api.post(`/club-match-sessions/${item.clubMatchSessionId}/participants/self`);
+      toast.success(`Đã vào slot của ${item.club.name}`);
+      return true;
+    } catch {
+      setActivities((currentActivities) =>
+        currentActivities.map((activity) => {
+          if (activity.id !== item.id || !activity.slots) return activity;
+          return {
+            ...activity,
+            slots: {
+              ...activity.slots,
+              current: item.slots!.current,
+              joinedPlayers: item.slots!.joinedPlayers,
+            },
+          };
+        }),
+      );
+      setJoinedActivityIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(item.id);
+        return nextIds;
+      });
+      toast.error('Không thể vào slot. Vui lòng thử lại.');
+      return false;
+    }
   }, []);
 
-  const handleShare = useCallback((item: ActivityFeedItem) => {
-    toast.success(`Đã chuẩn bị nội dung chia sẻ kèo của ${item.club.name}`);
+  const handleShare = useCallback(async (item: ActivityFeedItem) => {
+    const target = item.clubMatchSessionId
+      ? { clubMatchSessionId: item.clubMatchSessionId }
+      : item.tournamentId
+        ? { tournamentId: item.tournamentId }
+        : null;
+    if (!target) {
+      toast.error('Hoạt động chưa có liên kết hợp lệ');
+      return;
+    }
+    try {
+      await api.post(`/communities/${item.club.id}/activity-share`, target, {
+        headers: {
+          'Idempotency-Key': `activity-share-${item.id}`,
+        },
+      });
+      toast.success(`Đã chia sẻ hoạt động của ${item.club.name}`);
+    } catch {
+      toast.error('Không thể chia sẻ hoạt động. Vui lòng thử lại.');
+    }
   }, []);
 
   return (
@@ -1076,7 +1063,16 @@ export default function HomeSocialFeed() {
         </div>
       </div>
 
-      {timelineGroups.length > 0 ? (
+      {isLoading ? (
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+          Đang tải hoạt động CLB...
+        </div>
+      ) : hasLoadError ? (
+        <div className="rounded-2xl border border-dashed border-rose-200 bg-rose-50 px-6 py-12 text-center">
+          <h3 className="text-base font-bold text-rose-800">Không tải được bảng tin CLB</h3>
+          <p className="mt-1 text-sm text-rose-700">Vui lòng thử lại sau.</p>
+        </div>
+      ) : timelineGroups.length > 0 ? (
         <div className="space-y-5">
           {timelineGroups.map((group) => (
             <div key={group.time} className="relative">
@@ -1099,7 +1095,7 @@ export default function HomeSocialFeed() {
                       onShare={() => handleShare(item)}
                     />
                   ) : (
-                    <PickupCard
+                    <ClubSessionCard
                       key={item.id}
                       item={item}
                       reducedMotion={reducedMotion}

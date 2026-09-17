@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from 'next-intl';
-import { X, MessageCircle, User, CheckCircle2, Tag, Plus, Check, Loader2 } from "lucide-react";
+import { X, MessageCircle, User, CheckCircle2, Tag, Plus, Check, Loader2, UserPlus, UserCheck, UserRoundX } from "lucide-react";
 import { UserProfileSkeleton } from "@/components/skeletons/UserProfileSkeleton";
 import { usersApi } from "@/features/users/api";
 import { chatApi } from "@/features/chat/api";
@@ -15,6 +15,7 @@ import { getCommunityTagDisplayName } from '@/app/(public)/communities/[id]/comp
 import { isPublicRankingEligible } from '@/features/rankings/elo-display';
 import { rankingsApi, PlayerRanking } from "@/features/rankings/api";
 import { matchesApi } from "@/features/matches/api";
+import { socialApi, type FriendshipStatusResponse } from "@/features/social/api";
 import { Trophy, Flame } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -89,6 +90,9 @@ export default function UserProfilePopover({
   const [viewerRole, setViewerRole] = useState<string | null>(null);
   const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [directMessagePolicy, setDirectMessagePolicy] = useState<{ canMessage: boolean; reasonCode: string | null } | null>(null);
+  const [friendship, setFriendship] = useState<FriendshipStatusResponse | null>(null);
+  const [friendshipContextKey, setFriendshipContextKey] = useState<string | null>(null);
+  const [friendshipAction, setFriendshipAction] = useState<'send' | 'accept' | 'reject' | 'remove' | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user?.id || !currentUser?.id || currentUser.id === user.id) {
@@ -109,6 +113,35 @@ export default function UserProfilePopover({
     return () => {
       isMounted = false;
       setDirectMessagePolicy(null);
+    };
+  }, [isOpen, user?.id, currentUser?.id]);
+
+  useEffect(() => {
+    if (!isOpen || !user?.id || !currentUser?.id || currentUser.id === user.id) {
+      return;
+    }
+
+    let isMounted = true;
+    const requestContextKey = `${currentUser.id}:${user.id}`;
+
+    socialApi
+      .getFriendshipStatus(user.id)
+      .then((status) => {
+        if (isMounted) {
+          setFriendshipContextKey(requestContextKey);
+          setFriendship(status);
+        }
+      })
+      .catch(() => {
+        // Fail closed: an unavailable status must not expose an unsafe action.
+        if (isMounted) {
+          setFriendshipContextKey(requestContextKey);
+          setFriendship(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
     };
   }, [isOpen, user?.id, currentUser?.id]);
 
@@ -418,6 +451,12 @@ export default function UserProfilePopover({
   const primaryRank = eligibleHighlightRank ?? eligibleRanks[0] ?? null;
   const isSelf = Boolean(currentUser?.id && profileData?.id && currentUser.id === profileData.id);
   const canMessage = !isSelf && directMessagePolicy?.canMessage === true;
+  const friendshipRequestContextKey = currentUser?.id && profileData?.id
+    ? `${currentUser.id}:${profileData.id}`
+    : null;
+  const isFriendshipLoading = Boolean(
+    !isSelf && friendshipRequestContextKey && friendshipContextKey !== friendshipRequestContextKey,
+  );
   const profileRanks = eligibleRanks.slice(0, 3);
   const totalMatches = profileRanks.reduce((sum, rank) => sum + rank.matchesPlayed, 0);
   const totalWins = profileRanks.reduce((sum, rank) => sum + rank.matchesWon, 0);
@@ -426,6 +465,46 @@ export default function UserProfilePopover({
   const handleStartEditTags = () => {
     setSelectedTags(profileData?.tags ? [...profileData.tags] : []);
     setIsEditingTags(true);
+  };
+
+  const handleFriendshipAction = async (
+    action: 'send' | 'accept' | 'reject' | 'remove',
+  ) => {
+    if (!profileData?.id || !currentUser?.id || friendshipAction) return;
+
+    if (action === 'remove') {
+      const message = friendship?.status === 'ACCEPTED'
+        ? translate('friendConfirmUnfriend')
+        : translate('friendConfirmCancel');
+      if (!window.confirm(message)) return;
+    }
+
+    setFriendshipAction(action);
+    try {
+      const nextStatus = action === 'send'
+        ? await socialApi.sendFriendRequest(profileData.id)
+        : action === 'accept'
+          ? await socialApi.respondToFriendRequest(friendship?.id ?? '', 'ACCEPTED')
+          : action === 'reject'
+            ? await socialApi.respondToFriendRequest(friendship?.id ?? '', 'REJECTED')
+            : await socialApi.removeFriendship(friendship?.id ?? '');
+
+      setFriendship(nextStatus);
+      const successKey = action === 'send'
+        ? 'friendSendSuccess'
+        : action === 'accept'
+          ? 'friendAcceptSuccess'
+          : action === 'reject'
+            ? 'friendRejectSuccess'
+            : friendship?.status === 'ACCEPTED'
+              ? 'friendUnfriendSuccess'
+              : 'friendCancelSuccess';
+      toast.success(translate(successKey));
+    } catch {
+      toast.error(translate('friendActionFailed'));
+    } finally {
+      setFriendshipAction(null);
+    }
   };
 
   // Toggle tag selection
@@ -1041,6 +1120,97 @@ export default function UserProfilePopover({
                     <span>{translate('saveTags')}</span>
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isSelf && currentUser?.id && (isFriendshipLoading || (friendshipContextKey === friendshipRequestContextKey && friendship)) && (
+          <div className="mt-3 border-t border-slate-100 pt-2.5">
+            {isFriendshipLoading ? (
+              <div className="flex h-9 items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500">
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                {translate('friendLoading')}
+              </div>
+            ) : friendship?.status === 'NONE' ? (
+              <button
+                type="button"
+                onClick={() => handleFriendshipAction('send')}
+                disabled={friendshipAction !== null}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {friendshipAction === 'send' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <UserPlus className="h-3.5 w-3.5" />
+                )}
+                {translate('friendAdd')}
+              </button>
+            ) : friendship?.status === 'PENDING' && friendship.direction === 'OUTGOING' ? (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {translate('friendRequestSent')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFriendshipAction('remove')}
+                  disabled={friendshipAction !== null}
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {translate('friendCancel')}
+                </button>
+              </div>
+            ) : friendship?.status === 'PENDING' && friendship.direction === 'INCOMING' ? (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleFriendshipAction('accept')}
+                  disabled={friendshipAction !== null}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {friendshipAction === 'accept' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserCheck className="h-3.5 w-3.5" />}
+                  {translate('friendAccept')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFriendshipAction('reject')}
+                  disabled={friendshipAction !== null}
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {friendshipAction === 'reject' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {translate('friendReject')}
+                </button>
+              </div>
+            ) : friendship?.status === 'ACCEPTED' ? (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 disabled:cursor-not-allowed"
+                >
+                  <UserCheck className="h-3.5 w-3.5" />
+                  {translate('friendAccepted')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFriendshipAction('remove')}
+                  disabled={friendshipAction !== null}
+                  className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  <UserRoundX className="h-3.5 w-3.5" />
+                  {translate('friendUnfriend')}
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
+                {translate('friendUnavailable')}
               </div>
             )}
           </div>

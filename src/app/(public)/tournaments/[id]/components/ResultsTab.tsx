@@ -100,53 +100,93 @@ function ParticipantAwardIdentity({
           ? 'bg-orange-100 text-orange-900'
           : 'bg-slate-100 text-slate-700';
 
+  const handleMemberClick = (member: ParsedMember, event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    if (member.userId) {
+      openUserById(
+        member.userId,
+        member.fullName,
+        member.avatarUrl || null,
+        event.currentTarget.getBoundingClientRect(),
+      );
+    }
+  };
+
+  const renderMemberAvatar = (member: ParsedMember, index: number) => {
+    const key = member.userId || `${participant.participantId}-${index}`;
+    const avatar = member.avatarUrl ? (
+      <img
+        src={member.avatarUrl}
+        alt=""
+        referrerPolicy="no-referrer"
+        className="h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-full object-cover"
+      />
+    ) : (
+      <span
+        aria-hidden="true"
+        className={`flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-full text-[10px] sm:text-[11px] font-black leading-none ${fallbackBg}`}
+      >
+        {member.initials}
+      </span>
+    );
+
+    if (!member.userId) {
+      return (
+        <span key={key} className={`flex rounded-full ${ringClasses} shadow-2xs`} title={member.fullName}>
+          {avatar}
+        </span>
+      );
+    }
+
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={(event) => handleMemberClick(member, event)}
+        aria-label={`Xem hồ sơ ${member.fullName}`}
+        title={member.fullName}
+        className={`flex cursor-pointer rounded-full transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${ringClasses} shadow-2xs`}
+      >
+        {avatar}
+      </button>
+    );
+  };
+
+  const renderMemberName = (member: ParsedMember, index: number) => {
+    if (!member.userId) {
+      return <span key={`${participant.participantId}-name-${index}`}>{member.fullName}</span>;
+    }
+
+    return (
+      <button
+        key={`${participant.participantId}-name-${index}`}
+        type="button"
+        onClick={(event) => handleMemberClick(member, event)}
+        className="cursor-pointer text-left underline decoration-transparent underline-offset-2 transition-colors hover:text-blue-600 hover:decoration-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      >
+        {member.fullName}
+      </button>
+    );
+  };
+
   return (
     <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
       <div className="flex shrink-0 items-center -space-x-1.5" aria-label={participant.teamName}>
-        {members.map((member, index) => {
-          const handleMemberClick = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            if (member.userId) {
-              openUserById(
-                member.userId,
-                member.fullName,
-                member.avatarUrl || null,
-                e.currentTarget.getBoundingClientRect(),
-              );
-            }
-          };
-
-          return member.avatarUrl ? (
-            <img
-              key={member.userId || `${participant.participantId}-${index}`}
-              src={member.avatarUrl}
-              alt={member.fullName}
-              referrerPolicy="no-referrer"
-              onClick={handleMemberClick}
-              className={`h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 rounded-full object-cover cursor-pointer hover:scale-105 transition-transform ${ringClasses} shadow-2xs`}
-              title={member.fullName}
-            />
-          ) : (
-            <button
-              key={member.userId || `${participant.participantId}-${index}`}
-              type="button"
-              onClick={handleMemberClick}
-              className={`flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-full text-[10px] sm:text-[11px] font-black cursor-pointer hover:scale-105 transition-transform leading-none ${fallbackBg} ${ringClasses} shadow-2xs`}
-              title={member.fullName}
-            >
-              {member.initials}
-            </button>
-          );
-        })}
+        {members.map(renderMemberAvatar)}
       </div>
       <div className="min-w-0 flex-1">
         <h4 className="truncate text-xs sm:text-sm font-bold text-slate-900 leading-tight" title={participant.teamName}>
           {participant.teamName}
         </h4>
         {isDoubles && (
-          <p className="mt-0.5 truncate text-[10px] sm:text-[11px] font-medium text-slate-500 leading-none">
-            {members.map((m) => m.fullName).join(' • ')}
-          </p>
+          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1 text-[10px] sm:text-[11px] font-medium text-slate-500 leading-none">
+            {members.map((member, index) => (
+              <React.Fragment key={`${participant.participantId}-name-fragment-${index}`}>
+                {index > 0 && <span aria-hidden="true">•</span>}
+                {renderMemberName(member, index)}
+              </React.Fragment>
+            ))}
+          </div>
         )}
       </div>
     </div>

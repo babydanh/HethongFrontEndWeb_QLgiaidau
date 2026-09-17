@@ -18,6 +18,7 @@ import type { ClubSessionMatch } from '@/types/club-match-session';
 interface ClubStandaloneMatchModalProps {
   communityId: string;
   isOpen: boolean;
+  canManage?: boolean;
   onClose: () => void;
   onMatchCreated?: (match: ClubSessionMatch) => void;
 }
@@ -25,6 +26,7 @@ interface ClubStandaloneMatchModalProps {
 export function ClubStandaloneMatchModal({
   communityId,
   isOpen,
+  canManage = false,
   onClose,
   onMatchCreated,
 }: ClubStandaloneMatchModalProps) {
@@ -38,6 +40,7 @@ export function ClubStandaloneMatchModal({
   const [sideAUserIds, setSideAUserIds] = useState<string[]>([]);
   const [sideBUserIds, setSideBUserIds] = useState<string[]>([]);
   const [isRanked, setIsRanked] = useState(true);
+  const [memberScoringEnabled, setMemberScoringEnabled] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -125,7 +128,14 @@ export function ClubStandaloneMatchModal({
       const matchKey = crypto.randomUUID();
       const matchType = sideAUserIds.length === 1 ? 'SINGLES' : 'DOUBLES';
       const result = await clubMatchSessionsApi.createStandaloneMatch(
-        { communityId, sideAUserIds, sideBUserIds, matchType, isRanked },
+        {
+          communityId,
+          sideAUserIds,
+          sideBUserIds,
+          matchType,
+          isRanked,
+          ...(canManage ? { memberScoringEnabled } : {}),
+        },
         matchKey,
       );
 
@@ -218,6 +228,21 @@ export function ClubStandaloneMatchModal({
               className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-hidden focus:border-blue-500 transition-colors"
             />
           </div>
+
+          {canManage && (
+            <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700">
+              <input
+                type="checkbox"
+                checked={memberScoringEnabled}
+                onChange={(event) => setMemberScoringEnabled(event.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>
+                <span className="block font-semibold">Cho phép thành viên nhập điểm trận này</span>
+                <span className="mt-0.5 block text-[11px] text-slate-500">Tắt đi nếu chỉ BQT được xác nhận tỉ số.</span>
+              </span>
+            </label>
+          )}
         </div>
 
         {/* Danh sách thành viên */}

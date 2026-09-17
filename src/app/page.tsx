@@ -1826,7 +1826,10 @@ export default function HomePage() {
           {mainView === 'FEED' ? (
             /* VIEW B: BẢNG TIN CỘNG ĐỒNG & HOẠT ĐỘNG PLAYER */
             <div className="space-y-3">
-              <HomeSocialFeed categories={categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat))} />
+              <HomeSocialFeed
+                categories={categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat))}
+                selectedCategoryId={selectedCategoryId}
+              />
             </div>
           ) : (
             /* VIEW A: KHÁM PHÁ (Giải đấu nổi bật, Kèo giao lưu, Lịch thi đấu) */

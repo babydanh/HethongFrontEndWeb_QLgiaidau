@@ -320,7 +320,7 @@ export interface TournamentResultAward {
   participant: {
     participantId: string;
     teamName: string;
-    members?: Array<{ userId?: string; fullName?: string; avatarUrl?: string }>;
+    members?: Array<{ userId?: string; fullName?: string; avatarUrl?: string | null }>;
   } | null;
 }
 

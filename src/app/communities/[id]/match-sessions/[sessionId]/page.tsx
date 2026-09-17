@@ -147,7 +147,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       : current.filter((idValue) => idValue !== userId));
   };
 
-  const createMatch = async (confirmWarnings = false, idempotencyKey = crypto.randomUUID(), onCreated?: (match: ClubSessionMatch) => void) => {
+  const createMatch = async (memberScoringEnabled = true, confirmWarnings = false, idempotencyKey = crypto.randomUUID(), onCreated?: (match: ClubSessionMatch) => void) => {
     if (![1, 2].includes(sideAPlayers.length) || sideBPlayers.length !== sideAPlayers.length) {
       toast.error(t('selectBalancedPlayers'));
       return;
@@ -157,6 +157,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       const result = await clubMatchSessionsApi.createMatch(sessionId, {
         sideAUserIds: sideAPlayers,
         sideBUserIds: sideBPlayers,
+        memberScoringEnabled,
         confirmWarnings,
       }, idempotencyKey);
       setSideAPlayers([]);
@@ -167,7 +168,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     } catch (error) {
       const body = (error as AxiosError<ClubMatchApiError>).response?.data;
       if (body?.code === 'PAIRING_WARNINGS_REQUIRE_CONFIRMATION' && window.confirm(t('confirmPairingWarnings', { count: body.warnings?.length ?? 0 }))) {
-        await createMatch(true, idempotencyKey, onCreated);
+        await createMatch(memberScoringEnabled, true, idempotencyKey, onCreated);
       } else {
         toast.error(getErrorMessage(error));
       }
@@ -255,7 +256,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       onForceSelected={forceSelected}
       onCreateMock={() => void createMockParticipant()}
       onSavePreferences={savePreferences}
-      onCreateMatch={(onCreated) => void createMatch(false, crypto.randomUUID(), onCreated)}
+      onCreateMatch={(memberScoringEnabled, onCreated) => void createMatch(memberScoringEnabled, false, crypto.randomUUID(), onCreated)}
       onMatchUpdated={updateMatchInView}
       onLoadMoreParticipants={() => void loadMoreParticipants()}
       onLoadMoreMatches={() => void loadMoreMatches()}

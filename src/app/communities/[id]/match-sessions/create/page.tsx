@@ -30,7 +30,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [pairingMode, setPairingMode] = useState<PairingMode>('FREE');
-  const [format, setFormat] = useState<'singles' | 'doubles' | 'mixed_doubles'>('doubles');
+  const [format, setFormat] = useState<'singles' | 'doubles'>('doubles');
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('group_stage_knockout');
   const [isRanked, setIsRanked] = useState(true);
   const [startDate, setStartDate] = useState('');
@@ -233,11 +233,10 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                   <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                     <div>
                       <label className="mb-1.5 block text-[11px] font-semibold text-slate-600">{t('formatTitle')}</label>
-                      <div className="grid grid-cols-3 gap-1.5">
+                      <div className="grid grid-cols-2 gap-1.5">
                         {([
                           ['singles', t('singles')],
                           ['doubles', t('doubles')],
-                          ['mixed_doubles', t('mixedDoubles')],
                         ] as const).map(([val, label]) => (
                           <button
                             key={val}

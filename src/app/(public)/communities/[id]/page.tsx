@@ -810,7 +810,7 @@ export default function CommunityDetailPage() {
               />
             )}
             {activeTab === 'tournaments' && canViewContent && <TournamentsTab communityId={id} isOwnerOrMod={isOwnerOrMod} />}
-            {activeTab === 'activity' && canViewContent && <ClubActivityTab communityId={id} />}
+            {activeTab === 'activity' && canViewContent && <ClubActivityTab communityId={id} canManage={isOwnerOrMod || effectiveRole === 'ADMIN' || Boolean(user?.roles?.includes('ADMIN'))} />}
             {activeTab === 'members' && canViewContent && (
               <MembersTab
                 communityId={id}

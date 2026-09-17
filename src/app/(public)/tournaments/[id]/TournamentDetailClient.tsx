@@ -1358,13 +1358,15 @@ const commonTranslate = useTranslations('Common');
     );
   };
 
+
   const renderContactCard = () => {
     const hasContact = Boolean(
       activeTournament.contactInfo &&
       Object.values(activeTournament.contactInfo).some((v) => typeof v === 'string' && v.trim().length > 0)
     );
 
-    if (!hasContact && !hasTournamentLogo) return null;
+    // Always render at minimum the organizer block
+    const hasContent = hasContact || hasTournamentLogo;
 
     return (
       <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
@@ -1418,13 +1420,14 @@ const commonTranslate = useTranslations('Common');
           </div>
         )}
 
-        {/* Show Creator at bottom under contact info */}
-        <div className={hasContact ? "pt-3 border-t border-slate-100" : ""}>
+        {/* Show Creator — always visible regardless of contact info */}
+        <div className={hasContent ? "pt-3 border-t border-slate-100" : ""}>
           {renderOrganizerBlock()}
         </div>
       </div>
     );
   };
+
 
   const renderLiteEventHeader = () => {
     const isLive = isTournamentInProgress(activeTournament.status) || liveMatchesCount > 0;

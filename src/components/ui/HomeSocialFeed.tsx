@@ -944,7 +944,7 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   );
 }
 
-export default function HomeSocialFeed({ categories = [] }: { categories?: HomeFeedCategory[] }) {
+export default function HomeSocialFeed({ categories = [], selectedCategoryId = '' }: { categories?: HomeFeedCategory[]; selectedCategoryId?: string }) {
   const reducedMotion = Boolean(useReducedMotion());
   const today = useMemo(() => startOfLocalDay(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(() => formatDateKey(today));
@@ -971,6 +971,15 @@ export default function HomeSocialFeed({ categories = [] }: { categories?: HomeF
   );
 
   const activeDate = dateTabs.find((tab) => tab.key === selectedDate) ?? dateTabs[0];
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+
+  const matchesSelectedSport = useCallback((activity: ActivityFeedItem) => {
+    if (!selectedCategory) return true;
+    const normalize = (value: string) => value.trim().toLocaleLowerCase('vi').replace(/[^\p{L}\p{N}]+/gu, '');
+    const selectedValues = [selectedCategory.name, selectedCategory.slug].filter(Boolean).map((value) => normalize(value as string));
+    const activitySport = normalize(activity.sport);
+    return selectedValues.some((value) => value === activitySport || value.includes(activitySport) || activitySport.includes(value));
+  }, [selectedCategory]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1009,8 +1018,9 @@ export default function HomeSocialFeed({ categories = [] }: { categories?: HomeF
     () =>
       activities
         .filter((activity) => activity.playDate === activeDate.key)
+        .filter(matchesSelectedSport)
         .sort((left, right) => left.startTime.localeCompare(right.startTime)),
-    [activeDate.key, activities],
+    [activeDate.key, activities, matchesSelectedSport],
   );
   const timelineGroups = useMemo(() => {
     const groups = new Map<string, ActivityFeedItem[]>();

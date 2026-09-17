@@ -72,7 +72,7 @@ type Props = {
   onForceSelected: () => void;
   onCreateMock: () => void;
   onSavePreferences: () => void;
-  onCreateMatch: (onCreated?: (match: ClubSessionMatch) => void) => void;
+  onCreateMatch: (memberScoringEnabled: boolean, onCreated?: (match: ClubSessionMatch) => void) => void;
   onMatchUpdated?: (match: ClubSessionMatch) => void;
   onLoadMoreParticipants: () => void;
   onLoadMoreMatches: () => void;
@@ -459,8 +459,8 @@ export function ClubMatchSessionDetailView({
             {/* Header + Tabs unified card */}
             <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
               <div className="p-5 sm:p-7">
-                <div className="flex flex-wrap items-start justify-between gap-5">
-                  <div className="min-w-0">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                       <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
                       <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
@@ -473,6 +473,27 @@ export function ClubMatchSessionDetailView({
                       <p className="mt-2 text-sm text-slate-400">{t('noDescription')}</p>
                     )}
                   </div>
+
+                  {/* Top-right compact organizer actions */}
+                  {session.capabilities?.canManage && (
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {['OPEN', 'LIVE'].includes(session.status) && (
+                        <Button size="sm" disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>
+                          {t('closeRegistration')}
+                        </Button>
+                      )}
+                      {!['ENDED', 'CANCELLED'].includes(session.status) && (
+                        <Button size="sm" disabled={busy} variant="secondary" onClick={() => onTransition('END')}>
+                          {t('endSession')}
+                        </Button>
+                      )}
+                      {!['ENDED', 'CANCELLED'].includes(session.status) && (
+                        <Button size="sm" disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>
+                          {t('cancelSession')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
@@ -480,17 +501,6 @@ export function ClubMatchSessionDetailView({
                   {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
                   <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
                 </div>
-
-                {((session.capabilities?.canWithdraw) ||
-                  (session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status)) ||
-                  (session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status))) && (
-                  <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                    {session.capabilities?.canWithdraw && <Button disabled={busy} variant="outline" onClick={onWithdraw}>{t('withdraw')}</Button>}
-                    {session.capabilities?.canManage && ['OPEN', 'LIVE'].includes(session.status) && <Button disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>{t('closeRegistration')}</Button>}
-                    {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="secondary" onClick={() => onTransition('END')}>{t('endSession')}</Button>}
-                    {session.capabilities?.canManage && !['ENDED', 'CANCELLED'].includes(session.status) && <Button disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>{t('cancelSession')}</Button>}
-                  </div>
-                )}
               </div>
 
               {/* Tab navigation docked seamlessly at bottom of header */}
@@ -607,8 +617,17 @@ export function ClubMatchSessionDetailView({
             <aside className="p-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
               <div className="mt-3 flex items-center gap-3">
-                <Avatar name={communityName || t('clubSessionLabel')} avatarUrl={communityLogoUrl} className="h-11 w-11" />
-                <div className="min-w-0"><p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p><p className="mt-0.5 text-xs text-slate-500">{t('clubContextHint')}</p></div>
+                {Boolean(communityLogoUrl) && (
+                  <img
+                    src={communityLogoUrl!}
+                    alt={communityName || t('clubSessionLabel')}
+                    className="h-11 w-11 rounded-full border-2 border-white object-cover shadow-sm shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{t('clubContextHint')}</p>
+                </div>
               </div>
             </aside>
 
@@ -616,7 +635,7 @@ export function ClubMatchSessionDetailView({
           </div>
         </div>
       </div>
-          {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={() => { setPairingOpen(false); onCreateMatch(setScoreMatch); }} />}
+          {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} canManage={session.capabilities?.canManage === true} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={(memberScoringEnabled) => { setPairingOpen(false); onCreateMatch(memberScoringEnabled, setScoreMatch); }} />}
       </div>
     </main>
   );
@@ -680,22 +699,36 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
     </div>
 
     {pageCount > 1 && <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-medium text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
-    {canWithdraw && <div className="mt-4 border-t border-slate-100 pt-3"><Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>{t('withdraw')}</Button></div>}
+    {canWithdraw ? (
+      <div className="mt-4 border-t border-slate-100 pt-3">
+        <Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>
+          {t('withdraw')}
+        </Button>
+      </div>
+    ) : canJoin ? (
+      <div className="mt-4 border-t border-slate-100 pt-3">
+        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold" size="sm" disabled={busy} onClick={onJoin}>
+          {t('join')}
+        </Button>
+      </div>
+    ) : null}
   </div>;
 }
 
-function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, busy, t, assignPlayer, onClose, onCreate }: {
+function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, busy, canManage, t, assignPlayer, onClose, onCreate }: {
   participants: ClubMatchParticipant[];
   sideAPlayers: string[];
   sideBPlayers: string[];
   pairingReady: boolean;
   busy: boolean;
+  canManage: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   assignPlayer: (userId: string, side: 'A' | 'B') => void;
   onClose: () => void;
-  onCreate: () => void;
+  onCreate: (memberScoringEnabled: boolean) => void;
 }) {
   const [search, setSearch] = useState('');
+  const [memberScoringEnabled, setMemberScoringEnabled] = useState(true);
   const normalizedSearch = search.trim().toLowerCase();
   const filteredParticipants = normalizedSearch
     ? participants.filter((item) => {
@@ -766,6 +799,21 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
             />
           </div>
         </div>
+
+        {canManage && (
+          <label className="mt-4 flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-700">
+            <input
+              type="checkbox"
+              checked={memberScoringEnabled}
+              onChange={(event) => setMemberScoringEnabled(event.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span>
+              <span className="block font-semibold">Cho phép thành viên nhập điểm trận này</span>
+              <span className="mt-0.5 block text-[11px] text-slate-500">Tắt đi nếu chỉ BQT được xác nhận tỉ số.</span>
+            </span>
+          </label>
+        )}
 
         <div className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
           {filteredParticipants.length === 0 ? (
@@ -845,7 +893,7 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
             <Button variant="outline" disabled={busy} onClick={onClose}>
               {t('closeForm')}
             </Button>
-            <Button disabled={busy || !pairingReady} onClick={onCreate}>
+            <Button disabled={busy || !pairingReady} onClick={() => onCreate(memberScoringEnabled)}>
               <Swords className="mr-2 h-4 w-4" />
               {t('createMatch')}
             </Button>

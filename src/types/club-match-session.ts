@@ -77,6 +77,7 @@ export interface ClubSessionMatch {
   scoreDetails?: Record<string, unknown>;
   sideAUserIds: string[];
   sideBUserIds: string[];
+  memberScoringEnabled?: boolean;
   isRanked?: boolean;
   sportRules?: Record<string, unknown> | null;
   tournamentConfig?: Record<string, unknown> | null;

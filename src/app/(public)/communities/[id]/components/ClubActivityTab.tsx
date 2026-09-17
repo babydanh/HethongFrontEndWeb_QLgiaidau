@@ -35,6 +35,7 @@ import { ClubStandaloneMatchModal } from '@/components/ClubStandaloneMatchModal'
 
 interface Props {
   communityId: string;
+  canManage?: boolean;
 }
 
 type TimelineFilter = 'ALL' | 'MY_MATCHES' | 'COMPLETED' | 'ONGOING';
@@ -371,7 +372,7 @@ function ClubActivitySkeleton() {
   );
 }
 
-export default function ClubActivityTab({ communityId }: Props) {
+export default function ClubActivityTab({ communityId, canManage = false }: Props) {
   const searchInputId = useId();
   const matchTranslate = useTranslations('Match');
   const commonTranslate = useTranslations('Common');
@@ -1492,6 +1493,7 @@ export default function ClubActivityTab({ communityId }: Props) {
       <ClubStandaloneMatchModal
         key={`standalone-modal-${isStandaloneModalOpen ? 'open' : 'closed'}`}
         communityId={communityId}
+        canManage={canManage}
         isOpen={isStandaloneModalOpen}
         onClose={() => setIsStandaloneModalOpen(false)}
         onMatchCreated={(createdMatch) => {

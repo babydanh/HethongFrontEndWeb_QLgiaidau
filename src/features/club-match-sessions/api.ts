@@ -42,7 +42,7 @@ export const clubMatchSessionsApi = {
     description?: string;
     registrationMode: 'SELF' | 'MANAGER_ASSIGN' | 'MIXED';
     pairingMode?: 'FREE' | 'BRACKET';
-    format?: 'singles' | 'doubles' | 'mixed_doubles';
+    format?: 'singles' | 'doubles';
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     isRanked: boolean;
     maxParticipants?: number;
@@ -100,7 +100,7 @@ export const clubMatchSessionsApi = {
     api.post<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/mock`, { name }).then(unwrapClubMatchData),
   createMatch: (
     id: string,
-    payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType?: 'SINGLES' | 'DOUBLES' | 'MIXED_DOUBLES'; confirmWarnings?: boolean },
+    payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType?: 'SINGLES' | 'DOUBLES'; memberScoringEnabled?: boolean; confirmWarnings?: boolean },
     idempotencyKey: string,
   ) => api.post<ApiResponse<{ match: ClubSessionMatch }>>(`/club-match-sessions/${id}/matches`, payload, { headers: { 'Idempotency-Key': idempotencyKey } }).then(unwrapClubMatchData),
   createStandaloneMatch: (
@@ -109,6 +109,7 @@ export const clubMatchSessionsApi = {
       sideAUserIds: string[];
       sideBUserIds: string[];
       matchType: 'SINGLES' | 'DOUBLES';
+      memberScoringEnabled?: boolean;
       isRanked: boolean;
       scheduledAt?: string;
     },

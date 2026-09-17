@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from '@/components/ui/Modal';
 import { getErrorMessage } from '@/utils/error';
 import { cn } from '@/utils/cn';
+import { trimSpaces } from '@/utils/string';
 import { tournamentsApi, type Division } from '@/features/tournaments/api';
 import type { Tournament } from '@/types/tournament';
 import {
@@ -136,7 +137,7 @@ export function RegistrationFormBuilder({
   };
 
   const addOptionToField = (fieldId: string) => {
-    const text = (newOptionInputs[fieldId] ?? '').trim();
+    const text = trimSpaces(newOptionInputs[fieldId]);
     if (!text) return;
     const targetField = config.fields.find((f) => f.id === fieldId);
     const existing = targetField?.options ?? [];

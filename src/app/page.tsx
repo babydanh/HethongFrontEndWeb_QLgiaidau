@@ -731,7 +731,6 @@ export default function HomePage() {
         // Keep loaded cards visible during background refreshes.
         setIsLoading(!hasLoadedFeedRef.current || Boolean(selectedCategoryId));
         setIsLoadingRanked(true);
-        const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
         const tParams: Record<string, unknown> = { limit: HOME_TOURNAMENT_FETCH_LIMIT };
         // The tournament endpoint validates categoryId as UUID. Fallback
         // categories use slugs, so those are filtered against the returned
@@ -785,7 +784,6 @@ export default function HomePage() {
           ? activeTournaments.filter((t) => matchesSelectedCategory(
             [t.categoryId, t.category?.id, t.category?.slug, t.category?.name],
             selectedCategoryId,
-            selectedCategory,
           ))
           : activeTournaments;
         if (tRes.status === 'fulfilled') {
@@ -799,7 +797,7 @@ export default function HomePage() {
         if (cRes.status === 'fulfilled') {
           setCommunities(selectedCategoryId
             ? fetchedCommunities.filter((community) => community.categories?.some((category) =>
-              matchesSelectedCategory([category.id, category.slug, category.name], selectedCategoryId, selectedCategory),
+              matchesSelectedCategory([category.id, category.slug, category.name], selectedCategoryId),
             ))
             : fetchedCommunities);
         }
@@ -958,7 +956,7 @@ export default function HomePage() {
       }
     };
     fetchData();
-  }, [categories, selectedCategoryId, isAuthenticated, user?.id, feedRefreshTick]);
+  }, [selectedCategoryId, isAuthenticated, user?.id, feedRefreshTick]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();

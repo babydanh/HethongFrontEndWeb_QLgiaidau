@@ -1171,7 +1171,22 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
                 </Button>
               )}
 
-              {(isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) && (
+              {isTournamentUpcoming(tournament.status) && !isTournamentRegistrationClosed(tournament.status) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={s.handleOpenRegistrationNow}
+                  disabled={s.isLoading || s.isOpeningRegistration}
+                  title={translate('status.openRegistrationNowTitle')}
+                  className="flex-1 text-xs font-bold text-emerald-700 border-emerald-300 hover:bg-emerald-50 h-8"
+                >
+                  {s.isOpeningRegistration ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Play className="w-3.5 h-3.5 fill-current mr-1" />}
+                  {translate('status.openRegistrationNow')}
+                </Button>
+              )}
+
+              {isTournamentRegistrationClosed(tournament.status) && (
                 <Button
                   type="button"
                   size="sm"
@@ -1602,6 +1617,8 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
               isLoading={s.isLoading || s.isPayingPublishFee}
               onOpenTournament={s.handleConfirmOpen}
               isOpening={s.isOpening}
+              onOpenRegistrationNow={s.handleOpenRegistrationNow}
+              isOpeningRegistration={s.isOpeningRegistration}
               isEndModalOpen={s.isEndModalOpen}
               setIsEndModalOpen={s.setIsEndModalOpen}
               handleConfirmEnd={s.handleConfirmEnd}

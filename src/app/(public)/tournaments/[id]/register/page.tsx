@@ -33,9 +33,11 @@ import { divisionsApi } from '@/features/tournaments/api';
 import { isClubSuperLiteTournament } from '@/features/tournaments/lite-qr';
 import { WithdrawModal } from '@/components/shared/WithdrawModal';
 import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcoming } from '@/utils/tournament-status';
-import { normalizeRegistrationResponses, readRegistrationFormConfig } from '@/features/tournaments/registration-form';
+import { normalizeRegistrationResponses, readRegistrationFormConfig, type RegistrationField } from '@/features/tournaments/registration-form';
 import RegistrationCustomFields, { validateRegistrationResponses } from './components/RegistrationCustomFields';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
+
+const EMPTY_REGISTRATION_FIELDS: RegistrationField[] = [];
 
 const createRegisterSchema = (messages: { teamNameMinLength: string; teamNameTooLong: string }) => z.object({
   teamName: z.string().min(3, messages.teamNameMinLength).max(100, messages.teamNameTooLong),
@@ -596,12 +598,10 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
     [tournament?.tournamentConfig?.registrationForm, allDivisions],
   );
 
-  const registrationFields = useMemo(() => {
-    return configuredRegistrationForm.status === 'PUBLISHED' &&
-      (configuredRegistrationForm.divisionIds.length === 0 || configuredRegistrationForm.divisionIds.includes(selectedDivisionId))
-      ? configuredRegistrationForm.fields
-      : [];
-  }, [configuredRegistrationForm, selectedDivisionId]);
+  const registrationFields = configuredRegistrationForm.status === 'PUBLISHED' &&
+    (configuredRegistrationForm.divisionIds.length === 0 || configuredRegistrationForm.divisionIds.includes(selectedDivisionId))
+    ? configuredRegistrationForm.fields
+    : EMPTY_REGISTRATION_FIELDS;
 
   useEffect(() => {
     if (!user || registrationFields.length === 0) return;

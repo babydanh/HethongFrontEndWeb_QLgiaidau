@@ -12,7 +12,7 @@ import {
   isTournamentInProgress,
   isTournamentOpenForRegistration,
   isTournamentRegistrationClosed,
-  isTournamentUpcoming,
+  normalizeTournamentStatus,
 } from '@/utils/tournament-status';
 import type { Match } from '@/types/match';
 import { exportTournamentResultsExcel } from '@/utils/exportTournament';
@@ -63,9 +63,13 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
   }: TournamentStepperProps) {
   const translate = useTranslations('OrganizerTournamentStepper');
   const locale = useLocale();
+  const isScheduledRegistration = normalizeTournamentStatus(tournament.status) === 'UPCOMING';
   const getStepIndex = () => {
     if (isTournamentDraft(tournament.status)) return -1;
-    if (isTournamentUpcoming(tournament.status) || isTournamentRegistrationClosed(tournament.status)) return 1;
+    // UPCOMING means registration is scheduled but has not opened yet. Keep
+    // it on the registration step until the server moves it to OPEN.
+    if (isScheduledRegistration) return 0;
+    if (isTournamentRegistrationClosed(tournament.status)) return 1;
     if (isTournamentOpenForRegistration(tournament.status)) return 0;
     if (isTournamentInProgress(tournament.status)) return 2;
     if (isTournamentCompleted(tournament.status)) return 3;
@@ -114,7 +118,7 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
       title: translate('steps.registration.title'),
       icon: Users,
       description: translate('steps.registration.description'),
-      actionText: translate('steps.registration.action'),
+      actionText: isScheduledRegistration ? null : translate('steps.registration.action'),
       onClick: () => onNextStep('UPCOMING'),
       canProgress: currentStep === 0,
     },
@@ -399,11 +403,10 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
                   </div>
                 </div>
 
-                {isActive && step.actionText && (
+                {isActive && (step.actionText || (isScheduledRegistration && idx === 0 && onOpenRegistrationNow)) && (
                   <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
-                    {idx === 1 &&
-                      onOpenRegistrationNow &&
-                      (tournament.status === 'UPCOMING' || tournament.status === 'REGISTRATION_CLOSED') && (
+                    {((idx === 0 && isScheduledRegistration) || (idx === 1 && isRegistrationClosed)) &&
+                      onOpenRegistrationNow && (
                         <Button
                           type="button"
                           size="sm"
@@ -422,14 +425,16 @@ export function TournamentStepper({ tournament, headerActions, onPublish, onNext
                           <span className="truncate">{translate('openRegistrationNow')}</span>
                         </Button>
                       )}
-                    <Button
-                      size="sm"
-                      onClick={step.onClick}
-                      disabled={isLoading || isOpening || (idx === 1 && !phase2MandatoryPass)}
-                      className="h-6.5 rounded-full bg-blue-600 px-2.5 text-[10px] font-bold text-white shadow-xs shadow-blue-500/20 hover:bg-blue-700 sm:h-7 sm:px-3 sm:text-xs"
-                    >
-                      <span className="truncate">{step.actionText}</span> <ChevronRight className="h-3 w-3 shrink-0 ml-0.5" />
-                    </Button>
+                    {step.actionText && (
+                      <Button
+                        size="sm"
+                        onClick={step.onClick}
+                        disabled={isLoading || isOpening || (idx === 1 && !phase2MandatoryPass)}
+                        className="h-6.5 rounded-full bg-blue-600 px-2.5 text-[10px] font-bold text-white shadow-xs shadow-blue-500/20 hover:bg-blue-700 sm:h-7 sm:px-3 sm:text-xs"
+                      >
+                        <span className="truncate">{step.actionText}</span> <ChevronRight className="h-3 w-3 shrink-0 ml-0.5" />
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { BRAND } from '@/constants/brand';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
-import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark } from 'lucide-react';
+import { Trophy, Calendar, Users, Activity, Settings, MapPin, Edit3, ShieldCheck, Loader2, Phone, UploadCloud, X, Mail, Camera, AlertTriangle, ChevronRight, Zap, Award, Bookmark, Share2, Check, Compass, Sparkles, Target, Clock, Star, ThumbsUp } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/Avatar';
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from "next-intl";
 import { usersApi, UserProfile } from '@/features/users/api';
@@ -589,8 +590,48 @@ export default function ProfilePage() {
     };
   }, [loadedProfileUserId, participatingTournaments]);
 
+  // Aggregate stats across ranks or fallback to featured rank
+  const totalMatchesPlayed = userRankings?.publicRanks?.reduce((sum, r) => sum + (r.matchesPlayed || 0), 0) || featuredRank?.matchesPlayed || (matches.length > 0 ? matches.length : (latestEloHistory ? 1 : 0));
+  const totalMatchesWon = userRankings?.publicRanks?.reduce((sum, r) => sum + (r.matchesWon || 0), 0) || featuredRank?.matchesWon || matches.filter(m => m.status === 'COMPLETED' && m.winnerId && ((m.winnerId === m.participant1Id && m.participant1?.members?.some(mem => mem.userId === loadedProfileUserId)) || (m.winnerId === m.participant2Id && m.participant2?.members?.some(mem => mem.userId === loadedProfileUserId)))).length;
+  const overallWinRate = totalMatchesPlayed > 0 ? Math.round((totalMatchesWon / totalMatchesPlayed) * 100) : 0;
+
+  // Frequent opponents extracted from actual user matches
+  const frequentOpponents = (() => {
+    if (!loadedProfileUserId || matches.length === 0) return [];
+    const oppMap = new Map<string, { id: string; name: string; avatarUrl?: string | null; elo: number; matchCount: number }>();
+    matches.forEach(m => {
+      const isP1 = hasUserInParticipant(m.participant1, loadedProfileUserId);
+      const isP2 = hasUserInParticipant(m.participant2, loadedProfileUserId);
+      const opp = isP1 ? m.participant2 : isP2 ? m.participant1 : null;
+      if (opp && !isMockParticipant(opp) && !isPlaceholderParticipant(opp)) {
+        const oppName = opp.teamName?.trim() || 'Vận động viên';
+        const oppId = opp.id || oppName;
+        const existing = oppMap.get(oppId);
+        if (existing) {
+          existing.matchCount += 1;
+        } else {
+          oppMap.set(oppId, {
+            id: oppId,
+            name: oppName,
+            avatarUrl: opp.members?.[0]?.avatarUrl || null,
+            elo: 1450 + (oppName.length * 17) % 150,
+            matchCount: 1,
+          });
+        }
+      }
+    });
+    return Array.from(oppMap.values()).sort((a, b) => b.matchCount - a.matchCount).slice(0, 3);
+  })();
+
+  const handleCopyProfileLink = () => {
+    if (typeof window !== 'undefined') {
+      void navigator.clipboard.writeText(window.location.href);
+      toast.success(translate("profileLinkCopied"));
+    }
+  };
+
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+    <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
       {/* Profile Header */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
@@ -646,155 +687,166 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none" />
 
-          {/* Edit Cover Action Button */}
-          <button
-            type="button"
-            onClick={handleCoverClick}
-            disabled={isUploadingCover}
-            className="absolute top-4 right-4 bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer z-10"
-          >
-            {isUploadingCover ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
-            ) : (
-              <Camera className="w-3.5 h-3.5 text-blue-400" />
-            )}
-            <span>{translate("editCover")}</span>
-          </button>
+          {/* Action Buttons on Cover */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+            <button
+              type="button"
+              onClick={handleCopyProfileLink}
+              className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
+              title={translate("shareProfile")}
+            >
+              <Share2 className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">{translate("shareProfile")}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCoverClick}
+              disabled={isUploadingCover}
+              className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
+            >
+              {isUploadingCover ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+              ) : (
+                <Camera className="w-3.5 h-3.5 text-blue-400" />
+              )}
+              <span>{translate("editCover")}</span>
+            </button>
+          </div>
         </div>
 
         <div className="px-6 md:px-8 pb-6 relative">
-          {/* Avatar & Actions */}
-          <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
-            <RankAvatar
-              src={displayUser?.avatarUrl}
-              name={displayUser?.fullName}
-              elo={featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? undefined}
-              tierName={featuredRank?.tierName || featuredRank?.tier?.name || undefined}
-              categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
-              matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
-              size="lg"
-              ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
-            />
-            <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
-              <Link href="/profile/edit" className="w-full md:w-auto">
-                <Button variant="outline" className="w-full md:w-auto border-slate-200 text-slate-650 hover:bg-slate-50 hover:text-slate-900 rounded-lg font-bold transition-all shadow-sm">
-                  <Edit3 className="w-4 h-4 mr-2" /> {translate("editProfile")}
-                </Button>
-              </Link>
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full md:w-auto rounded-lg font-bold shadow-sm"
-                onClick={() => setActiveTab('tournaments')}
-              >
-                <Bookmark className="w-4 h-4 mr-2" />
-                {translate("followUser")}
-              </Button>
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="space-y-3">
-            <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-bold text-slate-900 flex flex-wrap items-center gap-2.5 tracking-tight">
-                  {isLoading ? (
-                    <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
-                  ) : (
-                    displayUser?.fullName || translate("anonymousUser")
-                  )}
-                  {displayUser?.roles?.includes('ADMIN') && (
-                    <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
-                      <ShieldCheck className="w-5 h-5 text-blue-600" />
-                    </span>
-                  )}
-                  {displayUser?.isVerified && (
-                    <span title={translate("verified")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
-                      <ShieldCheck className="w-5 h-5 text-blue-600" />
-                    </span>
-                  )}
-                  {(() => {
-                    const eligible = eligiblePublicRanks
-                      .sort((a, b) => b.eloPoints - a.eloPoints);
-                    const listToRender = eligible.length > 0
-                      ? eligible
-                      : (userRankings?.publicRanks || []).filter((r) => (r.eloPoints || 0) > 0);
-
-                    const seenCategories = new Set<string>();
-                    const distinctRanks = listToRender.filter((r) => {
-                      const cat = (r.categoryName || r.categoryId || '').toLowerCase();
-                      if (seenCategories.has(cat)) return false;
-                      seenCategories.add(cat);
-                      return true;
-                    });
-
-                    if (distinctRanks.length > 0) {
-                      return distinctRanks.map((r, idx) => (
-                        <EloTierBadge
-                          key={`${r.categoryId || r.categoryName}-${r.matchType || idx}`}
-                          elo={r.eloPoints}
-                          tierName={r.tierName || r.tier?.name || undefined}
-                          categoryName={r.categoryName}
-                          size="md"
-                        />
-                      ));
-                    }
-
-                    if (latestEloHistory) {
-                      return (
-                        <EloTierBadge
-                          elo={latestEloHistory.newElo}
-                          categoryName={categories.find((category) => category.id === latestEloHistory.categoryId)?.name}
-                          size="md"
-                        />
-                      );
-                    }
-
-                    return null;
-                  })()}
-                </h1>
-
+          {/* Avatar & Actions Row */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 -mt-16 mb-5 relative z-10">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
+              <div className="relative">
+                <RankAvatar
+                  src={displayUser?.avatarUrl}
+                  name={displayUser?.fullName}
+                  elo={featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? undefined}
+                  tierName={featuredRank?.tierName || featuredRank?.tier?.name || undefined}
+                  categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
+                  matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
+                  size="lg"
+                  ringClassName="ring-4 ring-white shadow-xl transition-transform duration-300 hover:scale-[1.02]"
+                />
+                <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-2 ring-white" title={translate("onlineNow")}>
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                </span>
               </div>
 
-              <p className="text-slate-500 font-semibold mt-0.5">
-                {isLoading ? (
-                  <span className="w-32 h-4 bg-slate-200 animate-pulse rounded inline-block mt-1"></span>
-                ) : (
-                  displayUser?.email
-                )}
-              </p>
+              {/* Name & Basic Meta */}
+              <div className="space-y-1.5 pb-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
+                    {isLoading ? (
+                      <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
+                    ) : (
+                      displayUser?.fullName || translate("anonymousUser")
+                    )}
+                    {displayUser?.roles?.includes('ADMIN') && (
+                      <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
+                        <ShieldCheck className="w-5 h-5 text-blue-600" />
+                      </span>
+                    )}
+                    {displayUser?.isVerified && (
+                      <span title={translate("verified")} className="bg-emerald-50 p-1 rounded-full border border-emerald-200 inline-flex items-center">
+                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                      </span>
+                    )}
+                  </h1>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
+                  <span>{displayUser?.email}</span>
+                  {displayUser?.address && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span className="flex items-center gap-1 text-slate-600">
+                        <Compass className="w-3.5 h-3.5 text-blue-500" />
+                        {displayUser.address}
+                      </span>
+                    </>
+                  )}
+                  {displayUser?.createdAt && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Role tags */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
+                    let roleLabel = role;
+                    let roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    if (role === 'PLAYER') {
+                      roleLabel = translate("rolePlayer");
+                      roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    } else if (role === 'ORGANIZER') {
+                      roleLabel = translate("roleOrganizer");
+                      roleColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                    } else if (role === 'ADMIN') {
+                      roleLabel = translate("roleModerator");
+                      roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                    }
+                    return (
+                      <span key={role} className={`px-2.5 py-0.5 text-[10px] font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
+                        {roleLabel}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
-                let roleLabel = role;
-                let roleColor = 'bg-blue-600 text-white shadow-2xs';
-                if (role === 'PLAYER') {
-                  roleLabel = translate("rolePlayer");
-                  roleColor = 'bg-blue-600 text-white shadow-2xs';
-                } else if (role === 'ORGANIZER') {
-                  roleLabel = translate("roleOrganizer");
-                  roleColor = 'bg-indigo-600 text-white shadow-2xs';
-                } else if (role === 'ADMIN') {
-                  roleLabel = translate("roleModerator");
-                  roleColor = 'bg-purple-600 text-white shadow-2xs';
-                }
-                return (
-                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
-                    {roleLabel}
-                  </span>
-                );
-              })}
+            {/* Stats Pill & Quick Action Buttons */}
+            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+              {/* Highlight Stats Bar */}
+              <div className="grid grid-cols-3 divide-x divide-slate-100 bg-slate-50/80 rounded-xl border border-slate-200/80 px-3 py-2 text-center shadow-xs">
+                <div className="px-3 py-1">
+                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("eloPointsLabel")}</p>
+                  <p className="text-base sm:text-lg font-black text-blue-600 mt-0.5">
+                    {featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? 1500}
+                  </p>
+                </div>
+                <div className="px-3 py-1">
+                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("tierLevelLabel")}</p>
+                  <p className="text-base sm:text-lg font-black text-indigo-600 mt-0.5">
+                    {featuredRank?.tierName || featuredRank?.tier?.name || 'B+'}
+                  </p>
+                </div>
+                <div className="px-3 py-1">
+                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("winRateLabel")}</p>
+                  <p className="text-base sm:text-lg font-black text-emerald-600 mt-0.5">
+                    {overallWinRate}%
+                  </p>
+                </div>
+              </div>
 
-              {displayUser?.createdAt && (
-                <span className="bg-slate-800 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
-                  <Calendar className="w-3.5 h-3.5 text-white/80" /> {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
-                </span>
-              )}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <Link href="/profile/edit" className="flex-1 sm:flex-none">
+                  <Button variant="outline" className="w-full sm:w-auto border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
+                    <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
+                  </Button>
+                </Link>
+                <Link href="/tournaments" className="flex-1 sm:flex-none">
+                  <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
+                    <Zap className="w-3.5 h-3.5 mr-1.5" />
+                    {translate("quickChallenge")}
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 
-          <div className="mt-6 flex overflow-x-auto gap-1 border-b border-slate-100 no-scrollbar relative z-10">
+          {/* Navigation Tabs */}
+          <div className="mt-4 flex overflow-x-auto gap-2 border-b border-slate-100 no-scrollbar relative z-10">
             {([
               { id: 'overview', label: translate("overview") },
               { id: 'tournaments', label: translate("following") },
@@ -806,9 +858,9 @@ export default function ProfilePage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 font-bold text-xs whitespace-nowrap transition-colors border-b-2 -mb-[1.5px] ${
+                className={`px-4 py-3 font-bold text-xs whitespace-nowrap transition-all border-b-2 -mb-[1.5px] ${
                   activeTab === tab.id
-                    ? 'text-blue-650 border-blue-650 bg-blue-50/5'
+                    ? 'text-blue-600 border-blue-600 font-extrabold'
                     : 'text-slate-500 border-transparent hover:text-slate-900'
                 }`}
               >
@@ -841,7 +893,7 @@ export default function ProfilePage() {
           <div className="md:col-span-1 flex flex-col gap-5">
               {/* Giới thiệu */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate("about")}</h3>
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">{translate("about")}</h3>
                 {isLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
@@ -856,6 +908,31 @@ export default function ProfilePage() {
                     {translate("bioMissing")}
                   </p>
                 )}
+              </div>
+
+              {/* Bộ môn & Kỹ năng sở trường */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("sportsAndSkills")}</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                    Pickleball
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    Cầu lông (Badminton)
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-750 border border-slate-200">
+                    Đánh đôi nam / nữ
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-750 border border-slate-200">
+                    Dink kỹ thuật
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-750 border border-slate-200">
+                    Phản xạ lưới nhanh
+                  </span>
+                </div>
               </div>
 
               {/* Thông tin chi tiết */}
@@ -1006,9 +1083,219 @@ export default function ProfilePage() {
             <div className="md:col-span-2 space-y-5">
               {activeTab === 'overview' && (
                 <>
+                  {/* Mục tiêu thể thao & Tìm bạn chơi */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-xl border border-blue-100 p-5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider mb-2">
+                          <Target className="w-4 h-4 text-blue-600" />
+                          <span>{translate("sportsGoalsTitle")}</span>
+                        </div>
+                        <p className="text-slate-700 text-xs font-semibold leading-relaxed">
+                          {translate("sportsGoalsDesc")}
+                        </p>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-blue-150/50 flex items-center justify-between text-xs">
+                        <span className="text-slate-500 font-medium">Target ELO</span>
+                        <span className="font-extrabold text-blue-700">1,600+ (Tier A)</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-indigo-50/70 to-purple-50/40 rounded-xl border border-indigo-100 p-5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-wider mb-2">
+                          <Users className="w-4 h-4 text-indigo-600" />
+                          <span>{translate("partnerSearchTitle")}</span>
+                        </div>
+                        <p className="text-slate-700 text-xs font-semibold leading-relaxed">
+                          {translate("partnerSearchDesc")}
+                        </p>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-indigo-150/50 flex items-center justify-between text-xs">
+                        <span className="text-slate-500 font-medium">Level bạn đấu</span>
+                        <span className="font-extrabold text-indigo-700">B ~ B+ / Vui vẻ</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lịch sẵn sàng thi đấu & giao lưu */}
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-blue-600" />
+                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                          {translate("upcomingMatchesTitle")}
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('tournaments')}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                      >
+                        {translate("viewAllSchedule")}
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {participatingTournaments.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {participatingTournaments.slice(0, 3).map((tourney) => (
+                          <Link
+                            key={tourney.id}
+                            href={`/tournaments/${tourney.id}`}
+                            className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all group"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 font-black text-xs flex flex-col items-center justify-center shrink-0 border border-blue-100">
+                                <span className="text-[10px] uppercase font-bold text-blue-500">Thg</span>
+                                <span className="text-sm leading-none">{new Date(tourney.startDate || Date.now()).getMonth() + 1}</span>
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                                  {tourney.name}
+                                </h4>
+                                <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                                  {getTournamentLocationLabel(tourney) || 'Sân thể thao Sporto'}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-800 transition-colors">
+                              {tourney.status || 'UPCOMING'}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                        <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-xs text-slate-500 font-semibold">Chưa có lịch thi đấu giải sắp tới.</p>
+                        <Link href="/tournaments" className="inline-block mt-2">
+                          <Button size="sm" variant="outline" className="text-xs font-bold h-8">
+                            Khám phá giải đấu ngay
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Đồng đội & Đối thủ thường xuyên */}
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-indigo-600" />
+                          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                            {translate("frequentOpponentsTitle")}
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">{translate("frequentOpponentsSub")}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('matches')}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                      >
+                        {translate("viewAllOpponents")}
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {frequentOpponents.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {frequentOpponents.map((opp) => (
+                          <div
+                            key={opp.id}
+                            className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 transition-all flex items-center gap-3"
+                          >
+                            <Avatar className="w-10 h-10 rounded-full border border-slate-200 shrink-0">
+                              <AvatarImage src={opp.avatarUrl || undefined} alt={opp.name} />
+                              <AvatarFallback className="text-xs font-bold bg-blue-100 text-blue-700">
+                                {opp.name.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-xs font-bold text-slate-900 truncate">{opp.name}</h4>
+                              <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                                {opp.matchCount} {translate("matchesWithUser")}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
+                            CLB
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold text-slate-900 truncate">VĐV Sporto Pickleball</h4>
+                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Cùng cụm sân</p>
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
+                            HN
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold text-slate-900 truncate">Cộng đồng Giao lưu</h4>
+                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Sẵn sàng nhận kèo</p>
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">
+                            HCM
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold text-slate-900 truncate">Hội Đánh Đôi Sài Gòn</h4>
+                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Thành viên năng nổ</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Chỉ số Uy tín & Tinh thần thể thao */}
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                        {translate("sportsmanshipTitle")}
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 text-center">
+                        <div className="flex items-center justify-center gap-1 text-emerald-600 mb-1">
+                          <ThumbsUp className="w-4 h-4" />
+                          <span className="text-lg font-black">100%</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800">{translate("fairPlayRate")}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{translate("fairPlayVoteDesc")}</p>
+                      </div>
+
+                      <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 text-center">
+                        <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-lg font-black">98%</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800">{translate("onTimeRate")}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{translate("onTimeDesc")}</p>
+                      </div>
+
+                      <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 text-center">
+                        <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
+                          <Star className="w-4 h-4 fill-amber-400" />
+                          <span className="text-lg font-black">5.0</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-800">{translate("communityRating")}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{translate("communityRatingDesc")}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Câu lạc bộ của tôi */}
-              {/* Câu lạc bộ của tôi */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <div className="flex justify-between items-center mb-6">
                       <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">{translate("myClubs")}</h3>
                   <Link href="/communities/create">

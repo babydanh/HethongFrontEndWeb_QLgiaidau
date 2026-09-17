@@ -1,3 +1,5 @@
+import { trimSpaces } from '@/utils/string';
+
 export type RegistrationFieldType =
   | 'TEXT'
   | 'TEXTAREA'
@@ -60,7 +62,7 @@ function normalizeOptions(value: unknown): string[] | undefined {
     new Set(
       value
         .filter((option): option is string => typeof option === 'string')
-        .map((option) => option.trim())
+        .map((option) => trimSpaces(option))
         .filter(Boolean),
     ),
   );
@@ -74,14 +76,14 @@ function normalizeFiniteNumber(value: unknown): number | undefined {
 export function normalizeRegistrationField(field: RegistrationField): RegistrationField {
   const normalized: RegistrationField = {
     ...field,
-    label: field.label.trim(),
+    label: trimSpaces(field.label),
     required: field.required === true,
-    helpText: field.helpText?.trim() || undefined,
+    helpText: field.helpText ? trimSpaces(field.helpText) || undefined : undefined,
     options: normalizeOptions(field.options),
     min: normalizeFiniteNumber(field.min),
     max: normalizeFiniteNumber(field.max),
     acceptedFileTypes: field.acceptedFileTypes
-      ? Array.from(new Set(field.acceptedFileTypes.map((type) => type.trim()).filter(Boolean)))
+      ? Array.from(new Set(field.acceptedFileTypes.map((type) => trimSpaces(type)).filter(Boolean)))
       : undefined,
     maxFileSizeMb: field.type === 'FILE' && normalizeFiniteNumber(field.maxFileSizeMb) !== undefined
       ? Math.min(Math.max(normalizeFiniteNumber(field.maxFileSizeMb) ?? REGISTRATION_MAX_FILE_SIZE_MB, 1), REGISTRATION_MAX_FILE_SIZE_MB)
@@ -125,14 +127,14 @@ export function normalizeRegistrationResponses(
   return Object.fromEntries(
     Object.entries(responses).map(([fieldId, value]) => {
       if (typeof value === 'string') {
-        const normalized = value.trim();
+        const normalized = trimSpaces(value);
         return [fieldId, normalized || undefined];
       }
       if (Array.isArray(value)) {
         return [
           fieldId,
           value
-            .map((item) => (typeof item === 'string' ? item.trim() : item))
+            .map((item) => (typeof item === 'string' ? trimSpaces(item) : item))
             .filter((item) => item !== ''),
         ];
       }
@@ -153,7 +155,7 @@ export function readRegistrationFormConfig(raw: unknown, divisionIds: string[]):
       .filter((field) => typeof field.id === 'string' && typeof field.label === 'string' && isRegistrationFieldType(field.type))
       .map((field): RegistrationField => ({
         id: field.id as string,
-        label: (field.label as string).trim(),
+        label: trimSpaces(field.label as string),
         type: field.type as RegistrationFieldType,
         required: field.required === true,
         helpText: typeof field.helpText === 'string' ? field.helpText : undefined,
@@ -163,11 +165,11 @@ export function readRegistrationFormConfig(raw: unknown, divisionIds: string[]):
         acceptedFileTypes: Array.isArray(field.acceptedFileTypes)
           ? Array.from(new Set(field.acceptedFileTypes
             .filter((type): type is string => typeof type === 'string')
-            .map((type) => type.trim())
+            .map((type) => trimSpaces(type))
             .filter(Boolean)))
           : undefined,
-        maxFileSizeMb: field.type === 'FILE' && typeof field.maxFileSizeMb === 'number'
-          ? Math.min(Math.max(field.maxFileSizeMb, 1), REGISTRATION_MAX_FILE_SIZE_MB)
+        maxFileSizeMb: field.type === 'FILE' && normalizeFiniteNumber(field.maxFileSizeMb) !== undefined
+          ? Math.min(Math.max(normalizeFiniteNumber(field.maxFileSizeMb) ?? REGISTRATION_MAX_FILE_SIZE_MB, 1), REGISTRATION_MAX_FILE_SIZE_MB)
           : undefined,
         confidence: typeof field.confidence === 'number' ? field.confidence : undefined,
         needsReview: field.needsReview === true,

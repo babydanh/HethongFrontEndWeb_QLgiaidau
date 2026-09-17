@@ -637,7 +637,7 @@ export default function ProfilePage() {
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
       {/* ─── Cover Banner (Độc lập ở trên cùng) ─── */}
-      <div className="relative h-48 sm:h-56 md:h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-md select-none">
+      <div className="relative h-60 sm:h-72 md:h-80 bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-md select-none">
         <input
           type="file"
           accept="image/*"
@@ -751,18 +751,15 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Main 2-Column Bento Grid */}
-      <div className="min-h-[400px] relative z-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
-          <div className="lg:col-span-1 flex flex-col gap-5 -mt-16 sm:-mt-20 md:-mt-24">
-            {/* Primary Athlete Card (Left Card with Avatar, Name, Badges, ELO Stats & Actions) */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-md p-5 flex flex-col items-center text-center relative overflow-hidden">
-              {/* Top Accent Gradient Line */}
-              <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400" />
-
+      {/* Main 2-Column Bento Grid - Layout chuẩn Figma với Left Card thụt vô trong so với mép banner */}
+      <div className="min-h-[400px] relative z-20 px-2 sm:px-6 md:px-8">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes (thụt vô trong lề banner) */}
+          <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-5 -mt-24 sm:-mt-28 md:-mt-32">
+            {/* Primary Athlete Card (Left Card with Avatar, Name, Badges & Actions - Bỏ khối ELO theo Figma) */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
               {/* Avatar with Ring & Online Status */}
-              <div className="relative mt-2 mb-4">
+              <div className="relative mt-2 mb-3">
                 <RankAvatar
                   src={displayUser?.avatarUrl}
                   name={displayUser?.fullName}
@@ -771,8 +768,8 @@ export default function ProfilePage() {
                   categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
                   matchesPlayed={featuredRank?.matchesPlayed || (latestEloHistory ? 1 : 0)}
                   size="lg"
-                  className="!h-24 !w-24 border-4 shadow-xl transition-transform duration-300 hover:scale-[1.02]"
-                  ringClassName="ring-2 ring-white"
+                  className="!h-24 !w-24 border-4 border-white shadow-lg transition-transform duration-300 hover:scale-[1.02]"
+                  ringClassName="ring-2 ring-slate-100"
                 />
                 <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-2 ring-white" title={translate("onlineNow")}>
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -780,33 +777,27 @@ export default function ProfilePage() {
               </div>
 
               {/* Athlete Name & Badges */}
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center justify-center gap-1.5 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center justify-center gap-1.5 tracking-tight">
                 {isLoading ? (
-                  <span className="w-36 h-7 bg-slate-200 animate-pulse rounded-lg inline-block"></span>
+                  <span className="w-32 h-6 bg-slate-200 animate-pulse rounded-lg inline-block"></span>
                 ) : (
                   displayUser?.fullName || translate("anonymousUser")
                 )}
                 {displayUser?.roles?.includes('ADMIN') && (
                   <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
-                    <ShieldCheck className="w-4 h-4 text-blue-600" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
                   </span>
                 )}
                 {displayUser?.isVerified && (
-                  <span title={translate("verified")} className="bg-emerald-50 p-1 rounded-full border border-emerald-200 inline-flex items-center">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                  <span title={translate("verified")} className="bg-blue-500 p-0.5 rounded-full text-white inline-flex items-center">
+                    <Check className="w-3 h-3 stroke-[3]" />
                   </span>
                 )}
               </h1>
 
               {/* Email & Location */}
               <div className="mt-1 space-y-0.5 text-xs text-slate-500 font-medium">
-                <p className="truncate max-w-[240px] text-slate-500">{displayUser?.email}</p>
-                {displayUser?.address && (
-                  <p className="flex items-center justify-center gap-1 text-slate-600">
-                    <Compass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                    <span className="truncate">{displayUser.address}</span>
-                  </p>
-                )}
+                <p className="truncate max-w-[220px] text-slate-400">{displayUser?.email}</p>
                 {displayUser?.createdAt && (
                   <p className="flex items-center justify-center gap-1 text-slate-400 text-[11px] pt-0.5">
                     <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
@@ -831,41 +822,19 @@ export default function ProfilePage() {
                     roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
                   }
                   return (
-                    <span key={role} className={`px-2.5 py-0.5 text-[10px] font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
+                    <span key={role} className={`px-2 py-0.5 text-[10px] font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
                       {roleLabel}
                     </span>
                   );
                 })}
               </div>
 
-              {/* Highlight Stats Bar inside Profile Card */}
-              <div className="w-full grid grid-cols-3 divide-x divide-slate-100 bg-slate-50/90 rounded-xl border border-slate-200/80 px-2 py-2.5 text-center shadow-xs mt-4">
-                <div className="px-1.5">
-                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("eloPointsLabel")}</p>
-                  <p className="text-base sm:text-lg font-black text-blue-600 mt-0.5">
-                    {featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? 1500}
-                  </p>
-                </div>
-                <div className="px-1.5">
-                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("tierLevelLabel")}</p>
-                  <p className="text-base sm:text-lg font-black text-indigo-600 mt-0.5">
-                    {featuredRank?.tierName || featuredRank?.tier?.name || 'B+'}
-                  </p>
-                </div>
-                <div className="px-1.5">
-                  <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("winRateLabel")}</p>
-                  <p className="text-base sm:text-lg font-black text-emerald-600 mt-0.5">
-                    {overallWinRate}%
-                  </p>
-                </div>
-              </div>
-
               {/* Action Buttons in Left Profile Card */}
-              <div className="w-full flex flex-col gap-2 mt-4">
+              <div className="w-full flex flex-col gap-2 mt-5">
                 {isOwner ? (
                   <>
                     <Link href="/tournaments" className="w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs cursor-pointer">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs cursor-pointer">
                         <Zap className="w-3.5 h-3.5 mr-1.5" />
                         {translate("quickChallenge")}
                       </Button>
@@ -879,7 +848,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <Link href={`/tournaments?challengeUser=${loadedProfileUserId || ''}`} className="w-full">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs cursor-pointer">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs cursor-pointer">
                         <Swords className="w-3.5 h-3.5 mr-1.5" />
                         {translate("quickChallenge")}
                       </Button>
@@ -1088,7 +1057,7 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div className="lg:col-span-2 space-y-5">
+            <div className="flex-1 min-w-0 w-full space-y-5">
               {/* Navigation Tabs Bar: Underline Style, Không đè lên banner */}
               <div className="bg-white rounded-xl border border-slate-200 px-3 sm:px-6 flex items-center overflow-x-auto no-scrollbar shadow-2xs">
                 <div className="flex gap-4 sm:gap-8">

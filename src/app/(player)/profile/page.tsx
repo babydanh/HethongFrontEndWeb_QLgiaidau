@@ -756,7 +756,7 @@ export default function ProfilePage() {
           <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-5 -mt-24 sm:-mt-28 md:-mt-32">
             {/* Primary Athlete Card (Left Card with Avatar, Name, Badges & Actions) */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center relative overflow-hidden">
-              {/* Avatar with Ring, Online Status & Tier Emblem */}
+              {/* Avatar with Ring & Online Status */}
               <div className="relative mt-2 mb-3">
                 <RankAvatar
                   src={displayUser?.avatarUrl}
@@ -772,19 +772,6 @@ export default function ProfilePage() {
                 <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-2 ring-white" title={translate("onlineNow")}>
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 </span>
-
-                {/* Tier Badge Icon như trong Popup */}
-                {(featuredRank?.eloPoints || latestEloHistory?.newElo) && (
-                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10">
-                    <EloTierBadge
-                      elo={featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? 1500}
-                      tierName={featuredRank?.tierName || featuredRank?.tier?.name}
-                      categoryName={featuredRank?.categoryName || (latestEloHistory ? categories.find(c => c.id === latestEloHistory.categoryId)?.name : undefined)}
-                      size="sm"
-                      className="shadow-sm border border-white"
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Athlete Name & Badges */}
@@ -829,9 +816,9 @@ export default function ProfilePage() {
                 })}
               </div>
 
-              {/* Tag / Badge các môn thể thao có hạng (hiện môn nào có hiện hết) */}
+              {/* Tag / Badge các môn thể thao có hạng (hiện môn nào có hiện hết, không có viền xám ngăn cách) */}
               {distinctSportRanks.length > 0 && (
-                <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3 pt-3 border-t border-slate-100 w-full">
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5 w-full">
                   {distinctSportRanks.map((rank, idx) => (
                     <EloTierBadge
                       key={`${rank.categoryName || 'cat'}-${rank.matchType || idx}`}
@@ -864,9 +851,9 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Ngày tham gia - Giấu ở dưới bé tí */}
+              {/* Ngày tham gia - Bé tí ở góc dưới trái sát lề */}
               {displayUser?.createdAt && (
-                <div className="mt-3 pt-2 text-[10px] text-slate-400 flex items-center justify-center gap-1">
+                <div className="w-full mt-2.5 pt-1 text-[10px] text-slate-400 flex items-center justify-start gap-1">
                   <Calendar className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                   <span>{translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}</span>
                 </div>

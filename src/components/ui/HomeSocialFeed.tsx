@@ -23,9 +23,12 @@ import {
 import { motion, useReducedMotion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { api } from '@/lib/axios';
-import { DatePicker } from '@/components/ui/Input';
+import { DateTimePicker } from '@/components/ui/Input';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { venuesApi, type VenueCourtOption, type VenueOption } from '@/features/venues/api';
+import { regionsApi } from '@/features/regions/api';
+import { useAutoAddressParser } from '@/utils/vietnamAddressParser';
+import type { Region } from '@/types/region';
 
 export type ActivityEventType =
   | 'CLUB_RECRUITING'
@@ -917,12 +920,16 @@ function getPickupEndTime(startTime: string, durationMinutes: number) {
   return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
 }
 
+function splitPickupDateTime(value: string) {
+  const [playDate = '', startTime = ''] = value.split('T');
+  return { playDate, startTime };
+}
+
 function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated }: { categories: HomeFeedCategory[]; initialDate: string; onClose: () => void; onCreated: () => void }) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [playDate, setPlayDate] = useState(initialDate);
-  const [startTime, setStartTime] = useState('19:30');
+  const [startDateTime, setStartDateTime] = useState(`${initialDate}T19:30`);
   const [durationMinutes, setDurationMinutes] = useState(120);
   const [customDuration, setCustomDuration] = useState('');
   const [location, setLocation] = useState('');
@@ -930,14 +937,26 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
   const [courtId, setCourtId] = useState('');
   const [venues, setVenues] = useState<VenueOption[]>([]);
   const [courts, setCourts] = useState<VenueCourtOption[]>([]);
+  const [provinces, setProvinces] = useState<Region[]>([]);
+  const [wards, setWards] = useState<Region[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(true);
   const [feePerSlot, setFeePerSlot] = useState('');
   const [maxSlots, setMaxSlots] = useState('4');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedVenue = venues.find((venue) => venue.id === venueId);
+  const { playDate, startTime } = splitPickupDateTime(startDateTime);
   const selectedDuration = Number.isInteger(durationMinutes) && durationMinutes > 0 ? durationMinutes : 0;
   const endTime = getPickupEndTime(startTime, selectedDuration);
+  const autoDetectedAddress = useAutoAddressParser({
+    addressValue: location,
+    provinces,
+    wards,
+    onSelectProvince: () => undefined,
+    onSelectWard: () => undefined,
+    onWardsLoaded: setWards,
+    enabled: location.trim().length >= 3,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -951,6 +970,16 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
       .finally(() => {
         if (mounted) setIsLoadingVenues(false);
       });
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    regionsApi.getProvinces()
+      .then((response) => {
+        if (mounted) setProvinces(response ?? []);
+      })
+      .catch(() => undefined);
     return () => { mounted = false; };
   }, []);
 
@@ -1060,10 +1089,16 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
 
           <label className="sm:col-span-2"><span className="mb-1.5 block text-xs font-bold text-slate-700">Tiêu đề</span><input value={title} onChange={(event) => setTitle(event.target.value)} minLength={3} maxLength={255} required placeholder="Ví dụ: Giao lưu Pickleball buổi tối" className={inputClass} /></label>
 
-          <div>
-            <DatePicker label="Ngày chơi" value={playDate} onChange={setPlayDate} className="h-11" />
+          <div className="sm:col-span-2">
+            <DateTimePicker
+              name="playDateTime"
+              label="Ngày chơi và giờ bắt đầu"
+              value={startDateTime}
+              onChange={setStartDateTime}
+              placeholder="dd/mm/yyyy hh:mm"
+              className="h-11"
+            />
           </div>
-          <label><span className="mb-1.5 flex items-center gap-1 text-xs font-bold text-slate-700"><Clock3 className="h-3.5 w-3.5 text-slate-400" /> Giờ bắt đầu</span><input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} required className={inputClass} /></label>
 
           <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
             <div className="mb-2 flex items-center justify-between gap-2"><span className="text-xs font-bold text-slate-700">Thời lượng</span><span className="text-[11px] text-slate-400">Chọn nhanh hoặc nhập số phút</span></div>
@@ -1082,6 +1117,15 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
             </select>
             {venueId && <select value={courtId} onChange={(event) => handleCourtChange(event.target.value)} className={`${inputClass} bg-white`}><option value="">Chọn tên sân (không bắt buộc)</option>{courts.map((court) => <option key={court.id} value={court.id}>{court.courtName}</option>)}</select>}
             <input value={location} onChange={(event) => setLocation(event.target.value)} minLength={2} maxLength={255} required placeholder="Ví dụ: D-Sport Quận 7 · Sân 3" className={inputClass} />
+            {autoDetectedAddress.isMatched && autoDetectedAddress.province && (
+              <div className="flex items-center gap-1 text-[11px] font-medium text-blue-600">
+                <Sparkles className="h-3 w-3 shrink-0 text-blue-500" aria-hidden="true" />
+                <span className="truncate">
+                  Gợi ý khu vực: <strong>{autoDetectedAddress.province.fullName || autoDetectedAddress.province.name}</strong>
+                  {autoDetectedAddress.ward ? ` > ${autoDetectedAddress.ward.fullName || autoDetectedAddress.ward.name}` : ''}
+                </span>
+              </div>
+            )}
           </div>
 
           <label><span className="mb-1.5 block text-xs font-bold text-slate-700">Phí mỗi người <span className="font-normal text-slate-400">(không bắt buộc)</span></span><input type="number" min={0} max={10000000} step={1000} value={feePerSlot} onChange={(event) => setFeePerSlot(event.target.value)} placeholder="Để trống nếu miễn phí" className={inputClass} /></label>

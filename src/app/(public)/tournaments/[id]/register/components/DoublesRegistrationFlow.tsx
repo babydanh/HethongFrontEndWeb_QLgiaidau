@@ -26,7 +26,7 @@ import { getRegistrationModeUi } from '../../../registrationMode';
 import ShareModal from '@/components/common/ShareModal';
 import { socketClient } from '@/lib/socket';
 import RegistrationCustomFields, { validateRegistrationResponses } from './RegistrationCustomFields';
-import type { RegistrationField } from '@/features/tournaments/registration-form';
+import { normalizeRegistrationResponses, type RegistrationField } from '@/features/tournaments/registration-form';
 
 interface Props {
   tournament: Tournament;
@@ -295,8 +295,9 @@ export default function DoublesRegistrationFlow({
       return;
     }
 
+    const submittedCustomResponses = normalizeRegistrationResponses(customResponses ?? {});
     if (registrationFields && registrationFields.length > 0) {
-      const customError = validateRegistrationResponses(registrationFields, customResponses ?? {}, registrationTranslate);
+      const customError = validateRegistrationResponses(registrationFields, submittedCustomResponses, registrationTranslate);
       if (customError) {
         toast.error(customError);
         return;
@@ -322,7 +323,7 @@ export default function DoublesRegistrationFlow({
         partnerEmailOrPhone,
         tournamentDivisionId: divisionId,
         rankingConsent,
-        customResponses,
+        customResponses: submittedCustomResponses,
       });
 
       if (res.data) {

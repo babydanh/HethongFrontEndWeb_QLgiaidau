@@ -28,6 +28,10 @@ import type { Tournament } from '@/types/tournament';
 import {
   readRegistrationFormConfig,
   REGISTRATION_FIELD_TYPES,
+  REGISTRATION_MAX_FILE_SIZE_MB,
+  isRegistrationFieldType,
+  normalizeRegistrationField,
+  validateRegistrationFormForPublish,
   type RegistrationField,
   type RegistrationFieldType,
   type RegistrationFormConfig,
@@ -150,22 +154,30 @@ export function RegistrationFormBuilder({
   };
 
   const save = async (status: RegistrationFormConfig['status'] = 'DRAFT') => {
-    if (config.fields.some((field) => !field.label.trim())) {
-      toast.error(registrationFormTranslate('requiredValidation'));
-      return;
+    const normalizedFields = config.fields.map(normalizeRegistrationField);
+    const nextConfig: RegistrationFormConfig = {
+      ...config,
+      status,
+      divisionIds: config.divisionIds.length > 0 ? config.divisionIds : divisions.map((division) => division.id),
+      fields: normalizedFields,
+    };
+    if (status === 'PUBLISHED') {
+      const validationError = validateRegistrationFormForPublish(nextConfig);
+      if (validationError?.code === 'missingLabel') {
+        toast.error(registrationFormTranslate('requiredValidation'));
+        return;
+      }
+      if (validationError?.code === 'choiceOptions') {
+        toast.error(registrationFormTranslate('choiceOptionsValidation', { label: validationError.label }));
+        return;
+      }
+      if (validationError?.code === 'numberRange') {
+        toast.error(registrationFormTranslate('numberRangeValidation', { label: validationError.label }));
+        return;
+      }
     }
     setIsSaving(true);
     try {
-      const nextConfig = {
-        ...config,
-        status,
-        divisionIds: config.divisionIds.length > 0 ? config.divisionIds : divisions.map((division) => division.id),
-        fields: config.fields.map((field) => ({
-          ...field,
-          label: field.label.trim(),
-          helpText: field.helpText?.trim() || undefined,
-        })),
-      };
       await tournamentsApi.updateTournament(tournament.id, {
         tournamentConfig: { ...(tournament.tournamentConfig ?? {}), registrationForm: nextConfig },
       });
@@ -375,7 +387,8 @@ export function RegistrationFormBuilder({
                                   <select
                                     value={field.type}
                                     onChange={(event) => {
-                                      const nextType = event.target.value as RegistrationFieldType;
+                                      const nextType = event.target.value;
+                                      if (!isRegistrationFieldType(nextType)) return;
                                       updateField(field.id, {
                                         type: nextType,
                                         options: (nextType === 'SELECT' || nextType === 'MULTI_SELECT') && !field.options?.length
@@ -520,9 +533,16 @@ export function RegistrationFormBuilder({
                                     <input
                                       type="number"
                                       min={1}
-                                      max={20}
-                                      value={field.maxFileSizeMb ?? 10}
-                                      onChange={(e) => updateField(field.id, { maxFileSizeMb: Number(e.target.value) || 10 })}
+                                      max={REGISTRATION_MAX_FILE_SIZE_MB}
+                                      value={field.maxFileSizeMb ?? REGISTRATION_MAX_FILE_SIZE_MB}
+                                      onChange={(e) => {
+                                        const value = Number(e.target.value);
+                                        updateField(field.id, {
+                                          maxFileSizeMb: Number.isFinite(value)
+                                            ? Math.min(Math.max(value, 1), REGISTRATION_MAX_FILE_SIZE_MB)
+                                            : REGISTRATION_MAX_FILE_SIZE_MB,
+                                        });
+                                      }}
                                       className="h-8 w-20 rounded border border-slate-300 bg-white px-2 text-xs font-semibold text-center focus:border-blue-500 focus:outline-none"
                                     />
                                   </div>
@@ -655,24 +675,24 @@ export function RegistrationFormBuilder({
                             <legend className="px-1 text-[10px] font-bold text-blue-700">
                               {registrationFormTranslate('singleChoiceInstruction')}
                             </legend>
-                            {(field.options && field.options.length > 0 ? field.options : [registrationFormTranslate('choiceOption', { number: 1 }), registrationFormTranslate('choiceOption', { number: 2 })]).map((opt, i) => (
+                            {field.options && field.options.length > 0 ? field.options.map((opt, i) => (
                               <label key={i} className="flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700">
                                 <input type="radio" name={`preview-${field.id}`} disabled className="h-3.5 w-3.5 accent-blue-600" />
                                 <span>{opt}</span>
                               </label>
-                            ))}
+                            )) : <p className="text-[11px] text-amber-700">{registrationFormTranslate('choiceOptionsEmpty')}</p>}
                           </fieldset>
                         ) : field.type === 'MULTI_SELECT' ? (
                           <fieldset className="space-y-1.5 rounded-lg border border-violet-100 bg-violet-50/40 p-2">
                             <legend className="px-1 text-[10px] font-bold text-violet-700">
                               {registrationFormTranslate('multiChoiceInstruction')}
                             </legend>
-                            {(field.options && field.options.length > 0 ? field.options : [registrationFormTranslate('choiceOption', { number: 1 }), registrationFormTranslate('choiceOption', { number: 2 })]).map((opt, i) => (
+                            {field.options && field.options.length > 0 ? field.options.map((opt, i) => (
                               <label key={i} className="flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700">
                                 <input type="checkbox" disabled className="h-3.5 w-3.5 rounded accent-violet-600" />
                                 <span>{opt}</span>
                               </label>
-                            ))}
+                            )) : <p className="text-[11px] text-amber-700">{registrationFormTranslate('choiceOptionsEmpty')}</p>}
                           </fieldset>
                         ) : field.type === 'FILE' ? (
                           <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/40 p-2.5 text-center">

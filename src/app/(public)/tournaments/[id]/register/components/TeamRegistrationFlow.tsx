@@ -11,7 +11,7 @@ import { Check, Loader2, Plus, ShieldCheck, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import RegistrationCustomFields, { validateRegistrationResponses } from './RegistrationCustomFields';
-import type { RegistrationField } from '@/features/tournaments/registration-form';
+import { normalizeRegistrationResponses, type RegistrationField } from '@/features/tournaments/registration-form';
 
 interface Props {
   tournamentId: string;
@@ -123,8 +123,9 @@ export default function TeamRegistrationFlow({
     if (!participantId && isRanked && !rankingConsent) {
       return toast.error(rankingConsentRequiredMessage || translate('selectTeam'));
     }
+    const submittedCustomResponses = normalizeRegistrationResponses(customResponses || {});
     if (!participantId && registrationFields && registrationFields.length > 0) {
-      const customValidationError = validateRegistrationResponses(registrationFields, customResponses || {}, registrationTranslate);
+      const customValidationError = validateRegistrationResponses(registrationFields, submittedCustomResponses, registrationTranslate);
       if (customValidationError) {
         toast.error(customValidationError);
         return;
@@ -151,7 +152,7 @@ export default function TeamRegistrationFlow({
         divisionId,
         tournamentDivisionId: divisionId,
         rankingConsent: isRanked ? rankingConsent : true,
-        customResponses,
+        customResponses: submittedCustomResponses,
       });
       const createdParticipantId = res.data?.participant?.id;
       if (createdParticipantId && res.data?.paymentEligible === true) {

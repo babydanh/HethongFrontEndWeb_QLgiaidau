@@ -33,7 +33,7 @@ import { divisionsApi } from '@/features/tournaments/api';
 import { isClubSuperLiteTournament } from '@/features/tournaments/lite-qr';
 import { WithdrawModal } from '@/components/shared/WithdrawModal';
 import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcoming } from '@/utils/tournament-status';
-import { readRegistrationFormConfig } from '@/features/tournaments/registration-form';
+import { normalizeRegistrationResponses, readRegistrationFormConfig } from '@/features/tournaments/registration-form';
 import RegistrationCustomFields, { validateRegistrationResponses } from './components/RegistrationCustomFields';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 
@@ -479,7 +479,8 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
       return;
     }
 
-    const customError = validateRegistrationResponses(registrationFields, customResponses, registrationTranslate);
+    const submittedCustomResponses = normalizeRegistrationResponses(customResponses);
+    const customError = validateRegistrationResponses(registrationFields, submittedCustomResponses, registrationTranslate);
     if (customError) {
       toast.error(customError);
       return;
@@ -492,7 +493,7 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
         inviteCode: inviteCode || undefined,
         tournamentDivisionId: selectedDivisionId || undefined,
         rankingConsent,
-        customResponses,
+        customResponses: submittedCustomResponses,
       };
 
       const res = await tournamentsApi.register(id, cleanData);
@@ -605,28 +606,35 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
   useEffect(() => {
     if (!user || registrationFields.length === 0) return;
 
-    setCustomResponses((prev) => {
-      let changed = false;
-      const next = { ...prev };
+    let active = true;
+    Promise.resolve().then(() => {
+      if (!active) return;
+      setCustomResponses((prev) => {
+        let changed = false;
+        const next = { ...prev };
 
-      for (const field of registrationFields) {
-        if (next[field.id] !== undefined && next[field.id] !== '') continue;
+        for (const field of registrationFields) {
+          if (next[field.id] !== undefined && next[field.id] !== '') continue;
 
-        const labelLower = field.label.toLowerCase();
-        const isEmailField = field.type === 'EMAIL' || labelLower.includes('email') || labelLower.includes('gmail');
-        const isPhoneField = field.type === 'PHONE' || labelLower.includes('điện thoại') || labelLower.includes('sđt') || labelLower.includes('phone');
+          const labelLower = field.label.toLowerCase();
+          const isEmailField = field.type === 'EMAIL' || labelLower.includes('email') || labelLower.includes('gmail');
+          const isPhoneField = field.type === 'PHONE' || labelLower.includes('điện thoại') || labelLower.includes('sđt') || labelLower.includes('phone');
 
-        if (isEmailField && user.email) {
-          next[field.id] = user.email;
-          changed = true;
-        } else if (isPhoneField && user.phoneNumber) {
-          next[field.id] = user.phoneNumber;
-          changed = true;
+          if (isEmailField && user.email) {
+            next[field.id] = user.email;
+            changed = true;
+          } else if (isPhoneField && user.phoneNumber) {
+            next[field.id] = user.phoneNumber;
+            changed = true;
+          }
         }
-      }
 
-      return changed ? next : prev;
+        return changed ? next : prev;
+      });
     });
+    return () => {
+      active = false;
+    };
   }, [user, registrationFields]);
 
   if (isLoading) {

@@ -1,4 +1,5 @@
 import { Category } from "./category";
+import type { RegistrationFormConfig } from "@/features/tournaments/registration-form";
 
 export enum MatchTypeUI {
   MALE_SINGLES = "MALE_SINGLES",
@@ -218,12 +219,7 @@ export interface Tournament {
     maxCombinedElo?: number | null;
     maxTeammateGap?: number | null;
     registrationMode?: "OPEN" | "APPROVAL" | "INVITE_ONLY";
-    registrationForm?: {
-      version: 1;
-      status: "DRAFT" | "PUBLISHED";
-      fields: Array<Record<string, unknown>>;
-      divisionIds: string[];
-    };
+    registrationForm?: RegistrationFormConfig;
     hideFeaturedCardText?: boolean;
     // Team sport (bóng đá)
     teamSize?: 5 | 7 | 11;

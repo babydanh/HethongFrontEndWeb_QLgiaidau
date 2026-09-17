@@ -114,10 +114,37 @@ interface GroupMatchesData {
   matches: BracketMatch[];
 }
 
-const HOME_TOURNAMENTS_LIMIT = 4;
+const HOME_TOURNAMENTS_LIMIT = 3;
 const HOME_MATCHES_PER_TOURNAMENT = 4;
+const HOME_TOURNAMENT_FETCH_LIMIT = 50;
+const HOME_MATCH_FETCH_LIMIT = 1000;
 
-const limitMatchGroups = (
+const isUuid = (value: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
+const normalizeCategoryValue = (value: string): string =>
+  value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[-_]+/g, ' ');
+
+const matchesSelectedCategory = (
+  values: Array<string | null | undefined>,
+  selectedCategoryId: string,
+  selectedCategory?: Category,
+): boolean => {
+  if (!selectedCategoryId) return true;
+  const selectedValues = [
+    selectedCategoryId,
+    selectedCategory?.id,
+    selectedCategory?.slug,
+    selectedCategory?.name,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeCategoryValue);
+  return values
+    .filter((value): value is string => Boolean(value))
+    .some((value) => selectedValues.includes(normalizeCategoryValue(value)));
+};
+
+const limitTournamentGroups = (
   entries: Array<[string, GroupMatchesData]>,
   tournamentLimit = HOME_TOURNAMENTS_LIMIT,
   matchesPerTournament = HOME_MATCHES_PER_TOURNAMENT,
@@ -704,8 +731,12 @@ export default function HomePage() {
         // Keep loaded cards visible during background refreshes.
         setIsLoading(!hasLoadedFeedRef.current || Boolean(selectedCategoryId));
         setIsLoadingRanked(true);
-        const tParams: Record<string, unknown> = { limit: 20 };
-        if (selectedCategoryId) {
+        const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+        const tParams: Record<string, unknown> = { limit: HOME_TOURNAMENT_FETCH_LIMIT };
+        // The tournament endpoint validates categoryId as UUID. Fallback
+        // categories use slugs, so those are filtered against the returned
+        // category projection instead of producing a guaranteed 400.
+        if (selectedCategoryId && isUuid(selectedCategoryId)) {
           tParams.categoryId = selectedCategoryId;
         }
 
@@ -721,7 +752,7 @@ export default function HomePage() {
         const matchCategoryParams = selectedCategoryId ? { categoryId: selectedCategoryId } : {};
         const publicMatchesPromise = matchesApi.getMatches({
           status: 'ONGOING,SCHEDULED,COMPLETED,FINISHED,DONE,ENDED',
-          limit: 100,
+          limit: HOME_MATCH_FETCH_LIMIT,
           publicOnly: true,
           ...matchCategoryParams,
         });
@@ -751,7 +782,11 @@ export default function HomePage() {
           }
         );
         const visibleTournaments = selectedCategoryId
-          ? activeTournaments.filter(t => t.categoryId === selectedCategoryId)
+          ? activeTournaments.filter((t) => matchesSelectedCategory(
+            [t.categoryId, t.category?.id, t.category?.slug, t.category?.name],
+            selectedCategoryId,
+            selectedCategory,
+          ))
           : activeTournaments;
         if (tRes.status === 'fulfilled') {
           setTournaments(visibleTournaments);
@@ -763,7 +798,9 @@ export default function HomePage() {
         const fetchedCommunities = cRes.status === 'fulfilled' ? cRes.value.data || [] : [];
         if (cRes.status === 'fulfilled') {
           setCommunities(selectedCategoryId
-            ? fetchedCommunities.filter(c => c.categories?.some(cat => cat.id === selectedCategoryId))
+            ? fetchedCommunities.filter((community) => community.categories?.some((category) =>
+              matchesSelectedCategory([category.id, category.slug, category.name], selectedCategoryId, selectedCategory),
+            ))
             : fetchedCommunities);
         }
 
@@ -776,9 +813,9 @@ export default function HomePage() {
         };
 
         const publicMatchList = extractMatches(publicMatchesRes);
-        const liveList = publicMatchList.filter((m) => ['ONGOING', 'IN_PROGRESS'].includes(String(m.status).toUpperCase()));
+        const liveList = publicMatchList.filter((m) => ['ONGOING', 'IN_PROGRESS', 'LIVE', 'PLAYING'].includes(String(m.status).toUpperCase()));
         const completedList = publicMatchList.filter((m) => ['COMPLETED', 'FINISHED', 'DONE', 'ENDED'].includes(String(m.status).toUpperCase()));
-        const upcomingList = publicMatchList.filter((m) => String(m.status).toUpperCase() === 'SCHEDULED');
+        const upcomingList = publicMatchList.filter((m) => ['SCHEDULED', 'UPCOMING', 'PENDING'].includes(String(m.status).toUpperCase()));
 
         // Populate initial cheer counts from backend
         const matchCheerMap: Record<string, number> = {};
@@ -802,7 +839,7 @@ export default function HomePage() {
             m.winnerId != null;
         };
 
-        setLiveMatches(liveList.filter(m => (m.status === 'ONGOING' || m.status === 'IN_PROGRESS') && !isCompletedMatch(m) && !m.isBye));
+        const nextLive = liveList.filter(m => !isCompletedMatch(m) && !m.isBye);
 
         const validUpcoming = upcomingList.filter(m =>
           !m.isBye &&
@@ -813,11 +850,18 @@ export default function HomePage() {
           m.participant1.teamName.trim().toLowerCase() !== 'chờ xác định' &&
           m.participant2.teamName.trim().toLowerCase() !== 'chờ xác định'
         );
-        setUpcomingMatches(validUpcoming);
+        const nextUpcoming = validUpcoming;
 
         const nextCompleted = completedList.filter(m => !m.isBye);
-        if (nextCompleted.length > 0 || selectedCategoryId) {
+        if (publicMatchesRes.status === 'fulfilled') {
+          setLiveMatches(nextLive);
+          setUpcomingMatches(nextUpcoming);
           setCompletedMatches(nextCompleted);
+        } else if (selectedCategoryId) {
+          // A failed filtered request must not leave another sport on screen.
+          setLiveMatches([]);
+          setUpcomingMatches([]);
+          setCompletedMatches([]);
         }
 
         // ── ĐỢT 3 (sau 600ms): rankings (1 call) ──
@@ -914,7 +958,7 @@ export default function HomePage() {
       }
     };
     fetchData();
-  }, [selectedCategoryId, isAuthenticated, user?.id, feedRefreshTick]);
+  }, [categories, selectedCategoryId, isAuthenticated, user?.id, feedRefreshTick]);
 
   useEffect(() => {
     const socket = socketClient.getMatchSocket();
@@ -1050,7 +1094,7 @@ export default function HomePage() {
 
   // The homepage is a preview. The full match list is available from /matches.
   const liveTournamentEntries = Object.entries(liveMatchesByTournament);
-  const visibleLiveTournamentEntries = limitMatchGroups(liveTournamentEntries);
+  const visibleLiveTournamentEntries = limitTournamentGroups(liveTournamentEntries);
 
   // Group upcoming matches by tournament name.
   const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
@@ -1070,7 +1114,7 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const upcomingTournamentEntries = Object.entries(upcomingMatchesByTournament);
-  const visibleUpcomingTournamentEntries = limitMatchGroups(upcomingTournamentEntries);
+  const visibleUpcomingTournamentEntries = limitTournamentGroups(upcomingTournamentEntries);
 
   // Group completed matches by tournament name.
   const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
@@ -1090,7 +1134,7 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const completedTournamentEntries = Object.entries(completedMatchesByTournament);
-  const visibleCompletedTournamentEntries = limitMatchGroups(completedTournamentEntries);
+  const visibleCompletedTournamentEntries = limitTournamentGroups(completedTournamentEntries);
 
   const renderMatchCard = (
     match: BracketMatch,
@@ -1099,9 +1143,10 @@ export default function HomePage() {
     contextTournament?: Pick<Tournament, 'format' | 'maxParticipants'> | null,
   ) => {
     const currentHighFives = highFives[match.id] ?? ((match as unknown as Record<string, unknown>).cheerCount as number) ?? 0;
-    const isCompleted = match.status === 'COMPLETED' || match.winnerId != null;
-    const isLive = (match.status === 'ONGOING' || match.status === 'IN_PROGRESS') && !isCompleted;
-    const isScheduled = match.status === 'SCHEDULED';
+    const matchStatus = String(match.status || '').toUpperCase();
+    const isCompleted = ['COMPLETED', 'FINISHED', 'DONE', 'ENDED'].includes(matchStatus) || match.winnerId != null;
+    const isLive = ['ONGOING', 'IN_PROGRESS', 'LIVE', 'PLAYING'].includes(matchStatus) && !isCompleted;
+    const isScheduled = ['SCHEDULED', 'UPCOMING', 'PENDING'].includes(matchStatus);
     const roundLabel = getMatchRoundLabel({
       match,
       matches: contextMatches,
@@ -2010,7 +2055,7 @@ export default function HomePage() {
         </section>
 
         {/* 2. RIGHT COLUMN: Athlete Profile Card & My Clubs (moved from left, replacing the old right column) */}
-        <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 flex flex-col gap-3.5 order-2">
+        <aside className="w-full lg:w-[270px] xl:w-[280px] shrink-0 flex flex-col gap-3 order-2">
           {/* Athlete Profile Card */}
           <AthleteProfileCard
             user={user}

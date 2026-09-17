@@ -5,7 +5,12 @@ import { useTranslations } from 'next-intl';
 import { ExternalLink, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tournamentsApi, type RegistrationAttachment } from '@/features/tournaments/api';
-import type { RegistrationField } from '@/features/tournaments/registration-form';
+import {
+  REGISTRATION_MAX_FILE_SIZE_MB,
+  VIETNAMESE_PHONE_PATTERN,
+  normalizeRegistrationResponses,
+  type RegistrationField,
+} from '@/features/tournaments/registration-form';
 
 interface Props {
   tournamentId: string;
@@ -17,12 +22,14 @@ interface Props {
 type RegistrationTranslate = (key: string, values?: Record<string, string | number>) => string;
 
 export function validateRegistrationResponses(fields: RegistrationField[], responses: Record<string, unknown>, translate?: RegistrationTranslate): string | null {
+  const normalizedResponses = normalizeRegistrationResponses(responses);
   for (const field of fields) {
-    const value = responses[field.id];
+    const value = normalizedResponses[field.id];
     const empty = value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
     if (field.required && empty) return translate?.('fieldRequired', { label: field.label }) ?? `Please complete “${field.label}”.`;
     if (empty) continue;
     if (field.type === 'EMAIL' && (typeof value !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) return translate?.('emailInvalid', { label: field.label }) ?? `“${field.label}” must be a valid email.`;
+    if (field.type === 'PHONE' && (typeof value !== 'string' || !VIETNAMESE_PHONE_PATTERN.test(value))) return translate?.('phoneInvalid', { label: field.label }) ?? `“${field.label}” must be a valid phone number.`;
     if (field.type === 'NUMBER') {
       const numberValue = Number(value);
       if (!Number.isFinite(numberValue)) return translate?.('numberInvalid', { label: field.label }) ?? `“${field.label}” must be a number.`;
@@ -31,7 +38,7 @@ export function validateRegistrationResponses(fields: RegistrationField[], respo
     }
     if (field.type === 'SELECT' && field.options?.length && !field.options.includes(String(value))) return translate?.('invalidSelect', { label: field.label }) ?? `Please choose a valid value for “${field.label}”.`;
     if (field.type === 'MULTI_SELECT' && field.options?.length && (!Array.isArray(value) || value.some((item) => !field.options?.includes(String(item))))) return translate?.('invalidMultiSelect', { label: field.label }) ?? `Please choose valid values for “${field.label}”.`;
-    if (field.type === 'CHECKBOX' && value !== true) return translate?.('checkboxRequired', { label: field.label }) ?? `You must confirm “${field.label}”.`;
+    if (field.type === 'CHECKBOX' && field.required && value !== true) return translate?.('checkboxRequired', { label: field.label }) ?? `You must confirm “${field.label}”.`;
   }
   return null;
 }
@@ -43,7 +50,7 @@ export default function RegistrationCustomFields({ tournamentId, fields, respons
 
   const handleFileChange = async (field: RegistrationField, file: File | undefined, input: HTMLInputElement) => {
     if (!file) return;
-    const maxSizeMb = Math.min(field.maxFileSizeMb ?? 10, 10);
+    const maxSizeMb = Math.min(field.maxFileSizeMb ?? REGISTRATION_MAX_FILE_SIZE_MB, REGISTRATION_MAX_FILE_SIZE_MB);
     if (file.size > maxSizeMb * 1024 * 1024) {
       input.value = '';
       onChange(field.id, undefined);

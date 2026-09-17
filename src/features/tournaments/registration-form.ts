@@ -31,6 +31,9 @@ export interface RegistrationFormConfig {
   divisionIds: string[];
 }
 
+export const REGISTRATION_MAX_FILE_SIZE_MB = 10;
+export const VIETNAMESE_PHONE_PATTERN = /^(?:\+84|0[35789])\d{8}$/;
+
 export const REGISTRATION_FIELD_TYPES: readonly RegistrationFieldType[] = [
   'TEXT',
   'TEXTAREA',
@@ -47,8 +50,95 @@ export const REGISTRATION_FIELD_TYPES: readonly RegistrationFieldType[] = [
 // Không tự chèn lại để người chơi không phải nhập trùng; BTC có thể thêm câu hỏi riêng.
 export const DEFAULT_REGISTRATION_FIELDS: RegistrationField[] = [];
 
-function isRegistrationFieldType(value: unknown): value is RegistrationFieldType {
+export function isRegistrationFieldType(value: unknown): value is RegistrationFieldType {
   return typeof value === 'string' && REGISTRATION_FIELD_TYPES.includes(value as RegistrationFieldType);
+}
+
+function normalizeOptions(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const options = Array.from(
+    new Set(
+      value
+        .filter((option): option is string => typeof option === 'string')
+        .map((option) => option.trim())
+        .filter(Boolean),
+    ),
+  );
+  return options.length > 0 ? options : undefined;
+}
+
+function normalizeFiniteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+export function normalizeRegistrationField(field: RegistrationField): RegistrationField {
+  const normalized: RegistrationField = {
+    ...field,
+    label: field.label.trim(),
+    required: field.required === true,
+    helpText: field.helpText?.trim() || undefined,
+    options: normalizeOptions(field.options),
+    min: normalizeFiniteNumber(field.min),
+    max: normalizeFiniteNumber(field.max),
+    acceptedFileTypes: field.acceptedFileTypes
+      ? Array.from(new Set(field.acceptedFileTypes.map((type) => type.trim()).filter(Boolean)))
+      : undefined,
+    maxFileSizeMb: field.type === 'FILE' && normalizeFiniteNumber(field.maxFileSizeMb) !== undefined
+      ? Math.min(Math.max(normalizeFiniteNumber(field.maxFileSizeMb) ?? REGISTRATION_MAX_FILE_SIZE_MB, 1), REGISTRATION_MAX_FILE_SIZE_MB)
+      : undefined,
+  };
+  return normalized;
+}
+
+export type RegistrationFormValidationError =
+  | { code: 'missingLabel'; label: string }
+  | { code: 'choiceOptions'; label: string }
+  | { code: 'numberRange'; label: string };
+
+export function validateRegistrationFormForPublish(
+  config: RegistrationFormConfig,
+): RegistrationFormValidationError | null {
+  for (const rawField of config.fields) {
+    const field = normalizeRegistrationField(rawField);
+    if (!field.label) return { code: 'missingLabel', label: rawField.label };
+    if (
+      (field.type === 'SELECT' || field.type === 'MULTI_SELECT') &&
+      (field.options?.length ?? 0) < 2
+    ) {
+      return { code: 'choiceOptions', label: field.label };
+    }
+    if (
+      field.type === 'NUMBER' &&
+      field.min !== undefined &&
+      field.max !== undefined &&
+      field.min > field.max
+    ) {
+      return { code: 'numberRange', label: field.label };
+    }
+  }
+  return null;
+}
+
+export function normalizeRegistrationResponses(
+  responses: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(responses).map(([fieldId, value]) => {
+      if (typeof value === 'string') {
+        const normalized = value.trim();
+        return [fieldId, normalized || undefined];
+      }
+      if (Array.isArray(value)) {
+        return [
+          fieldId,
+          value
+            .map((item) => (typeof item === 'string' ? item.trim() : item))
+            .filter((item) => item !== ''),
+        ];
+      }
+      return [fieldId, value];
+    }),
+  );
 }
 
 export function readRegistrationFormConfig(raw: unknown, divisionIds: string[]): RegistrationFormConfig {
@@ -63,15 +153,22 @@ export function readRegistrationFormConfig(raw: unknown, divisionIds: string[]):
       .filter((field) => typeof field.id === 'string' && typeof field.label === 'string' && isRegistrationFieldType(field.type))
       .map((field): RegistrationField => ({
         id: field.id as string,
-        label: field.label as string,
+        label: (field.label as string).trim(),
         type: field.type as RegistrationFieldType,
         required: field.required === true,
         helpText: typeof field.helpText === 'string' ? field.helpText : undefined,
-        options: Array.isArray(field.options) ? field.options.filter((option): option is string => typeof option === 'string') : undefined,
-        min: typeof field.min === 'number' ? field.min : undefined,
-        max: typeof field.max === 'number' ? field.max : undefined,
-        acceptedFileTypes: Array.isArray(field.acceptedFileTypes) ? field.acceptedFileTypes.filter((type): type is string => typeof type === 'string') : undefined,
-        maxFileSizeMb: typeof field.maxFileSizeMb === 'number' ? field.maxFileSizeMb : undefined,
+        options: normalizeOptions(field.options),
+        min: normalizeFiniteNumber(field.min),
+        max: normalizeFiniteNumber(field.max),
+        acceptedFileTypes: Array.isArray(field.acceptedFileTypes)
+          ? Array.from(new Set(field.acceptedFileTypes
+            .filter((type): type is string => typeof type === 'string')
+            .map((type) => type.trim())
+            .filter(Boolean)))
+          : undefined,
+        maxFileSizeMb: field.type === 'FILE' && typeof field.maxFileSizeMb === 'number'
+          ? Math.min(Math.max(field.maxFileSizeMb, 1), REGISTRATION_MAX_FILE_SIZE_MB)
+          : undefined,
         confidence: typeof field.confidence === 'number' ? field.confidence : undefined,
         needsReview: field.needsReview === true,
       }))

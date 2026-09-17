@@ -114,24 +114,21 @@ interface GroupMatchesData {
   matches: BracketMatch[];
 }
 
-const HOME_MATCH_LIMIT = 4;
+const HOME_TOURNAMENTS_LIMIT = 4;
+const HOME_MATCHES_PER_TOURNAMENT = 4;
 
 const limitMatchGroups = (
   entries: Array<[string, GroupMatchesData]>,
-  limit: number,
+  tournamentLimit = HOME_TOURNAMENTS_LIMIT,
+  matchesPerTournament = HOME_MATCHES_PER_TOURNAMENT,
 ): Array<[string, GroupMatchesData]> => {
-  let remaining = limit;
-
-  return entries.reduce<Array<[string, GroupMatchesData]>>((visible, [key, group]) => {
-    if (remaining <= 0) return visible;
-
-    const matches = group.matches.slice(0, remaining);
-    if (matches.length === 0) return visible;
-
-    visible.push([key, { ...group, matches }]);
-    remaining -= matches.length;
-    return visible;
-  }, []);
+  return entries.slice(0, tournamentLimit).map(([key, group]) => [
+    key,
+    {
+      ...group,
+      matches: group.matches.slice(0, matchesPerTournament),
+    },
+  ]);
 };
 
 const getMatchRankedStatus = (
@@ -720,11 +717,11 @@ export default function HomePage() {
         }
         const communitiesPromise = communitiesApi.getCommunities(cParams);
 
-        // Fetch only a lightweight preview for the homepage (not full matches list)
+        // Fetch preview matches for the homepage
         const matchCategoryParams = selectedCategoryId ? { categoryId: selectedCategoryId } : {};
         const publicMatchesPromise = matchesApi.getMatches({
           status: 'ONGOING,SCHEDULED,COMPLETED,FINISHED,DONE,ENDED',
-          limit: 20,
+          limit: 100,
           publicOnly: true,
           ...matchCategoryParams,
         });
@@ -1053,7 +1050,7 @@ export default function HomePage() {
 
   // The homepage is a preview. The full match list is available from /matches.
   const liveTournamentEntries = Object.entries(liveMatchesByTournament);
-  const visibleLiveTournamentEntries = limitMatchGroups(liveTournamentEntries, HOME_MATCH_LIMIT);
+  const visibleLiveTournamentEntries = limitMatchGroups(liveTournamentEntries);
 
   // Group upcoming matches by tournament name.
   const upcomingMatchesByTournament = upcomingMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
@@ -1073,7 +1070,7 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const upcomingTournamentEntries = Object.entries(upcomingMatchesByTournament);
-  const visibleUpcomingTournamentEntries = limitMatchGroups(upcomingTournamentEntries, HOME_MATCH_LIMIT);
+  const visibleUpcomingTournamentEntries = limitMatchGroups(upcomingTournamentEntries);
 
   // Group completed matches by tournament name.
   const completedMatchesByTournament = completedMatches.reduce<Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>>((acc, match) => {
@@ -1093,7 +1090,7 @@ export default function HomePage() {
   }, {} as Record<string, { id?: string | null; name: string; logoUrl?: string | null; isRanked?: boolean; matches: BracketMatch[] }>);
 
   const completedTournamentEntries = Object.entries(completedMatchesByTournament);
-  const visibleCompletedTournamentEntries = limitMatchGroups(completedTournamentEntries, HOME_MATCH_LIMIT);
+  const visibleCompletedTournamentEntries = limitMatchGroups(completedTournamentEntries);
 
   const renderMatchCard = (
     match: BracketMatch,

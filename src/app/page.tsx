@@ -1780,46 +1780,12 @@ export default function HomePage() {
         onSelectView={setMainView}
       />
 
-      {/* Main Content: 3 Columns with sleek sidebars and expansive center social feed */}
-      <main className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 py-3.5 flex flex-col lg:flex-row items-start gap-3.5">
+      {/* Main Content: 2 Columns - Main Feed on the Left, Sidebar (Profile & Clubs) on the Right */}
+      <main className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 py-3.5 flex flex-col lg:flex-row items-start gap-4">
         <h1 className="sr-only">{translate('seoH1')}</h1>
 
-        {/* 1. LEFT COLUMN: Athlete Profile Card, Match Filters, My Clubs (sleek width ~260px) */}
-        <aside className="w-full lg:w-[260px] xl:w-[270px] shrink-0 flex flex-col gap-3 order-2 lg:order-1">
-          {/* Athlete Profile Card */}
-          <AthleteProfileCard
-            user={user}
-            isAuthenticated={isAuthenticated}
-            elo={activeElo}
-            matchesPlayed={matchesPlayed}
-            winRate={winRate}
-            credibility={matchesPlayed > 0 ? 100 : 100}
-            tierName={displayTier}
-            categoryName={sportName}
-            isLoading={isLoading || (isAuthenticated && userRankings === null)}
-            onViewProfile={(e) => {
-              if (!user?.id) return;
-              const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;
-              openUserProfile(
-                {
-                  id: user.id,
-                  fullName: user.fullName || translate('user'),
-                  avatarUrl: user.avatarUrl,
-                },
-                rect,
-              );
-            }}
-          />
-
-          {/* My Clubs */}
-          <SocialMyClubsCard
-            clubs={myClubs}
-            isAuthenticated={isAuthenticated}
-          />
-        </aside>
-
-        {/* 2. CENTER COLUMN: Khám Phá (Explore) HOẶC Bảng Tin Hoạt Động (Social Feed) */}
-        <section className="flex-1 min-w-0 w-full flex flex-col gap-3.5 order-1 lg:order-2">
+        {/* 1. LEFT MAIN COLUMN: Khám Phá (Explore) HOẶC Bảng Tin Hoạt Động (Social Feed) */}
+        <section className="flex-1 min-w-0 w-full flex flex-col gap-3.5 order-1">
           {mainView === 'FEED' ? (
             /* VIEW B: BẢNG TIN CỘNG ĐỒNG & HOẠT ĐỘNG PLAYER */
             <div className="space-y-3">
@@ -1863,38 +1829,35 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setMatchStatusTab('UPCOMING')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                     matchStatusTab === 'UPCOMING'
-                      ? 'bg-white text-blue-600 shadow-xs'
+                      ? 'bg-white text-blue-600 shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Sắp diễn ra
+                  {translate('upcoming')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setMatchStatusTab('LIVE')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                     matchStatusTab === 'LIVE'
-                      ? 'bg-white text-rose-600 shadow-xs'
+                      ? 'bg-white text-blue-600 shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {liveMatches.length > 0 && (
-                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
-                  )}
-                  Đang diễn ra
+                  {translate('inProgress')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setMatchStatusTab('COMPLETED')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                     matchStatusTab === 'COMPLETED'
-                      ? 'bg-white text-slate-900 shadow-xs'
+                      ? 'bg-white text-blue-600 shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  Đã kết thúc
+                  {translate('finished')}
                 </button>
               </div>
 
@@ -2048,22 +2011,37 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* 3. RIGHT COLUMN: Your Schedule & Nearby Available Courts (sleek width ~280px) */}
-        <aside className="w-full lg:w-[280px] xl:w-[290px] shrink-0 flex flex-col gap-3 order-3">
-          <SocialScheduleAndCourtsWidgets
-            upcomingItem={upcomingWidgetData}
+        {/* 2. RIGHT COLUMN: Athlete Profile Card & My Clubs (moved from left, replacing the old right column) */}
+        <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 flex flex-col gap-3.5 order-2">
+          {/* Athlete Profile Card */}
+          <AthleteProfileCard
+            user={user}
             isAuthenticated={isAuthenticated}
+            elo={activeElo}
+            matchesPlayed={matchesPlayed}
+            winRate={winRate}
+            credibility={matchesPlayed > 0 ? 100 : 100}
+            tierName={displayTier}
+            categoryName={sportName}
+            isLoading={isLoading || (isAuthenticated && userRankings === null)}
+            onViewProfile={(e) => {
+              if (!user?.id) return;
+              const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;
+              openUserProfile(
+                {
+                  id: user.id,
+                  fullName: user.fullName || translate('user'),
+                  avatarUrl: user.avatarUrl,
+                },
+                rect,
+              );
+            }}
           />
 
-          {/* Ad Banner Card */}
-          <AdBannerCard
-            slot="HOMEPAGE_SIDEBAR"
-            variant="sidebar"
-            sponsor={translate('promoStore')}
-            title={translate('promoProduct')}
-            description={translate('promoOffer')}
-            href="/tournaments"
-            badgeLabel={translate('advertisement')}
+          {/* My Clubs */}
+          <SocialMyClubsCard
+            clubs={myClubs}
+            isAuthenticated={isAuthenticated}
           />
         </aside>
       </main>

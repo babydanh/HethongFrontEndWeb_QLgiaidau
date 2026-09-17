@@ -67,8 +67,8 @@ export default function RegistrationCustomFields({ tournamentId, fields, respons
   };
 
   return (
-    <section className="mb-6 space-y-4 rounded-xl border border-blue-100 bg-blue-50/40 p-4 sm:p-5 transition-all">
-      <div className="border-b border-blue-200/50 pb-2.5">
+    <section className="mb-6 space-y-4 rounded-xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs">
+      <div className="border-b border-slate-100 pb-2.5">
         <h3 className="text-sm font-bold text-slate-900">{registrationTranslate('customFieldsTitle')}</h3>
         <p className="mt-0.5 text-xs text-slate-500">{registrationTranslate('customFieldsDescription')}</p>
       </div>
@@ -84,70 +84,101 @@ export default function RegistrationCustomFields({ tournamentId, fields, respons
           );
 
           if (field.type === 'CHECKBOX') {
+            const isChecked = value === true;
             return (
-              <label key={field.id} className="flex cursor-pointer items-start gap-2.5 text-xs text-slate-700 bg-white/60 p-2.5 rounded-lg border border-slate-200/60 hover:bg-white transition-colors">
-                <input
-                  type="checkbox"
-                  checked={value === true}
-                  onChange={(event) => onChange(field.id, event.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded accent-blue-600 cursor-pointer"
-                />
-                <span className="font-semibold">{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>
-              </label>
+              <div
+                key={field.id}
+                onClick={() => onChange(field.id, !isChecked)}
+                className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 text-xs font-semibold transition-all select-none ${
+                  isChecked
+                    ? 'border-blue-500 bg-blue-50/30 text-blue-900'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <span>{field.label}{field.required && <span className="ml-1 text-rose-500">*</span>}</span>
+                <div
+                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                    isChecked ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'
+                  }`}
+                >
+                  {isChecked && <span className="text-[10px] leading-none font-bold">✓</span>}
+                </div>
+              </div>
             );
           }
 
           if (field.type === 'SELECT') {
             return (
-              <fieldset key={field.id} className="space-y-2 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
-                <legend className="px-1">{label}</legend>
-                <p className="text-[11px] font-semibold text-blue-700">{registrationTranslate('singleChoiceInstruction')}</p>
-                {field.helpText && <p className="text-[11px] text-slate-500">{field.helpText}</p>}
-                <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
-                  {(field.options ?? []).map((option) => (
-                    <label key={option} className="flex cursor-pointer items-center gap-2 rounded border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-300 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
-                      <input
-                        type="radio"
-                        name={`registration-${field.id}`}
-                        value={option}
-                        checked={value === option}
-                        onChange={(event) => onChange(field.id, event.target.value)}
-                        className="h-4 w-4 shrink-0 accent-blue-600"
-                      />
-                      <span className="truncate">{option}</span>
-                    </label>
-                  ))}
+              <div key={field.id} className="space-y-2">
+                <div>
+                  {label}
+                  {field.helpText && <p className="text-[11px] text-slate-500 mt-0.5">{field.helpText}</p>}
                 </div>
-              </fieldset>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {(field.options ?? []).map((option) => {
+                    const isSelected = value === option;
+                    return (
+                      <div
+                        key={option}
+                        onClick={() => onChange(field.id, option)}
+                        className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium transition-all select-none ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-semibold shadow-2xs'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="truncate">{option}</span>
+                        <div
+                          className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected ? 'border-blue-600' : 'border-slate-300'
+                          }`}
+                        >
+                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             );
           }
 
           if (field.type === 'MULTI_SELECT') {
             return (
-              <fieldset key={field.id} className="space-y-2 rounded-lg border border-violet-100 bg-violet-50/40 p-3">
-                <legend className="px-1">{label}</legend>
-                <p className="text-[11px] font-semibold text-violet-700">{registrationTranslate('multiChoiceInstruction')}</p>
-                {field.helpText && <p className="text-[11px] text-slate-500">{field.helpText}</p>}
-                <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+              <div key={field.id} className="space-y-2">
+                <div>
+                  {label}
+                  {field.helpText && <p className="text-[11px] text-slate-500 mt-0.5">{field.helpText}</p>}
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {(field.options ?? []).map((option) => {
                     const selected = Array.isArray(value) && value.includes(option);
                     return (
-                      <label key={option} className="flex cursor-pointer items-center gap-2 rounded border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-700 transition-colors hover:border-violet-300 has-[:checked]:border-violet-500 has-[:checked]:bg-violet-50">
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          onChange={(event) => {
-                            const current = Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-                            onChange(field.id, event.target.checked ? [...current, option] : current.filter((item) => item !== option));
-                          }}
-                          className="h-4 w-4 shrink-0 rounded accent-violet-600"
-                        />
+                      <div
+                        key={option}
+                        onClick={() => {
+                          const current = Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+                          onChange(field.id, selected ? current.filter((item) => item !== option) : [...current, option]);
+                        }}
+                        className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium transition-all select-none ${
+                          selected
+                            ? 'border-blue-600 bg-blue-50/40 text-blue-900 font-semibold shadow-2xs'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
                         <span className="truncate">{option}</span>
-                      </label>
+                        <div
+                          className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                            selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white'
+                          }`}
+                        >
+                          {selected && <span className="text-[9px] leading-none font-bold">✓</span>}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
-              </fieldset>
+              </div>
             );
           }
 

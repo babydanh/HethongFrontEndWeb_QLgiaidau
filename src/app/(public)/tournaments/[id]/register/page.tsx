@@ -35,6 +35,7 @@ import { WithdrawModal } from '@/components/shared/WithdrawModal';
 import { isTournamentDraft, isTournamentOpenForRegistration, isTournamentUpcoming } from '@/utils/tournament-status';
 import { readRegistrationFormConfig } from '@/features/tournaments/registration-form';
 import RegistrationCustomFields, { validateRegistrationResponses } from './components/RegistrationCustomFields';
+import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
 
 const createRegisterSchema = (messages: { teamNameMinLength: string; teamNameTooLong: string }) => z.object({
   teamName: z.string().min(3, messages.teamNameMinLength).max(100, messages.teamNameTooLong),
@@ -801,19 +802,16 @@ export default function TournamentRegisterPage({ params }: { params: Promise<{ i
             <div className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all">
               {/* Banner Image or Sport Gradient Cover */}
               <div className="relative h-32 sm:h-36 w-full overflow-hidden bg-slate-100">
-                {tournament.bannerUrl ? (
-                  <img
-                    src={tournament.bannerUrl}
-                    alt={tournament.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                <TournamentBannerCover
+                  bannerUrl={tournament.bannerUrl}
+                  tournamentName={tournament.name}
+                  categoryName={tournament.category?.name}
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent pointer-events-none" />
 
                 {/* Badges on Banner */}
-                <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
+                <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between z-10">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-sm">
                     {tournament.category?.name || registrationTranslate('sportFallback')}
                   </span>

@@ -633,93 +633,115 @@ export default function ProfilePage() {
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
-      {/* Profile Header */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-        {/* Cover Photo Banner */}
-        <div className="h-48 sm:h-64 md:h-72 lg:h-80 bg-slate-950 relative group overflow-hidden select-none">
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            ref={coverInputRef}
-            onChange={handleCoverChange}
+      {/* Standalone Cover Photo Banner */}
+      <div className="h-44 sm:h-56 md:h-64 lg:h-72 bg-slate-950 relative group overflow-hidden rounded-2xl border border-slate-200 shadow-sm select-none">
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          ref={coverInputRef}
+          onChange={handleCoverChange}
+        />
+        {displayUser?.coverUrl ? (
+          <img
+            src={displayUser.coverUrl}
+            alt="Cover"
+            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
           />
-          {displayUser?.coverUrl ? (
-            <img
-              src={displayUser.coverUrl}
-              alt="Cover"
-              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0a192f] to-[#0f2d59] overflow-hidden">
-              {/* Dynamic Glow Orbs */}
-              <div className="absolute -top-24 -left-20 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute top-1/2 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-16 left-1/3 w-72 h-72 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0a192f] to-[#0f2d59] overflow-hidden">
+            {/* Dynamic Glow Orbs */}
+            <div className="absolute -top-24 -left-20 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 left-1/3 w-72 h-72 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
 
-              {/* Sports Grid & Court Lines Pattern */}
-              <svg
-                className="absolute inset-0 w-full h-full opacity-20"
-                xmlns="http://www.w3.org/2000/svg"
-                width="100%"
-                height="100%"
-              >
-                <defs>
-                  <pattern id="sporto-court-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                    <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1" />
-                    <circle cx="30" cy="30" r="1.5" fill="rgba(56, 189, 248, 0.6)" />
-                  </pattern>
-                  <linearGradient id="sporto-court-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
-                  </linearGradient>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#sporto-court-grid)" />
-                {/* Court stylized vectors */}
-                <circle cx="85%" cy="30%" r="140" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="2" strokeDasharray="6 6" />
-                <circle cx="85%" cy="30%" r="200" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="1.5" opacity="0.6" />
-                <path d="M -50 280 L 400 -100" stroke="url(#sporto-court-grad)" strokeWidth="1.5" strokeDasharray="8 8" />
-              </svg>
-            </div>
-          )}
-
-          {/* Multi-layer Vignette & Bottom Blend */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none" />
-
-          {/* Action Buttons on Cover */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-            <button
-              type="button"
-              onClick={handleCopyProfileLink}
-              className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
-              title={translate("shareProfile")}
+            {/* Sports Grid & Court Lines Pattern */}
+            <svg
+              className="absolute inset-0 w-full h-full opacity-20"
+              xmlns="http://www.w3.org/2000/svg"
+              width="100%"
+              height="100%"
             >
-              <Share2 className="w-3.5 h-3.5 text-sky-400" />
-              <span className="hidden sm:inline">{translate("shareProfile")}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCoverClick}
-              disabled={isUploadingCover}
-              className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
-            >
-              {isUploadingCover ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
-              ) : (
-                <Camera className="w-3.5 h-3.5 text-blue-400" />
-              )}
-              <span>{translate("editCover")}</span>
-            </button>
+              <defs>
+                <pattern id="sporto-court-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                  <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1" />
+                  <circle cx="30" cy="30" r="1.5" fill="rgba(56, 189, 248, 0.6)" />
+                </pattern>
+                <linearGradient id="sporto-court-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#sporto-court-grid)" />
+              {/* Court stylized vectors */}
+              <circle cx="85%" cy="30%" r="140" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="2" strokeDasharray="6 6" />
+              <circle cx="85%" cy="30%" r="200" fill="none" stroke="url(#sporto-court-grad)" strokeWidth="1.5" opacity="0.6" />
+              <path d="M -50 280 L 400 -100" stroke="url(#sporto-court-grad)" strokeWidth="1.5" strokeDasharray="8 8" />
+            </svg>
           </div>
-        </div>
+        )}
 
-        <div className="px-6 md:px-8 pb-6 relative">
-          {/* Avatar & Actions Row */}
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 -mt-16 mb-5 relative z-10">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
-              <div className="relative">
+        {/* Multi-layer Vignette & Bottom Blend */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+
+        {/* Action Buttons on Cover */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+          <button
+            type="button"
+            onClick={handleCopyProfileLink}
+            className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
+            title={translate("shareProfile")}
+          >
+            <Share2 className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden sm:inline">{translate("shareProfile")}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCoverClick}
+            disabled={isUploadingCover}
+            className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
+          >
+            {isUploadingCover ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
+            ) : (
+              <Camera className="w-3.5 h-3.5 text-blue-400" />
+            )}
+            <span>{translate("editCover")}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Warning banner for missing gender */}
+      {!isLoading && displayUser && !displayUser.gender && (
+        <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
+              <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
+            </div>
+          </div>
+          <Link href="/profile/edit">
+            <Button size="sm" variant="warning" className="font-bold text-xs">
+              {translate("updateNow")}
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Main 2-Column Bento Grid */}
+      <div className="min-h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
+          <div className="lg:col-span-1 flex flex-col gap-5 -mt-16 sm:-mt-20 md:-mt-24 relative z-20">
+            {/* Primary Athlete Card (Left Card with Avatar, Name, Badges, ELO Stats & Actions) */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
+              {/* Top Accent Gradient Line */}
+              <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400" />
+
+              {/* Avatar with Ring & Online Status */}
+              <div className="relative mt-2 mb-4">
                 <RankAvatar
                   src={displayUser?.avatarUrl}
                   name={displayUser?.fullName}
@@ -735,92 +757,80 @@ export default function ProfilePage() {
                 </span>
               </div>
 
-              {/* Name & Basic Meta */}
-              <div className="space-y-1.5 pb-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
-                    {isLoading ? (
-                      <span className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg"></span>
-                    ) : (
-                      displayUser?.fullName || translate("anonymousUser")
-                    )}
-                    {displayUser?.roles?.includes('ADMIN') && (
-                      <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
-                        <ShieldCheck className="w-5 h-5 text-blue-600" />
-                      </span>
-                    )}
-                    {displayUser?.isVerified && (
-                      <span title={translate("verified")} className="bg-emerald-50 p-1 rounded-full border border-emerald-200 inline-flex items-center">
-                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                      </span>
-                    )}
-                  </h1>
-                </div>
+              {/* Athlete Name & Badges */}
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center justify-center gap-1.5 tracking-tight">
+                {isLoading ? (
+                  <span className="w-36 h-7 bg-slate-200 animate-pulse rounded-lg inline-block"></span>
+                ) : (
+                  displayUser?.fullName || translate("anonymousUser")
+                )}
+                {displayUser?.roles?.includes('ADMIN') && (
+                  <span title={translate("systemAdmin")} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
+                    <ShieldCheck className="w-4 h-4 text-blue-600" />
+                  </span>
+                )}
+                {displayUser?.isVerified && (
+                  <span title={translate("verified")} className="bg-emerald-50 p-1 rounded-full border border-emerald-200 inline-flex items-center">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                  </span>
+                )}
+              </h1>
 
-                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
-                  <span>{displayUser?.email}</span>
-                  {displayUser?.address && (
-                    <>
-                      <span className="text-slate-300">•</span>
-                      <span className="flex items-center gap-1 text-slate-600">
-                        <Compass className="w-3.5 h-3.5 text-blue-500" />
-                        {displayUser.address}
-                      </span>
-                    </>
-                  )}
-                  {displayUser?.createdAt && (
-                    <>
-                      <span className="text-slate-300">•</span>
-                      <span className="flex items-center gap-1 text-slate-500">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* Role tags */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
-                    let roleLabel = role;
-                    let roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
-                    if (role === 'PLAYER') {
-                      roleLabel = translate("rolePlayer");
-                      roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
-                    } else if (role === 'ORGANIZER') {
-                      roleLabel = translate("roleOrganizer");
-                      roleColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
-                    } else if (role === 'ADMIN') {
-                      roleLabel = translate("roleModerator");
-                      roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
-                    }
-                    return (
-                      <span key={role} className={`px-2.5 py-0.5 text-[10px] font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
-                        {roleLabel}
-                      </span>
-                    );
-                  })}
-                </div>
+              {/* Email & Location */}
+              <div className="mt-1 space-y-0.5 text-xs text-slate-500 font-medium">
+                <p className="truncate max-w-[240px] text-slate-500">{displayUser?.email}</p>
+                {displayUser?.address && (
+                  <p className="flex items-center justify-center gap-1 text-slate-600">
+                    <Compass className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span className="truncate">{displayUser.address}</span>
+                  </p>
+                )}
+                {displayUser?.createdAt && (
+                  <p className="flex items-center justify-center gap-1 text-slate-400 text-[11px] pt-0.5">
+                    <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span>{translate("memberSince")} {formatDate(displayUser.createdAt, 'MM/yyyy')}</span>
+                  </p>
+                )}
               </div>
-            </div>
 
-            {/* Stats Pill & Quick Action Buttons */}
-            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-              {/* Highlight Stats Bar */}
-              <div className="grid grid-cols-3 divide-x divide-slate-100 bg-slate-50/80 rounded-xl border border-slate-200/80 px-3 py-2 text-center shadow-xs">
-                <div className="px-3 py-1">
+              {/* Role Tags */}
+              <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
+                {Array.from(new Set(displayUser?.roles || (displayUser?.role ? [displayUser.role] : []) || user?.roles || [])).map((role: string) => {
+                  let roleLabel = role;
+                  let roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                  if (role === 'PLAYER') {
+                    roleLabel = translate("rolePlayer");
+                    roleColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                  } else if (role === 'ORGANIZER') {
+                    roleLabel = translate("roleOrganizer");
+                    roleColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                  } else if (role === 'ADMIN') {
+                    roleLabel = translate("roleModerator");
+                    roleColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                  }
+                  return (
+                    <span key={role} className={`px-2.5 py-0.5 text-[10px] font-bold rounded-md border uppercase tracking-wider ${roleColor}`}>
+                      {roleLabel}
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Highlight Stats Bar inside Profile Card */}
+              <div className="w-full grid grid-cols-3 divide-x divide-slate-100 bg-slate-50/90 rounded-xl border border-slate-200/80 px-2 py-2.5 text-center shadow-xs mt-4">
+                <div className="px-1.5">
                   <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("eloPointsLabel")}</p>
                   <p className="text-base sm:text-lg font-black text-blue-600 mt-0.5">
                     {featuredRank?.eloPoints ?? latestEloHistory?.newElo ?? 1500}
                   </p>
                 </div>
-                <div className="px-3 py-1">
+                <div className="px-1.5">
                   <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("tierLevelLabel")}</p>
                   <p className="text-base sm:text-lg font-black text-indigo-600 mt-0.5">
                     {featuredRank?.tierName || featuredRank?.tier?.name || 'B+'}
                   </p>
                 </div>
-                <div className="px-3 py-1">
+                <div className="px-1.5">
                   <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{translate("winRateLabel")}</p>
                   <p className="text-base sm:text-lg font-black text-emerald-600 mt-0.5">
                     {overallWinRate}%
@@ -828,87 +838,40 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                <Link href="/profile/edit" className="flex-1 sm:flex-none">
-                  <Button variant="outline" className="w-full sm:w-auto border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
+              {/* Action Buttons in Left Profile Card */}
+              <div className="w-full flex flex-col gap-2 mt-4">
+                <Link href="/profile/edit" className="w-full">
+                  <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
                     <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
                   </Button>
                 </Link>
-                <Link href="/tournaments" className="flex-1 sm:flex-none">
-                  <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
+                <Link href="/tournaments" className="w-full">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
                     <Zap className="w-3.5 h-3.5 mr-1.5" />
                     {translate("quickChallenge")}
                   </Button>
                 </Link>
               </div>
             </div>
-          </div>
 
-          {/* Navigation Tabs */}
-          <div className="mt-4 flex overflow-x-auto gap-2 border-b border-slate-100 no-scrollbar relative z-10">
-            {([
-              { id: 'overview', label: translate("overview") },
-              { id: 'tournaments', label: translate("following") },
-              { id: 'achievements', label: translate("achievements") },
-              { id: 'matches', label: translate("matches") },
-              { id: 'elo', label: translate("eloStats") }
-            ] as const).map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 font-bold text-xs whitespace-nowrap transition-all border-b-2 -mb-[1.5px] ${
-                  activeTab === tab.id
-                    ? 'text-blue-600 border-blue-600 font-extrabold'
-                    : 'text-slate-500 border-transparent hover:text-slate-900'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      {/* Warning banner for missing gender */}
-      {!isLoading && displayUser && !displayUser.gender && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-blue-600 shrink-0" />
-            <div>
-              <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
-              <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
+            {/* Giới thiệu bản thân (Bio) */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2.5">{translate("about")}</h3>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
+                  <div className="h-4 bg-slate-200 animate-pulse rounded w-3/4"></div>
+                </div>
+              ) : profileData?.bio ? (
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                  {profileData.bio}
+                </p>
+              ) : (
+                <p className="text-slate-400 text-xs italic">
+                  {translate("bioMissing")}
+                </p>
+              )}
             </div>
-          </div>
-          <Link href="/profile/edit">
-            <Button size="sm" variant="warning" className="font-bold text-xs">
-              {translate("updateNow")}
-            </Button>
-          </Link>
-        </div>
-      )}
-
-      <div className="min-h-[400px]">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-          <div className="md:col-span-1 flex flex-col gap-5">
-              {/* Giới thiệu */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">{translate("about")}</h3>
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <div className="h-4 bg-slate-200 animate-pulse rounded w-full"></div>
-                    <div className="h-4 bg-slate-200 animate-pulse rounded w-3/4"></div>
-                  </div>
-                ) : profileData?.bio ? (
-                  <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap">
-                    {profileData.bio}
-                  </p>
-                ) : (
-                  <p className="text-slate-400 text-sm italic">
-                    {translate("bioMissing")}
-                  </p>
-                )}
-              </div>
 
               {/* Bộ môn & Kỹ năng sở trường */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
@@ -1080,7 +1043,33 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div className="md:col-span-2 space-y-5">
+            <div className="lg:col-span-2 space-y-5">
+              {/* Navigation Tabs Bar */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs px-3 sm:px-4 py-1.5 flex items-center overflow-x-auto no-scrollbar">
+                <div className="flex gap-1 sm:gap-2">
+                  {([
+                    { id: 'overview', label: translate("overview") },
+                    { id: 'tournaments', label: translate("following") },
+                    { id: 'achievements', label: translate("achievements") },
+                    { id: 'matches', label: translate("matches") },
+                    { id: 'elo', label: translate("eloStats") }
+                  ] as const).map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-3.5 py-2.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all cursor-pointer ${
+                        activeTab === tab.id
+                          ? 'bg-blue-600 text-white shadow-xs font-extrabold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {activeTab === 'overview' && (
                 <>
                   {/* Mục tiêu thể thao & Tìm bạn chơi */}

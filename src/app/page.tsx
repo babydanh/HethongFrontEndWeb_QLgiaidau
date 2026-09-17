@@ -2050,7 +2050,10 @@ export default function HomePage() {
 
         {/* 3. RIGHT COLUMN: Your Schedule & Nearby Available Courts (sleek width ~280px) */}
         <aside className="w-full lg:w-[280px] xl:w-[290px] shrink-0 flex flex-col gap-3 order-3">
-          <SocialScheduleAndCourtsWidgets upcomingItem={upcomingWidgetData} />
+          <SocialScheduleAndCourtsWidgets
+            upcomingItem={upcomingWidgetData}
+            isAuthenticated={isAuthenticated}
+          />
 
           {/* Ad Banner Card */}
           <AdBannerCard

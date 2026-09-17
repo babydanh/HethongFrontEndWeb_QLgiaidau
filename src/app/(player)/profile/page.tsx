@@ -633,8 +633,8 @@ export default function ProfilePage() {
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
-      {/* Standalone Cover Photo Banner */}
-      <div className="h-44 sm:h-56 md:h-64 lg:h-72 bg-slate-950 relative group overflow-hidden rounded-2xl border border-slate-200 shadow-sm select-none">
+      {/* Standalone Cover Photo Banner - Expanded Hero */}
+      <div className="h-60 sm:h-72 md:h-80 lg:h-96 bg-slate-950 relative group overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm select-none">
         <input
           type="file"
           accept="image/*"
@@ -682,14 +682,24 @@ export default function ProfilePage() {
         )}
 
         {/* Multi-layer Vignette & Bottom Blend */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 pointer-events-none" />
 
         {/* Action Buttons on Cover */}
-        <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center gap-2 z-10">
+          <Link href="/profile/edit">
+            <Button
+              type="button"
+              className="bg-white hover:bg-slate-100 text-slate-900 border-none font-bold text-xs h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl shadow-lg flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+              <span>{translate("editProfile")}</span>
+            </Button>
+          </Link>
+
           <button
             type="button"
             onClick={handleCopyProfileLink}
-            className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
+            className="bg-black/50 hover:bg-black/75 text-white px-3 sm:px-3.5 h-9 sm:h-10 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
             title={translate("shareProfile")}
           >
             <Share2 className="w-3.5 h-3.5 text-sky-400" />
@@ -700,14 +710,15 @@ export default function ProfilePage() {
             type="button"
             onClick={handleCoverClick}
             disabled={isUploadingCover}
-            className="bg-black/50 hover:bg-black/75 text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-md border border-white/15 shadow-lg active:scale-95 cursor-pointer"
+            className="bg-black/50 hover:bg-black/75 text-white px-3 sm:px-3.5 h-9 sm:h-10 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
+            title={translate("editCover")}
           >
             {isUploadingCover ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
             ) : (
               <Camera className="w-3.5 h-3.5 text-blue-400" />
             )}
-            <span>{translate("editCover")}</span>
+            <span className="hidden md:inline">{translate("editCover")}</span>
           </button>
         </div>
       </div>
@@ -734,7 +745,7 @@ export default function ProfilePage() {
       <div className="min-h-[400px]">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
-          <div className="lg:col-span-1 flex flex-col gap-5 -mt-16 sm:-mt-20 md:-mt-24 relative z-20">
+          <div className="lg:col-span-1 flex flex-col gap-5 -mt-20 sm:-mt-28 md:-mt-36 relative z-20">
             {/* Primary Athlete Card (Left Card with Avatar, Name, Badges, ELO Stats & Actions) */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
               {/* Top Accent Gradient Line */}
@@ -840,15 +851,15 @@ export default function ProfilePage() {
 
               {/* Action Buttons in Left Profile Card */}
               <div className="w-full flex flex-col gap-2 mt-4">
-                <Link href="/profile/edit" className="w-full">
-                  <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
-                    <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
-                  </Button>
-                </Link>
                 <Link href="/tournaments" className="w-full">
                   <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-xs h-10 px-4 text-xs">
                     <Zap className="w-3.5 h-3.5 mr-1.5" />
                     {translate("quickChallenge")}
+                  </Button>
+                </Link>
+                <Link href="/profile/edit" className="w-full">
+                  <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-bold transition-all shadow-xs h-9 px-4 text-xs">
+                    <Edit3 className="w-3.5 h-3.5 mr-1.5 text-slate-500" /> {translate("editProfile")}
                   </Button>
                 </Link>
               </div>

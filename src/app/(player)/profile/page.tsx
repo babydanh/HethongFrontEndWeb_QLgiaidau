@@ -633,8 +633,8 @@ export default function ProfilePage() {
   return (
     <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
 
-      {/* Hero Section: Banner wraps profile cards */}
-      <div className="relative bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-md select-none">
+      {/* ─── Cover Banner (Độc lập ở trên cùng) ─── */}
+      <div className="relative h-48 sm:h-56 md:h-64 bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-md select-none">
         <input
           type="file"
           accept="image/*"
@@ -677,21 +677,21 @@ export default function ProfilePage() {
         {/* Vignette overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Action buttons on top-right */}
-        <div className="relative z-10 flex justify-end gap-2 p-4 sm:p-5">
+        {/* Action buttons on top-right of banner */}
+        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 flex gap-2">
           <Link href="/profile/edit">
             <Button
               type="button"
-              className="bg-white hover:bg-slate-100 text-slate-900 border-none font-bold text-xs h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl shadow-lg flex items-center gap-1.5 transition-all duration-200 active:scale-95 cursor-pointer"
+              className="bg-black/40 hover:bg-black/60 text-white border border-white/20 font-bold text-xs h-8 sm:h-9 px-3 rounded-xl shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all duration-200 active:scale-95 cursor-pointer"
             >
-              <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+              <Edit3 className="w-3.5 h-3.5 text-blue-300" />
               <span>{translate("editProfile")}</span>
             </Button>
           </Link>
           <button
             type="button"
             onClick={handleCopyProfileLink}
-            className="bg-black/50 hover:bg-black/75 text-white px-3 sm:px-3.5 h-9 sm:h-10 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
+            className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
             title={translate("shareProfile")}
           >
             <Share2 className="w-3.5 h-3.5 text-sky-400" />
@@ -701,7 +701,7 @@ export default function ProfilePage() {
             type="button"
             onClick={handleCoverClick}
             disabled={isUploadingCover}
-            className="bg-black/50 hover:bg-black/75 text-white px-3 sm:px-3.5 h-9 sm:h-10 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
+            className="bg-black/40 hover:bg-black/60 text-white px-2.5 sm:px-3 h-8 sm:h-9 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md border border-white/20 shadow-lg active:scale-95 cursor-pointer transition-all duration-200"
             title={translate("editCover")}
           >
             {isUploadingCover ? (
@@ -712,36 +712,31 @@ export default function ProfilePage() {
             <span className="hidden md:inline">{translate("editCover")}</span>
           </button>
         </div>
+      </div>
 
-        {/* Spacer: banner background height — card overlaps this area with -mt */}
-        <div className="h-52 sm:h-60 md:h-72" />
-
-        {/* Content sits inside hero, on top of banner */}
-        <div className="relative z-10 px-4 sm:px-6 pb-6">
-
-          {/* Warning banner for missing gender */}
-          {!isLoading && displayUser && !displayUser.gender && (
-            <div className="mb-4 bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-                <div>
-                  <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
-                  <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
-                </div>
-              </div>
-              <Link href="/profile/edit">
-                <Button size="sm" variant="warning" className="font-bold text-xs">
-                  {translate("updateNow")}
-                </Button>
-              </Link>
+      {/* Warning banner for missing gender */}
+      {!isLoading && displayUser && !displayUser.gender && (
+        <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-xs animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <h4 className="font-bold text-amber-900 text-sm">{translate("genderMissing")}</h4>
+              <p className="text-amber-700 text-xs mt-0.5">{translate("genderPrompt")}</p>
             </div>
-          )}
+          </div>
+          <Link href="/profile/edit">
+            <Button size="sm" variant="warning" className="font-bold text-xs">
+              {translate("updateNow")}
+            </Button>
+          </Link>
+        </div>
+      )}
 
-      {/* Main 2-Column Bento Grid */}
-      <div className="min-h-[400px]">
+      {/* Main 2-Column Bento Grid - float up into banner with -mt */}
+      <div className="min-h-[400px] -mt-16 sm:-mt-20 md:-mt-24 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes – floats UP into banner */}
-          <div className="lg:col-span-1 flex flex-col gap-5 relative z-20 -mt-28 sm:-mt-32 md:-mt-40">
+          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
+          <div className="lg:col-span-1 flex flex-col gap-5">
             {/* Primary Athlete Card (Left Card with Avatar, Name, Badges, ELO Stats & Actions) */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col items-center text-center relative overflow-hidden">
               {/* Top Accent Gradient Line */}
@@ -1966,8 +1961,6 @@ export default function ProfilePage() {
           </div>
         )}
           </div>
-        </div>
-      </div>
         </div>
       </div>
 

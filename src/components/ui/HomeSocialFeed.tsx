@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import {
@@ -80,14 +79,6 @@ interface DateTab {
   dayLabel: string;
   dateLabel: string;
   isToday: boolean;
-}
-
-interface DragState {
-  active: boolean;
-  hasMoved: boolean;
-  pointerId: number | null;
-  startX: number;
-  scrollLeft: number;
 }
 
 const DAY_NAMES = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -802,16 +793,7 @@ export default function HomeSocialFeed() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadError, setHasLoadError] = useState(false);
   const [joinedActivityIds, setJoinedActivityIds] = useState<Set<string>>(() => new Set());
-  const [isDragging, setIsDragging] = useState(false);
   const dateStripRef = useRef<HTMLDivElement>(null);
-  const dragStateRef = useRef<DragState>({
-    active: false,
-    hasMoved: false,
-    pointerId: null,
-    startX: 0,
-    scrollLeft: 0,
-  });
-  const suppressDateClickRef = useRef(false);
 
   const dateTabs = useMemo<DateTab[]>(
     () =>
@@ -869,55 +851,7 @@ export default function HomeSocialFeed() {
     return Array.from(groups, ([time, items]) => ({ time, items }));
   }, [activeActivities]);
 
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    const element = dateStripRef.current;
-    if (!element) return;
-
-    suppressDateClickRef.current = false;
-    dragStateRef.current = {
-      active: true,
-      hasMoved: false,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      scrollLeft: element.scrollLeft,
-    };
-    element.setPointerCapture?.(event.pointerId);
-    setIsDragging(true);
-  }, []);
-
-  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragStateRef.current;
-    const element = dateStripRef.current;
-    if (!drag.active || !element) return;
-
-    const distance = event.clientX - drag.startX;
-    if (Math.abs(distance) > 6) drag.hasMoved = true;
-    if (!drag.hasMoved) return;
-
-    event.preventDefault();
-    element.scrollLeft = drag.scrollLeft - distance;
-  }, []);
-
-  const finishPointerDrag = useCallback((event?: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragStateRef.current;
-    const element = dateStripRef.current;
-    if (!drag.active) return;
-
-    if (drag.hasMoved) suppressDateClickRef.current = true;
-    if (event && drag.pointerId !== null) {
-      element?.releasePointerCapture?.(drag.pointerId);
-    }
-    dragStateRef.current = { ...drag, active: false };
-    setIsDragging(false);
-  }, []);
-
   const handleDateClick = useCallback((dateKey: string) => {
-    if (suppressDateClickRef.current || dragStateRef.current.hasMoved) {
-      suppressDateClickRef.current = false;
-      dragStateRef.current.hasMoved = false;
-      return;
-    }
     setIsLoading(true);
     setHasLoadError(false);
     setActivities([]);
@@ -1005,34 +939,15 @@ export default function HomeSocialFeed() {
 
   return (
     <section className="space-y-4" aria-labelledby="social-feed-heading">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-1">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">Bảng tin CLB</p>
-          <h2 id="social-feed-heading" className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-            Hoạt động đang tìm người
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">Kèo giao lưu và giải đấu mới từ các CLB đã xác minh.</p>
-        </div>
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500">
-          <CalendarDays className="h-3.5 w-3.5 text-blue-600" aria-hidden="true" />
-          30 ngày tới
-        </div>
-      </div>
+      <h2 id="social-feed-heading" className="sr-only">
+        Hoạt động đang tìm người
+      </h2>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
         <div
           ref={dateStripRef}
-          className={`no-scrollbar flex select-none items-stretch gap-1 overflow-x-auto px-0.5 py-0.5 ${
-            isDragging ? 'cursor-grabbing' : 'cursor-grab'
-          }`}
-          style={{ scrollBehavior: isDragging ? 'auto' : 'smooth', touchAction: 'pan-x' }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={finishPointerDrag}
-          onPointerCancel={finishPointerDrag}
-          onPointerLeave={(event) => {
-            if (dragStateRef.current.active) finishPointerDrag(event);
-          }}
+          className="no-scrollbar flex items-stretch gap-1 overflow-x-auto px-0.5 py-0.5 select-none"
+          style={{ scrollBehavior: 'smooth', touchAction: 'pan-x' }}
           aria-label="Chọn ngày hoạt động"
         >
           {dateTabs.map((tab) => {

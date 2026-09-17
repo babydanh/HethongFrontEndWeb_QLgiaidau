@@ -1789,6 +1789,7 @@ export default function HomePage() {
           {/* Athlete Profile Card */}
           <AthleteProfileCard
             user={user}
+            isAuthenticated={isAuthenticated}
             elo={activeElo}
             matchesPlayed={matchesPlayed}
             winRate={winRate}
@@ -1814,10 +1815,6 @@ export default function HomePage() {
           <SocialMyClubsCard
             clubs={myClubs}
             isAuthenticated={isAuthenticated}
-            clubName={communities[0]?.name || 'Hà Anh Pickleball Club'}
-            memberCount={communities[0]?._count?.members || 151}
-            court={communities[0]?.locationAddress || 'Sân D-Sport Q7'}
-            clubId={communities[0]?.id}
           />
         </aside>
 

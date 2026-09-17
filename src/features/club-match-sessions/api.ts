@@ -45,6 +45,7 @@ export const clubMatchSessionsApi = {
     format?: 'singles' | 'doubles';
     bracketType?: 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout';
     isRanked: boolean;
+    memberScoringEnabled?: boolean;
     maxParticipants?: number;
     startAt?: string;
     endAt?: string;
@@ -62,6 +63,8 @@ export const clubMatchSessionsApi = {
       params: { communityId, limit: query.limit ?? 10, cursor: query.cursor ?? undefined, status: query.status },
     }).then(unwrapClubMatchPage),
   get: (id: string) => api.get<ApiResponse<ClubMatchSession>>(`/club-match-sessions/${id}`).then(unwrapClubMatchData),
+  update: (id: string, payload: { version: number; memberScoringEnabled?: boolean }) =>
+    api.patch<ApiResponse<ClubMatchSession>>(`/club-match-sessions/${id}`, payload).then(unwrapClubMatchData),
   transition: (id: string, action: 'CLOSE' | 'END' | 'CANCEL', version: number) =>
     api.post<ApiResponse<ClubMatchSession>>(`/club-match-sessions/${id}/transition`, { action, version }).then(unwrapClubMatchData),
   participants: (id: string, query: CursorQuery = {}) =>
@@ -100,7 +103,7 @@ export const clubMatchSessionsApi = {
     api.post<ApiResponse<ClubMatchParticipant>>(`/club-match-sessions/${id}/participants/mock`, { name }).then(unwrapClubMatchData),
   createMatch: (
     id: string,
-    payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType?: 'SINGLES' | 'DOUBLES'; memberScoringEnabled?: boolean; confirmWarnings?: boolean },
+    payload: { sideAUserIds: string[]; sideBUserIds: string[]; matchType?: 'SINGLES' | 'DOUBLES'; confirmWarnings?: boolean },
     idempotencyKey: string,
   ) => api.post<ApiResponse<{ match: ClubSessionMatch }>>(`/club-match-sessions/${id}/matches`, payload, { headers: { 'Idempotency-Key': idempotencyKey } }).then(unwrapClubMatchData),
   createStandaloneMatch: (
@@ -109,7 +112,6 @@ export const clubMatchSessionsApi = {
       sideAUserIds: string[];
       sideBUserIds: string[];
       matchType: 'SINGLES' | 'DOUBLES';
-      memberScoringEnabled?: boolean;
       isRanked: boolean;
       scheduledAt?: string;
     },

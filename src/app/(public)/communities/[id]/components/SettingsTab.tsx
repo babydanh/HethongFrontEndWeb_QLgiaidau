@@ -76,7 +76,7 @@ export default function SettingsTab({ community }: { community: Community }) {
   const [newQuestion, setNewQuestion] = useState('');
 
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>(community.socialLinks || {});
-  const [socialSettings, setSocialSettings] = useState<CommunitySocialSettings>({ postingPolicy: 'MEMBERS', postApprovalRequired: false, commentsEnabled: true, chatEnabled: true, publicFeed: true, memberTaggingPolicy: 'MEMBERS' });
+  const [socialSettings, setSocialSettings] = useState<CommunitySocialSettings>({ postingPolicy: 'MEMBERS', postApprovalRequired: false, commentsEnabled: true, chatEnabled: true, publicFeed: true, memberTaggingPolicy: 'MEMBERS', memberMatchCreationEnabled: true, memberMatchScoringEnabled: true });
   const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#E2E8F0');
@@ -146,7 +146,11 @@ export default function SettingsTab({ community }: { community: Community }) {
   }, []);
 
   useEffect(() => {
-    communitiesApi.getSocialSettings(community.id).then((response) => setSocialSettings(response.data)).catch(() => undefined);
+    communitiesApi.getSocialSettings(community.id).then((response) => setSocialSettings({
+      ...response.data,
+      memberMatchCreationEnabled: response.data.memberMatchCreationEnabled !== false,
+      memberMatchScoringEnabled: response.data.memberMatchScoringEnabled !== false,
+    })).catch(() => undefined);
   }, [community.id]);
 
   useEffect(() => {
@@ -383,6 +387,36 @@ export default function SettingsTab({ community }: { community: Community }) {
                   <option value="ADMINS">Chỉ Ban quản trị (BQT)</option>
                   <option value="OFF">Tắt gắn thẻ</option>
                 </select>
+              </div>
+
+              <div className="border-t border-slate-200 pt-3">
+                <p className="mb-2 text-xs font-semibold text-slate-700">Quyền trận riêng trong CLB</p>
+                <div className="space-y-2.5">
+                  <label className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={socialSettings.memberMatchCreationEnabled !== false}
+                      onChange={(event) => setSocialSettings((current) => ({ ...current, memberMatchCreationEnabled: event.target.checked }))}
+                      className="mt-0.5 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>
+                      <span className="block">Cho phép thành viên tạo trận riêng</span>
+                      <span className="mt-0.5 block text-[11px] font-normal text-slate-500">Áp dụng chung cho mọi trận riêng của CLB.</span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={socialSettings.memberMatchScoringEnabled !== false}
+                      onChange={(event) => setSocialSettings((current) => ({ ...current, memberMatchScoringEnabled: event.target.checked }))}
+                      className="mt-0.5 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>
+                      <span className="block">Cho phép thành viên nhập điểm trận riêng</span>
+                      <span className="mt-0.5 block text-[11px] font-normal text-slate-500">Tắt để chỉ BQT được xác nhận tỉ số.</span>
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>

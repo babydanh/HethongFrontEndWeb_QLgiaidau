@@ -61,6 +61,7 @@ export interface DayPill {
 // 1. LEFT COLUMN: Athlete Profile Card (Clean White with Subtle Brand Accents)
 export function AthleteProfileCard({
   user,
+  isAuthenticated = false,
   elo,
   matchesPlayed,
   winRate,
@@ -71,6 +72,7 @@ export function AthleteProfileCard({
   onViewProfile,
 }: {
   user?: { fullName?: string | null; avatarUrl?: string | null } | null;
+  isAuthenticated?: boolean;
   elo: number;
   matchesPlayed: number;
   winRate: number;
@@ -112,6 +114,28 @@ export function AthleteProfileCard({
             <div className="h-2 bg-slate-200 rounded w-10" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden text-center p-4">
+        <div className="w-14 h-14 rounded-full border-2 border-slate-200 bg-slate-50 mx-auto mb-2 flex items-center justify-center">
+          <UserPlus className="w-6 h-6 text-slate-400" aria-hidden="true" />
+        </div>
+        <h3 className="text-slate-900 font-bold text-sm tracking-tight">
+          {translate('notSignedIn')}
+        </h3>
+        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+          {translate('loginToSee')}
+        </p>
+        <Link
+          href="/login"
+          className="inline-flex items-center justify-center mt-3 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors"
+        >
+          {translate('signInNow')}
+        </Link>
       </div>
     );
   }
@@ -298,31 +322,14 @@ export interface MyClubItem {
 export function SocialMyClubsCard({
   clubs = [],
   isAuthenticated = false,
-  // Backward compatibility fallback props
-  clubName = 'Hà Anh Pickleball Club',
-  memberCount = 151,
-  court = 'Sân D-Sport Q7',
-  clubId,
 }: {
   clubs?: MyClubItem[];
   isAuthenticated?: boolean;
-  clubName?: string;
-  memberCount?: number;
-  court?: string;
-  clubId?: string;
 }) {
   const translate = useTranslations('Home');
 
-  // If clubs array is provided, use it; otherwise fallback to single club if provided
-  const displayClubs: MyClubItem[] = clubs.length > 0
-    ? clubs
-    : (isAuthenticated ? [] : [{
-        id: clubId || '',
-        name: clubName,
-        memberCount: memberCount,
-        court: court,
-        role: 'MEMBER',
-      }]);
+  // Personal clubs must never be fabricated for guests or while auth is unavailable.
+  const displayClubs: MyClubItem[] = isAuthenticated ? clubs : [];
 
   const getRoleBadge = (role?: string) => {
     const r = (role || 'MEMBER').toUpperCase();
@@ -873,5 +880,4 @@ export function SocialScheduleAndCourtsWidgets({
     </div>
   );
 }
-
 

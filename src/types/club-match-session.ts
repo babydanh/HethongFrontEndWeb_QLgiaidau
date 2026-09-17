@@ -13,6 +13,7 @@ export interface ClubMatchSession {
   pairingMode: 'FREE' | 'BRACKET';
   bracketTournamentId?: string | null;
   isRanked: boolean;
+  memberScoringEnabled?: boolean;
   maxParticipants: number;
   startAt: string | null;
   endAt: string | null;
@@ -77,7 +78,6 @@ export interface ClubSessionMatch {
   scoreDetails?: Record<string, unknown>;
   sideAUserIds: string[];
   sideBUserIds: string[];
-  memberScoringEnabled?: boolean;
   isRanked?: boolean;
   sportRules?: Record<string, unknown> | null;
   tournamentConfig?: Record<string, unknown> | null;
@@ -86,6 +86,7 @@ export interface ClubSessionMatch {
   startedAt?: string | null;
   completedAt?: string | null;
   updatedAt?: string | null;
+  canEditScore?: boolean;
   participant1: { id: 'SIDE_A'; members: Array<{ id: string; userId?: string; fullName: string | null; avatarUrl?: string | null; isMock?: boolean }> };
   participant2: { id: 'SIDE_B'; members: Array<{ id: string; userId?: string; fullName: string | null; avatarUrl?: string | null; isMock?: boolean }> };
 }

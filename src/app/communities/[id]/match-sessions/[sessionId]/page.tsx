@@ -134,6 +134,17 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     void run(() => clubMatchSessionsApi.transition(sessionId, action, session.version), 'sessionUpdated');
   };
 
+  const updateMemberScoring = (enabled: boolean) => {
+    if (!session) return;
+    void run(
+      () => clubMatchSessionsApi.update(sessionId, {
+        version: session.version,
+        memberScoringEnabled: enabled,
+      }),
+      'sessionUpdated',
+    );
+  };
+
   const assignPlayer = (userId: string, side: 'A' | 'B') => {
     setSideAPlayers((current) => side === 'A'
       ? current.includes(userId)
@@ -147,7 +158,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       : current.filter((idValue) => idValue !== userId));
   };
 
-  const createMatch = async (memberScoringEnabled = true, confirmWarnings = false, idempotencyKey = crypto.randomUUID(), onCreated?: (match: ClubSessionMatch) => void) => {
+  const createMatch = async (confirmWarnings = false, idempotencyKey = crypto.randomUUID(), onCreated?: (match: ClubSessionMatch) => void) => {
     if (![1, 2].includes(sideAPlayers.length) || sideBPlayers.length !== sideAPlayers.length) {
       toast.error(t('selectBalancedPlayers'));
       return;
@@ -157,7 +168,6 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       const result = await clubMatchSessionsApi.createMatch(sessionId, {
         sideAUserIds: sideAPlayers,
         sideBUserIds: sideBPlayers,
-        memberScoringEnabled,
         confirmWarnings,
       }, idempotencyKey);
       setSideAPlayers([]);
@@ -168,7 +178,7 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     } catch (error) {
       const body = (error as AxiosError<ClubMatchApiError>).response?.data;
       if (body?.code === 'PAIRING_WARNINGS_REQUIRE_CONFIRMATION' && window.confirm(t('confirmPairingWarnings', { count: body.warnings?.length ?? 0 }))) {
-        await createMatch(memberScoringEnabled, true, idempotencyKey, onCreated);
+        await createMatch(true, idempotencyKey, onCreated);
       } else {
         toast.error(getErrorMessage(error));
       }
@@ -213,10 +223,6 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     } finally { setLoadingMore(false); }
   };
 
-  const updateMatchInView = (updatedMatch: ClubSessionMatch) => {
-    setMatches((current) => current.map((match) => match.id === updatedMatch.id ? updatedMatch : match));
-  };
-
   if (loadError && !session) return <main className="min-h-screen bg-slate-50 p-8 text-center"><p className="text-rose-700" role="alert">{t('loadFailed')}</p><Button className="mt-4" variant="outline" onClick={() => void refresh()}>{t('retry')}</Button></main>;
   if (!session) return <main className="min-h-screen bg-slate-50 p-8 text-center text-slate-600">{t('loading')}</main>;
 
@@ -253,11 +259,11 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
       onJoin={() => void run(() => clubMatchSessionsApi.selfJoin(sessionId), 'joined')}
       onWithdraw={() => void run(() => clubMatchSessionsApi.withdraw(sessionId), 'withdrawn')}
       onTransition={transition}
+      onUpdateMemberScoring={updateMemberScoring}
       onForceSelected={forceSelected}
       onCreateMock={() => void createMockParticipant()}
       onSavePreferences={savePreferences}
-      onCreateMatch={(memberScoringEnabled, onCreated) => void createMatch(memberScoringEnabled, false, crypto.randomUUID(), onCreated)}
-      onMatchUpdated={updateMatchInView}
+      onCreateMatch={(onCreated) => void createMatch(false, crypto.randomUUID(), onCreated)}
       onLoadMoreParticipants={() => void loadMoreParticipants()}
       onLoadMoreMatches={() => void loadMoreMatches()}
       onLoadMoreMembers={() => void loadMoreMembers()}

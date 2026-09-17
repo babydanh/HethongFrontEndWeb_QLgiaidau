@@ -171,6 +171,10 @@ export interface CommunitySocialSettings {
   chatEnabled: boolean;
   publicFeed: boolean;
   memberTaggingPolicy: 'MEMBERS' | 'ADMINS' | 'OFF';
+  memberMatchCreationEnabled: boolean;
+  memberMatchScoringEnabled: boolean;
+  memberMatchDeletionEnabled?: boolean;
+  matchScoringPresets?: Record<string, unknown>;
 }
 
 export interface ChatRoom {

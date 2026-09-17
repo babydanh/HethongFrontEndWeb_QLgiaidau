@@ -146,6 +146,8 @@ export interface Match {
   clubMatchSessionId?: string | null;
   standaloneMatchId?: string | null;
   communityId?: string | null;
+  /** Authenticated club live endpoint capability. */
+  canEditScore?: boolean;
   sportRules?: SportRulesEnvelope | null;
   tournamentConfig?: {
     isLite?: boolean;

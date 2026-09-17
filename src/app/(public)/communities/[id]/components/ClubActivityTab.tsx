@@ -2,6 +2,7 @@
 
 import React, { useId, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import type { Tournament } from '@/features/tournaments/api';
 import type { Match } from '@/types/match';
@@ -9,7 +10,6 @@ import { communitiesApi } from '@/features/communities/api';
 import { matchesApi } from '@/features/matches/api';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import type { ClubSessionMatch } from '@/types/club-match-session';
-import { ClubMatchScoreEntryModal, type ScoreMatch } from '@/features/club-match-sessions/ClubMatchScoreEntryModal';
 import { InfiniteScrollTrigger } from '@/components/ui/infinite-scroll-trigger';
 import { extractMatchScores } from '@/features/matches/score-display';
 import { socketClient } from '@/lib/socket';
@@ -144,28 +144,6 @@ function hasActivityCursor(pagination: ActivityPagination) {
     Object.values(pagination.sessionMatches).some((cursor) => cursor.hasMore) ||
     Object.values(pagination.tournaments).some((cursor) => cursor.hasMore) ||
     pagination.pendingSessionIds.length > 0;
-}
-
-function toScoreMatch(match: MatchWithTournament): ScoreMatch {
-  const mapMembers = (participant: Match['participant1'], side: 'A' | 'B') => (participant?.members || []).map((member, index) => ({
-    id: `${match.id}-${side}-${index}`,
-    userId: member.userId,
-    fullName: member.fullName || null,
-    avatarUrl: member.avatarUrl || null,
-    isMock: member.isMock,
-  }));
-  return {
-    id: match.id,
-    status: match.status === 'DISPUTED' ? 'COMPLETED' : match.status,
-    revision: match.revision ?? 0,
-    p1SetsWon: match.p1SetsWon ?? 0,
-    p2SetsWon: match.p2SetsWon ?? 0,
-    scoreDetails: match.scoreDetails,
-    sportRules: match.sportRules as Record<string, unknown> | null | undefined,
-    tournamentConfig: match.tournamentConfig as Record<string, unknown> | null | undefined,
-    participant1: { id: 'SIDE_A', members: mapMembers(match.participant1, 'A') },
-    participant2: { id: 'SIDE_B', members: mapMembers(match.participant2, 'B') },
-  };
 }
 
 type MatchParticipant = NonNullable<Match['participant1']>;
@@ -373,6 +351,7 @@ function ClubActivitySkeleton() {
 }
 
 export default function ClubActivityTab({ communityId, canManage = false }: Props) {
+  const router = useRouter();
   const searchInputId = useId();
   const matchTranslate = useTranslations('Match');
   const commonTranslate = useTranslations('Common');
@@ -384,8 +363,6 @@ export default function ClubActivityTab({ communityId, canManage = false }: Prop
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isStandaloneModalOpen, setIsStandaloneModalOpen] = useState(false);
-  const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
-  const [scoreMatch, setScoreMatch] = useState<ScoreMatch | null>(null);
   const [visibleLimit, setVisibleLimit] = useState(ACTIVITY_PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [pagination, setPagination] = useState<ActivityPagination>({
@@ -1154,10 +1131,7 @@ export default function ClubActivityTab({ communityId, canManage = false }: Prop
               ? formatDateTime(match.scheduledAt)
               : null;
             const isClubActivityMatch = match.isClubSessionMatch || match.isStandaloneMatch;
-            const openScoreFromCard = () => {
-              setScoreMatch(toScoreMatch(match));
-              setIsScoreModalOpen(true);
-            };
+            const openScoreFromCard = () => router.push(`/live/${match.id}?scoring=1`);
 
             return (
               <div key={match.id} className="relative group">
@@ -1456,17 +1430,13 @@ export default function ClubActivityTab({ communityId, canManage = false }: Prop
                     </div>
 
                     {match.isClubSessionMatch || match.isStandaloneMatch ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setScoreMatch(toScoreMatch(match));
-                          setIsScoreModalOpen(true);
-                        }}
+                      <Link
+                        href={`/live/${match.id}?scoring=1`}
                         className="group/btn inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-slate-700 transition-colors hover:text-blue-600"
                       >
                         <span>{matchTranslate('clubOpenScoring')}</span>
                         <ChevronRight className="h-3.5 w-3.5 text-slate-400 transition-all group-hover/btn:translate-x-0.5 group-hover/btn:text-blue-600" />
-                      </button>
+                      </Link>
                     ) : (
                       <Link
                         href={`/live/${match.id}`}
@@ -1493,24 +1463,12 @@ export default function ClubActivityTab({ communityId, canManage = false }: Prop
       <ClubStandaloneMatchModal
         key={`standalone-modal-${isStandaloneModalOpen ? 'open' : 'closed'}`}
         communityId={communityId}
-        canManage={canManage}
         isOpen={isStandaloneModalOpen}
         onClose={() => setIsStandaloneModalOpen(false)}
         onMatchCreated={(createdMatch) => {
-          setScoreMatch(createdMatch);
-          setIsScoreModalOpen(true);
+          router.push(`/live/${createdMatch.id}?scoring=1`);
           void fetchClubMatches(true);
         }}
-      />
-      <ClubMatchScoreEntryModal
-        key={scoreMatch?.id ?? 'no-score-match'}
-        match={scoreMatch}
-        open={isScoreModalOpen}
-        onOpenChange={(open) => {
-          setIsScoreModalOpen(open);
-          if (!open) setScoreMatch(null);
-        }}
-        onSaved={() => void fetchClubMatches(true)}
       />
     </div>
   );

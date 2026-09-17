@@ -32,7 +32,6 @@ import type {
   ClubMatchSession,
   ClubSessionMatch,
 } from '@/types/club-match-session';
-import { ClubMatchScoreEntryModal } from './ClubMatchScoreEntryModal';
 
 type SessionAction = 'CLOSE' | 'END' | 'CANCEL';
 type SessionTab = 'overview' | 'participants' | 'matches' | 'statistics';
@@ -69,11 +68,11 @@ type Props = {
   onJoin: () => void;
   onWithdraw: () => void;
   onTransition: (action: SessionAction) => void;
+  onUpdateMemberScoring: (enabled: boolean) => void;
   onForceSelected: () => void;
   onCreateMock: () => void;
   onSavePreferences: () => void;
-  onCreateMatch: (memberScoringEnabled: boolean, onCreated?: (match: ClubSessionMatch) => void) => void;
-  onMatchUpdated?: (match: ClubSessionMatch) => void;
+  onCreateMatch: (onCreated?: (match: ClubSessionMatch) => void) => void;
   onLoadMoreParticipants: () => void;
   onLoadMoreMatches: () => void;
   onLoadMoreMembers: () => void;
@@ -255,7 +254,7 @@ function buildPlayerStats(participants: ClubMatchParticipant[], matches: ClubSes
   return [...stats.values()].sort((left, right) => right.wins - left.wins || right.played - left.played || right.eloDelta - left.eloDelta);
 }
 
-function MatchCard({ match, isTennis, t, onOpenScoring }: { match: ClubSessionMatch; isTennis: boolean; t: (key: string, values?: Record<string, string | number>) => string; onOpenScoring: (match: ClubSessionMatch) => void }) {
+function MatchCard({ match, isTennis, t }: { match: ClubSessionMatch; isTennis: boolean; t: (key: string, values?: Record<string, string | number>) => string }) {
   const sets = readSetScores(match);
   const sideA = sideMembers(match, 'A');
   const sideB = sideMembers(match, 'B');
@@ -270,10 +269,6 @@ function MatchCard({ match, isTennis, t, onOpenScoring }: { match: ClubSessionMa
   return (
     <Link
       href={`/live/${match.id}?scoring=1`}
-      onClick={(event) => {
-        event.preventDefault();
-        onOpenScoring(match);
-      }}
       className={`group block overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md ${isLive ? 'border-rose-200' : 'border-slate-200'}`}
     >
       <div className={`flex items-center justify-between border-b px-4 py-2.5 ${isLive ? 'border-rose-100 bg-rose-50/70' : 'border-slate-100 bg-slate-50/70'}`}>
@@ -373,11 +368,11 @@ export function ClubMatchSessionDetailView({
   onJoin,
   onWithdraw,
   onTransition,
+  onUpdateMemberScoring,
   onForceSelected,
   onCreateMock,
   onSavePreferences,
   onCreateMatch,
-  onMatchUpdated,
   onLoadMoreParticipants,
   onLoadMoreMatches,
   onLoadMoreMembers,
@@ -385,7 +380,6 @@ export function ClubMatchSessionDetailView({
   const t = useTranslations('ClubMatchSession');
   const locale = useLocale();
   const [activeTab, setActiveTab] = useState<SessionTab>('overview');
-  const [scoreMatch, setScoreMatch] = useState<ClubSessionMatch | null>(null);
   const [pairingOpen, setPairingOpen] = useState(false);
   const [mockFormOpen, setMockFormOpen] = useState(false);
   const activeParticipants = participants.filter((item) => item.participant.status === 'ACTIVE');
@@ -538,6 +532,21 @@ export function ClubMatchSessionDetailView({
               {session.startAt && <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, '')} />}
               {session.endAt && <InfoRow icon={<Clock3 className="h-4 w-4" />} label={t('endAt')} value={formatSessionDate(session.endAt, locale, '')} />}
               <InfoRow icon={<ShieldCheck className="h-4 w-4" />} label={t('ranked')} value={session.isRanked ? t('rankedHint') : t('unrankedHint')} />
+              {session.capabilities?.canManage && (
+                <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                  <span>
+                    <span className="block text-xs font-semibold text-slate-800">Cho phép thành viên nhập điểm</span>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">Áp dụng cho toàn bộ buổi giao lưu.</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={session.memberScoringEnabled !== false}
+                    onChange={(event) => onUpdateMemberScoring(event.target.checked)}
+                    disabled={busy}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </label>
+              )}
             </div>
           </div>
         </section>}
@@ -593,21 +602,11 @@ export function ClubMatchSessionDetailView({
 
         {activeTab === 'matches' && <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold text-slate-900">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><div className="flex flex-wrap items-center gap-2">{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => setPairingOpen(true)}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}<select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div></div>
-           {matches.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} onOpenScoring={setScoreMatch} />)}</div>}
+          {matches.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} />)}</div>}
           {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
         </section>}
 
         {activeTab === 'statistics' && <StatisticsPanel stats={playerStats} completedMatches={completedMatches.length} t={t} />}
-        <ClubMatchScoreEntryModal
-          key={scoreMatch?.id ?? 'no-score-match'}
-          match={scoreMatch}
-          open={scoreMatch !== null}
-          onOpenChange={(open) => { if (!open) setScoreMatch(null); }}
-          onSaved={(updatedMatch) => {
-            onMatchUpdated?.(updatedMatch);
-            setScoreMatch(updatedMatch);
-          }}
-        />
         </div>
         </div>
 
@@ -635,7 +634,7 @@ export function ClubMatchSessionDetailView({
           </div>
         </div>
       </div>
-          {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} canManage={session.capabilities?.canManage === true} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={(memberScoringEnabled) => { setPairingOpen(false); onCreateMatch(memberScoringEnabled, setScoreMatch); }} />}
+          {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={() => { setPairingOpen(false); onCreateMatch(); }} />}
       </div>
     </main>
   );
@@ -715,20 +714,18 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   </div>;
 }
 
-function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, busy, canManage, t, assignPlayer, onClose, onCreate }: {
+function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, busy, t, assignPlayer, onClose, onCreate }: {
   participants: ClubMatchParticipant[];
   sideAPlayers: string[];
   sideBPlayers: string[];
   pairingReady: boolean;
   busy: boolean;
-  canManage: boolean;
   t: (key: string, values?: Record<string, string | number>) => string;
   assignPlayer: (userId: string, side: 'A' | 'B') => void;
   onClose: () => void;
-  onCreate: (memberScoringEnabled: boolean) => void;
+  onCreate: () => void;
 }) {
   const [search, setSearch] = useState('');
-  const [memberScoringEnabled, setMemberScoringEnabled] = useState(true);
   const normalizedSearch = search.trim().toLowerCase();
   const filteredParticipants = normalizedSearch
     ? participants.filter((item) => {
@@ -799,21 +796,6 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
             />
           </div>
         </div>
-
-        {canManage && (
-          <label className="mt-4 flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-700">
-            <input
-              type="checkbox"
-              checked={memberScoringEnabled}
-              onChange={(event) => setMemberScoringEnabled(event.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span>
-              <span className="block font-semibold">Cho phép thành viên nhập điểm trận này</span>
-              <span className="mt-0.5 block text-[11px] text-slate-500">Tắt đi nếu chỉ BQT được xác nhận tỉ số.</span>
-            </span>
-          </label>
-        )}
 
         <div className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
           {filteredParticipants.length === 0 ? (
@@ -893,7 +875,7 @@ function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, 
             <Button variant="outline" disabled={busy} onClick={onClose}>
               {t('closeForm')}
             </Button>
-            <Button disabled={busy || !pairingReady} onClick={() => onCreate(memberScoringEnabled)}>
+            <Button disabled={busy || !pairingReady} onClick={onCreate}>
               <Swords className="mr-2 h-4 w-4" />
               {t('createMatch')}
             </Button>

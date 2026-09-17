@@ -647,10 +647,12 @@ export default function LiveMatchPage({ params }: Props) {
         .some((member) => member.userId === user.id),
   );
   const canControlLiveMatch = Boolean(
-      hasAdminRole ||
-      match.tournament?.createdBy === user?.id ||
-      isAssignedReferee ||
-      isClubMatchPlayer,
+    isClubMatch
+      ? match.canEditScore === true
+      : hasAdminRole ||
+        match.tournament?.createdBy === user?.id ||
+        isAssignedReferee ||
+        isClubMatchPlayer,
   );
 
   // Cho phép bình luận tự do thoải mái

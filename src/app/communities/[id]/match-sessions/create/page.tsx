@@ -33,6 +33,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
   const [format, setFormat] = useState<'singles' | 'doubles'>('doubles');
   const [bracketType, setBracketType] = useState<'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage_knockout'>('group_stage_knockout');
   const [isRanked, setIsRanked] = useState(true);
+  const [memberScoringEnabled, setMemberScoringEnabled] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('18:00');
   const [durationOption, setDurationOption] = useState<DurationOption>(60);
@@ -87,6 +88,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
         pairingMode,
         ...(pairingMode === 'BRACKET' ? { format, bracketType } : {}),
         isRanked,
+        memberScoringEnabled,
         maxParticipants,
         startAt: startIso,
         endAt: endIso,
@@ -309,6 +311,19 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                     />
                   </button>
                 </div>
+
+                <label className="flex cursor-pointer items-start justify-between gap-3 border-t border-slate-100 pt-3">
+                  <span>
+                    <span className="block text-xs font-bold text-slate-800">Cho phép thành viên nhập điểm</span>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-slate-400">Thiết lập cho toàn bộ buổi giao lưu này.</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={memberScoringEnabled}
+                    onChange={(event) => setMemberScoringEnabled(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </label>
               </div>
             </div>
 

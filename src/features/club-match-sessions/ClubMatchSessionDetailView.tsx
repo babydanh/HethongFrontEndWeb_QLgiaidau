@@ -136,7 +136,7 @@ function ClubLogoWithFallback({
   );
 }
 
-function UserAvatar({
+function Avatar({
   userId,
   name,
   avatarUrl,

@@ -597,30 +597,30 @@ function SessionDetailModal({
       <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-xl border border-slate-200 flex flex-col overflow-hidden">
 
         {/* ── Clean Header: Clickable to view Host profile + Contact Button ── */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-white">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 bg-white">
+          <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={handleOpenHostProfile}
-              className="group flex items-center gap-3 min-w-0 text-left cursor-pointer focus-visible:outline-none"
+              className="group flex items-center gap-2.5 min-w-0 text-left cursor-pointer focus-visible:outline-none"
               title="Xem trang cá nhân của host"
             >
               <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-700 border border-slate-200 group-hover:border-blue-300 transition-colors"
-                style={identity?.avatarUrl ? { backgroundImage: `url(${identity.avatarUrl})`, backgroundSize: 'cover' } : {}}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-700 border border-slate-200 group-hover:border-blue-300 transition-colors shadow-2xs"
+                style={identity?.avatarUrl ? { backgroundImage: `url(${identity.avatarUrl})`, backgroundPosition: 'center', backgroundSize: 'cover' } : {}}
               >
                 {!identity?.avatarUrl && identity?.initials}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors truncate">
                     {identity?.name ?? 'Người chơi'}
                   </span>
                   {!isPersonal && item.club?.verified && (
-                    <ShieldCheck className="h-4 w-4 shrink-0 text-blue-600" aria-label="Đã xác minh" />
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-label="Đã xác minh" />
                   )}
                 </div>
-                <p className="text-xs text-slate-500">{isPersonal ? 'Giao lưu cá nhân' : `${item.sport} · ${item.sportTier}`}</p>
+                <p className="text-[10px] text-slate-400 truncate">{isPersonal ? 'Giao lưu cá nhân' : `${item.sport} · ${item.sportTier}`}</p>
               </div>
             </button>
           </div>
@@ -740,16 +740,7 @@ function SessionDetailModal({
               <div className="p-6 bg-white flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-slate-900">Danh sách tham gia</h3>
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                        isFull
-                          ? 'bg-slate-100 text-slate-600'
-                          : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {getMissingLabel(slots.current, slots.max)}
-                      </span>
-                    </div>
+                    <h3 className="text-sm font-bold text-slate-900">Danh sách tham gia</h3>
                     <span className="text-xs font-bold text-slate-500">{slots.current}/{slots.max}</span>
                   </div>
 
@@ -953,9 +944,9 @@ function SessionDetailModal({
 
         {/* ── Footer Actions: Fee displayed on the left, buttons on the right ── */}
         <div className="border-t border-slate-100 bg-white px-6 py-3.5 flex items-center justify-between gap-3">
-          {slots ? (
-            <div className="flex items-center gap-1 text-sm font-bold text-slate-800">
-              <span>{slots.feePerSlot}/người</span>
+          {slots && slots.feePerSlot && slots.feePerSlot !== '0đ' && slots.feePerSlot !== 'Miễn phí' ? (
+            <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
+              <span>Lệ phí: {slots.feePerSlot}/người</span>
             </div>
           ) : <div />}
 
@@ -1036,8 +1027,8 @@ function ClubSessionCard({
 
   const { current, max, feePerSlot, joinedPlayers } = item.slots;
   const isFull = current >= max;
-  const statusLabel = getMissingLabel(current, max);
   const joinedLabel = isJoined ? 'Đã vào slot' : isFull ? 'Đã đủ' : 'Vào slot';
+  const hasFee = Boolean(feePerSlot && feePerSlot !== '0đ' && feePerSlot !== 'Miễn phí');
 
   return (
     <>
@@ -1051,69 +1042,121 @@ function ClubSessionCard({
         />
       )}
       <EventShell reducedMotion={reducedMotion}>
-        <div className="space-y-3 p-3.5 sm:p-4">
-          <div className="flex items-start justify-between gap-3">
-            <ClubIdentityRow item={item} />
-            <span
-              className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
-                isFull
-                  ? 'border-slate-200 bg-slate-100 text-slate-600'
-                  : 'border-amber-200 bg-amber-50 text-amber-700'
-              }`}
-            >
-              {statusLabel}
-            </span>
-          </div>
-
-          <div className="space-y-1.5">
-            <h3 className="text-sm font-bold leading-snug text-slate-950 sm:text-base">{item.title}</h3>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
-              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
-                <Clock3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-                {item.startTime} - {item.endTime}
-              </span>
-              <span className="text-slate-300" aria-hidden="true">•</span>
-              <span className="inline-flex min-w-0 items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-                <span className="truncate">{item.location}</span>
-              </span>
-              <span className="text-slate-300" aria-hidden="true">•</span>
-              <span className="font-bold text-slate-800">{feePerSlot}/người</span>
+        <div
+          onClick={() => setShowModal(true)}
+          className="p-3.5 sm:p-4 space-y-2.5 cursor-pointer select-none"
+        >
+          {/* Top row: Host / Club compact identity */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <div
+                className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-[11px] font-bold text-slate-700 shadow-2xs"
+                style={
+                  item.club?.avatarUrl
+                    ? {
+                        backgroundImage: `url(${item.club.avatarUrl})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'cover',
+                      }
+                    : undefined
+                }
+                role="img"
+                aria-label={`Logo ${item.club?.name}`}
+              >
+                {!item.club?.avatarUrl && item.club?.initials}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="truncate text-xs font-bold text-slate-800">{item.club?.name}</span>
+                  {item.club?.verified && (
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-blue-600" aria-label="CLB đã xác minh" />
+                  )}
+                </div>
+                <div className="flex min-w-0 items-center gap-1 text-[10px] text-slate-400">
+                  <span>{item.sport}</span>
+                  <span aria-hidden="true">•</span>
+                  <span className="truncate">{item.sportTier}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.description}</p>
+          {/* Title & Info */}
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold leading-snug text-slate-900 group-hover:text-blue-600 transition-colors">
+              {item.title}
+            </h3>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-            <div className="flex items-center gap-2.5" aria-label={`${current} trên ${max} người đã vào slot`}>
-              <div className="flex -space-x-2">
-                {joinedPlayers.slice(0, max).map((player, index) => (
+            {/* Schedule & Location */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+              {(item.startTime || item.endTime) && (
+                <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                  <Clock3 className="h-3 w-3 text-slate-400" aria-hidden="true" />
+                  {item.startTime}{item.endTime ? ` - ${item.endTime}` : ''}
+                </span>
+              )}
+              {(item.startTime || item.endTime) && item.location && (
+                <span className="text-slate-300" aria-hidden="true">•</span>
+              )}
+              {item.location && (
+                <span className="inline-flex min-w-0 items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true" />
+                  <span className="truncate">{item.location}</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Description: gọn gàng 2 dòng, có dấu ba chấm nếu dài */}
+          {item.description && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-slate-600">
+              {item.description}
+            </p>
+          )}
+
+          {/* Bottom Bar: Participants on left, Fee + Action button on right */}
+          <div
+            className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Joined slots mini avatar group */}
+            <div className="flex items-center gap-1.5" aria-label={`${current}/${max} người đã vào slot`}>
+              <div className="flex -space-x-1.5">
+                {joinedPlayers.slice(0, 5).map((player, index) => (
                   <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />
                 ))}
               </div>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
-                <UsersRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                <UsersRound className="h-3 w-3 text-slate-400" aria-hidden="true" />
                 {current}/{max} đã vào
               </span>
             </div>
 
-            <div className="ml-auto flex items-center gap-2">
-              <ShareButton onShare={onShare} />
-              <button
-                type="button"
-                onClick={() => setShowModal(true)}
-                disabled={isFull && !isJoined}
-                className={`inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98] ${
-                  isJoined
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : isFull
-                    ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                    : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
-                }`}
-              >
-                {isJoined ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />}
-                {joinedLabel}
-              </button>
+            {/* Right: Fee under button + Action Button */}
+            <div className="ml-auto flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1.5">
+                <ShareButton onShare={onShare} />
+                <button
+                  type="button"
+                  onClick={() => setShowModal(true)}
+                  disabled={isFull && !isJoined}
+                  className={`inline-flex min-h-8 items-center justify-center gap-1 rounded-lg px-3 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-[0.98] ${
+                    isJoined
+                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : isFull
+                      ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                      : 'bg-blue-600 text-white shadow-xs hover:bg-blue-700'
+                  }`}
+                >
+                  {isJoined ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />}
+                  {joinedLabel}
+                </button>
+              </div>
+              {hasFee && (
+                <span className="text-[10px] font-bold text-slate-700 pr-0.5">
+                  {feePerSlot}/người
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1130,46 +1173,134 @@ function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin, onLeave }: 
   const isFull = current >= max;
   const identity = item.personalHost;
   const isHost = Boolean(currentUser?.id && (item.personalHost?.id === currentUser.id || item.personalHost?.name === currentUser.fullName));
+  const hasFee = Boolean(feePerSlot && feePerSlot !== '0đ' && feePerSlot !== 'Miễn phí');
 
   return (
     <>
       {showModal && <SessionDetailModal item={item} isJoined={isJoined} onClose={() => setShowModal(false)} onJoin={onJoin} onLeave={onLeave} />}
       <EventShell reducedMotion={reducedMotion}>
-        <div className="space-y-3 p-3.5 sm:p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600" style={identity.avatarUrl ? { backgroundImage: `url(${identity.avatarUrl})`, backgroundPosition: 'center', backgroundSize: 'cover' } : undefined} role="img" aria-label={`Ảnh đại diện ${identity.name}`}>{!identity.avatarUrl && identity.initials}</div>
-              <div className="min-w-0"><div className="flex items-center gap-1.5"><span className="truncate text-sm font-bold text-slate-900">{identity.name}</span><span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">{isHost ? 'Bạn (Host)' : 'Cá nhân'}</span></div><div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500"><span>{item.sport}</span><span aria-hidden="true">•</span><span className="truncate font-medium text-slate-600">{item.sportTier}</span></div></div>
+        <div
+          onClick={() => setShowModal(true)}
+          className="p-3.5 sm:p-4 space-y-2.5 cursor-pointer select-none"
+        >
+          {/* Top row: Host compact identity */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <div
+                className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-[11px] font-bold text-slate-700 shadow-2xs"
+                style={
+                  identity.avatarUrl
+                    ? {
+                        backgroundImage: `url(${identity.avatarUrl})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'cover',
+                      }
+                    : undefined
+                }
+                role="img"
+                aria-label={`Ảnh đại diện ${identity.name}`}
+              >
+                {!identity.avatarUrl && identity.initials}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate text-xs font-bold text-slate-800">{identity.name}</span>
+                  <span className="shrink-0 rounded-sm bg-slate-100 px-1 py-0.5 text-[9px] font-medium text-slate-500">
+                    {isHost ? 'Bạn (Host)' : 'Cá nhân'}
+                  </span>
+                </div>
+                <div className="flex min-w-0 items-center gap-1 text-[10px] text-slate-400">
+                  <span>{item.sport}</span>
+                  <span aria-hidden="true">•</span>
+                  <span className="truncate">{item.sportTier}</span>
+                </div>
+              </div>
             </div>
-            <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${isFull ? 'border-slate-200 bg-slate-100 text-slate-600' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{getMissingLabel(current, max)}</span>
           </div>
-          <div className="space-y-1.5"><h3 className="text-sm font-bold leading-snug text-slate-950 sm:text-base">{item.title}</h3><div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600"><span className="inline-flex items-center gap-1.5 font-semibold text-slate-800"><Clock3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />{item.startTime} - {item.endTime}</span><span className="text-slate-300" aria-hidden="true">•</span><span className="inline-flex min-w-0 items-center gap-1.5"><MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" /><span className="truncate">{item.location}</span></span><span className="text-slate-300" aria-hidden="true">•</span><span className="font-bold text-slate-800">{feePerSlot}/người</span></div></div>
-          <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.description || 'Đang tìm người chơi phù hợp cho buổi giao lưu này.'}</p>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3"><div className="flex items-center gap-2.5" aria-label={`${current} trên ${max} người đã vào slot`}><div className="flex -space-x-2">{joinedPlayers.slice(0, max).map((player, index) => <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />)}</div><span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600"><UsersRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />{current}/{max} đã vào</span></div>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              disabled={!isHost && isFull && !isJoined}
-              className={`ml-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold ${
-                isHost
-                  ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                  : isJoined
-                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                  : isFull
-                  ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                  : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
-              }`}
-            >
-              {isHost ? (
-                <>👑 Quản lý slot</>
-              ) : isJoined ? (
-                <><Check className="h-3.5 w-3.5" aria-hidden="true" /> Đã vào slot</>
-              ) : isFull ? (
-                'Đã đủ'
-              ) : (
-                <><UserPlus className="h-3.5 w-3.5" aria-hidden="true" /> Vào slot</>
+
+          {/* Title & Info */}
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold leading-snug text-slate-900 group-hover:text-blue-600 transition-colors">
+              {item.title}
+            </h3>
+
+            {/* Schedule & Location */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+              {(item.startTime || item.endTime) && (
+                <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                  <Clock3 className="h-3 w-3 text-slate-400" aria-hidden="true" />
+                  {item.startTime}{item.endTime ? ` - ${item.endTime}` : ''}
+                </span>
               )}
-            </button>
+              {(item.startTime || item.endTime) && item.location && (
+                <span className="text-slate-300" aria-hidden="true">•</span>
+              )}
+              {item.location && (
+                <span className="inline-flex min-w-0 items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true" />
+                  <span className="truncate">{item.location}</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Description: gọn gàng 2 dòng có ba chấm */}
+          {item.description && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-slate-600">
+              {item.description}
+            </p>
+          )}
+
+          {/* Bottom Bar: Participants on left, Fee + Action button on right */}
+          <div
+            className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Joined slots mini avatar group */}
+            <div className="flex items-center gap-1.5" aria-label={`${current}/${max} người đã vào slot`}>
+              <div className="flex -space-x-1.5">
+                {joinedPlayers.slice(0, 5).map((player, index) => (
+                  <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />
+                ))}
+              </div>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+                <UsersRound className="h-3 w-3 text-slate-400" aria-hidden="true" />
+                {current}/{max} đã vào
+              </span>
+            </div>
+
+            {/* Right: Fee under button + Action Button */}
+            <div className="ml-auto flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                disabled={!isHost && isFull && !isJoined}
+                className={`inline-flex min-h-8 items-center justify-center gap-1 rounded-lg px-3 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-[0.98] ${
+                  isHost
+                    ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    : isJoined
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : isFull
+                    ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                    : 'bg-blue-600 text-white shadow-xs hover:bg-blue-700'
+                }`}
+              >
+                {isHost ? (
+                  <>👑 Quản lý slot</>
+                ) : isJoined ? (
+                  <><Check className="h-3.5 w-3.5" aria-hidden="true" /> Đã vào slot</>
+                ) : isFull ? (
+                  'Đã đủ'
+                ) : (
+                  <><UserPlus className="h-3.5 w-3.5" aria-hidden="true" /> Vào slot</>
+                )}
+              </button>
+              {hasFee && (
+                <span className="text-[10px] font-bold text-slate-700 pr-0.5">
+                  {feePerSlot}/người
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </EventShell>

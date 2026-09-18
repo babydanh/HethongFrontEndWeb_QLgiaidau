@@ -367,32 +367,80 @@ export default function UserProfilePopover({
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 
-  // Horizontal placement:
-  // If the trigger card is very wide (e.g. w-full sidebar card), anchor popover near the avatar (left edge of anchorRect + 12)
-  // or center it relative to trigger if small.
-  let left = anchorRect.left;
-  if (left + popoverWidth > viewportWidth - 16) {
-    left = viewportWidth - popoverWidth - 16;
-  }
-  if (left < 16) {
-    left = 16;
-  }
-
-  // Vertical placement:
-  // Calculate available spaces below and above
+  // Placement strategy:
+  // If the trigger is in a right-hand sidebar or has plenty of space to its left (and limited space below or wide screen),
+  // placing to the LEFT of the trigger keeps it directly aligned with the avatar instead of flying 350px up to the screen top!
+  const spaceLeft = anchorRect.left;
+  const spaceRight = viewportWidth - anchorRect.right;
   const spaceBelow = viewportHeight - anchorRect.bottom;
   const spaceAbove = anchorRect.top;
 
-  let top = anchorRect.bottom + 4;
-  // If not enough room below (< popoverHeight + 16), AND there's more room above than below:
-  if (spaceBelow < popoverHeight + 16 && spaceAbove > spaceBelow) {
-    top = Math.max(12, anchorRect.top - popoverHeight - 4);
-  } else if (top + popoverHeight > viewportHeight - 12) {
-    // If placed below but still hits screen bottom, clamp within viewport
-    top = Math.max(12, viewportHeight - popoverHeight - 12);
-  }
-  if (top < 12) {
-    top = 12;
+  let left = anchorRect.left;
+  let top = anchorRect.bottom + 6;
+
+  // Decide if side placement (left or right) is better:
+  // If the anchor is horizontally displaced (e.g. right sidebar, where anchorRect.right is near screen right and spaceLeft >= popoverWidth + 16),
+  // OR when space below and space above are both constrained:
+  const isRightSidebar = spaceLeft >= popoverWidth + 16 && anchorRect.right >= viewportWidth * 0.55;
+  const isLeftSidebar = spaceRight >= popoverWidth + 16 && anchorRect.left <= viewportWidth * 0.45 && anchorRect.width > 200;
+
+  if (isRightSidebar) {
+    // Place directly to the LEFT of the anchor
+    left = anchorRect.left - popoverWidth - 10;
+    // Vertically align with trigger avatar (center or top align)
+    top = anchorRect.top - 20;
+    if (top + popoverHeight > viewportHeight - 16) {
+      top = viewportHeight - popoverHeight - 16;
+    }
+    if (top < 16) {
+      top = 16;
+    }
+  } else if (isLeftSidebar) {
+    // Place directly to the RIGHT of the anchor
+    left = anchorRect.right + 10;
+    top = anchorRect.top - 20;
+    if (top + popoverHeight > viewportHeight - 16) {
+      top = viewportHeight - popoverHeight - 16;
+    }
+    if (top < 16) {
+      top = 16;
+    }
+  } else {
+    // Standard top/bottom placement
+    // Horizontal centering or align near anchor
+    if (anchorRect.width <= 120) {
+      // Small trigger like avatar: center popover horizontally on trigger
+      left = anchorRect.left + (anchorRect.width / 2) - (popoverWidth / 2);
+    } else {
+      // Wide trigger card: align with anchor's left edge
+      left = anchorRect.left;
+    }
+
+    if (left + popoverWidth > viewportWidth - 16) {
+      left = viewportWidth - popoverWidth - 16;
+    }
+    if (left < 16) {
+      left = 16;
+    }
+
+    // Vertical placement
+    if (spaceBelow >= popoverHeight + 16) {
+      // Enough room below
+      top = anchorRect.bottom + 6;
+    } else if (spaceAbove >= popoverHeight + 16) {
+      // Flip directly above trigger
+      top = anchorRect.top - popoverHeight - 6;
+    } else if (spaceAbove > spaceBelow) {
+      // Not enough room either side, but more room above: clamp at top
+      top = Math.max(12, anchorRect.top - popoverHeight - 6);
+    } else {
+      // Clamp at bottom
+      top = Math.min(viewportHeight - popoverHeight - 12, anchorRect.bottom + 6);
+    }
+
+    if (top < 12) {
+      top = 12;
+    }
   }
 
   // Permissions to manage tags in this community

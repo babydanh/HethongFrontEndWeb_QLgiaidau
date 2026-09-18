@@ -359,11 +359,13 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
           }
         }}
         className={`w-full bg-white border border-slate-300 rounded-lg transition-all duration-300 ease-out ${
-          isFocused
-            ? 'px-4 py-3 ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[360px]'
-            : compact
-              ? 'px-3 py-2 hover:border-slate-400 min-h-[84px] max-h-[96px] overflow-hidden'
-              : 'px-4 py-3 hover:border-slate-400 min-h-[220px]'
+          isFocused && compact
+            ? 'px-3 py-2 ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[120px] max-h-[180px] overflow-y-auto'
+            : isFocused
+              ? 'px-4 py-3 ring-2 ring-blue-500/20 border-blue-500 shadow-sm min-h-[360px]'
+              : compact
+                ? 'px-3 py-2 hover:border-slate-400 min-h-[84px] max-h-[96px] overflow-hidden'
+                : 'px-4 py-3 hover:border-slate-400 min-h-[220px]'
         }`}
       >
         <div ref={containerRef} className={`prose prose-slate max-w-none text-slate-800 text-sm editorjs-container ${compact ? 'editorjs-container--compact' : ''}`} />

@@ -534,7 +534,7 @@ function SessionDetailModal({
       clearTimeout(hoverOpenTimerRef.current);
       hoverOpenTimerRef.current = null;
     }
-    scheduleClose(1500);
+    scheduleClose(400);
   };
 
   const triggerUserHoverOpen = (userId: string, name: string, avatarUrl: string | null, rect: DOMRect) => {
@@ -550,7 +550,7 @@ function SessionDetailModal({
       clearTimeout(hoverOpenTimerRef.current);
       hoverOpenTimerRef.current = null;
     }
-    scheduleClose(1500);
+    scheduleClose(400);
   };
 
   const handleJoin = async () => {

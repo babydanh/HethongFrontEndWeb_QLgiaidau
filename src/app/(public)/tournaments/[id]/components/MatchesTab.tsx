@@ -126,7 +126,29 @@ function getPersistedOrRoundRobinLeg(
 export default function MatchesTab({ tournament, tournamentId, divisionId }: Props) {
   const translate = useTranslations('TournamentDetail');
   const matchTranslate = useTranslations('Match');
-  const { openUserProfile } = useUserProfileModalStore();
+  const { openUserProfile, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const matchesHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMemberHover = (
+    userPayload: { id: string; fullName: string; avatarUrl?: string | null },
+    event: React.MouseEvent<HTMLElement>,
+  ) => {
+    if (!userPayload.id) return;
+    keepOpen();
+    if (matchesHoverTimerRef.current) clearTimeout(matchesHoverTimerRef.current);
+    const rect = event.currentTarget.getBoundingClientRect();
+    matchesHoverTimerRef.current = setTimeout(() => {
+      openUserProfile(userPayload, rect, tournament.communityId || undefined);
+    }, 200);
+  };
+
+  const handleMemberLeave = () => {
+    if (matchesHoverTimerRef.current) {
+      clearTimeout(matchesHoverTimerRef.current);
+      matchesHoverTimerRef.current = null;
+    }
+    scheduleClose(400);
+  };
   const roundLabelTranslations = useMemo<RoundLabelTranslations>(() => ({
     roundGrandFinal: matchTranslate('roundGrandFinal'),
     roundFinal: matchTranslate('roundFinal'),
@@ -689,6 +711,7 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (matchesHoverTimerRef.current) clearTimeout(matchesHoverTimerRef.current);
                   const rect = e.currentTarget.getBoundingClientRect();
                   openUserProfile(
                     {
@@ -700,6 +723,16 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
                     tournament.communityId || undefined,
                   );
                 }}
+                onMouseEnter={(e) => {
+                  if (m.userId) {
+                    handleMemberHover({
+                      id: m.userId,
+                      fullName: m.fullName || matchTranslate('memberFallback'),
+                      avatarUrl: (m as { avatarUrl?: string | null }).avatarUrl || null,
+                    }, e);
+                  }
+                }}
+                onMouseLeave={handleMemberLeave}
                 className="hover:text-blue-600 hover:underline transition-colors cursor-pointer text-left font-bold"
               >
                 {m.fullName || matchTranslate('memberFallback')}

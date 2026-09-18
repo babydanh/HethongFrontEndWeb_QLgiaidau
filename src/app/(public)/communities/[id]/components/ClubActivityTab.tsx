@@ -173,7 +173,8 @@ function ParticipantAvatarStack({
   winner: boolean;
   communityId: string;
 }) {
-  const { openUserProfile } = useUserProfileModalStore();
+  const { openUserProfile, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const avatarHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
   const members = participant?.members || [];
   const items: Array<{
     userId?: string;
@@ -187,12 +188,38 @@ function ParticipantAvatarStack({
         avatarUrl: fallbackLogoUrl,
       }];
 
+  const handleAvatarHover = (
+    userPayload: { id: string; fullName: string; avatarUrl?: string | null },
+    event: React.MouseEvent<HTMLElement>,
+  ) => {
+    if (!userPayload.id) return;
+    keepOpen();
+    if (avatarHoverTimerRef.current) clearTimeout(avatarHoverTimerRef.current);
+    const rect = event.currentTarget.getBoundingClientRect();
+    avatarHoverTimerRef.current = setTimeout(() => {
+      openUserProfile(userPayload, rect, communityId);
+    }, 200);
+  };
+
+  const handleAvatarLeave = () => {
+    if (avatarHoverTimerRef.current) {
+      clearTimeout(avatarHoverTimerRef.current);
+      avatarHoverTimerRef.current = null;
+    }
+    scheduleClose(400);
+  };
+
   return (
     <div className="flex shrink-0 items-center -space-x-2">
       {items.map((member, index) => {
         const targetUserId = getParticipantProfileId(participantId, member);
         const displayName = member.fullName || fallbackName;
         const avatarUrl = member.avatarUrl || (members.length === 0 ? fallbackLogoUrl : null);
+        const userPayload = targetUserId ? {
+          id: targetUserId,
+          fullName: displayName,
+          avatarUrl,
+        } : null;
 
         return (
           <button
@@ -200,17 +227,18 @@ function ParticipantAvatarStack({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              if (!targetUserId) return;
+              if (!userPayload) return;
+              if (avatarHoverTimerRef.current) clearTimeout(avatarHoverTimerRef.current);
               openUserProfile(
-                {
-                  id: targetUserId,
-                  fullName: displayName,
-                  avatarUrl,
-                },
+                userPayload,
                 event.currentTarget.getBoundingClientRect(),
                 communityId,
               );
             }}
+            onMouseEnter={(event) => {
+              if (userPayload) handleAvatarHover(userPayload, event);
+            }}
+            onMouseLeave={handleAvatarLeave}
             title={`Xem hồ sơ ${displayName}`}
             aria-label={`Xem hồ sơ ${displayName}`}
             className={`relative w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-transform active:scale-90 overflow-hidden border shadow-2xs ${

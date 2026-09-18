@@ -284,7 +284,8 @@ export default function MembersTab({
     }
   };
 
-  const { openUserProfile } = useUserProfileModalStore();
+  const { openUserProfile, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const memberHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -293,6 +294,7 @@ export default function MembersTab({
 
   const openProfile = (targetUserId: string, targetMember?: MemberData, event?: React.MouseEvent | React.KeyboardEvent) => {
     if (!targetUserId) return;
+    if (memberHoverTimerRef.current) clearTimeout(memberHoverTimerRef.current);
     const rect = (event?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;
     openUserProfile(
       {
@@ -307,6 +309,37 @@ export default function MembersTab({
       rect,
       communityId,
     );
+  };
+
+  const handleMemberMouseEnter = (targetUserId: string, targetMember: MemberData | undefined, event: React.MouseEvent<HTMLElement>) => {
+    if (!targetUserId) return;
+    keepOpen();
+    if (memberHoverTimerRef.current) clearTimeout(memberHoverTimerRef.current);
+    const avatarEl = event.currentTarget.querySelector('.member-avatar-anchor');
+    const rect = (avatarEl || event.currentTarget).getBoundingClientRect();
+    memberHoverTimerRef.current = setTimeout(() => {
+      openUserProfile(
+        {
+          id: targetUserId,
+          fullName: targetMember?.user?.fullName || translate('memberFallback'),
+          avatarUrl: targetMember?.user?.avatarUrl || null,
+          role: targetMember?.member?.role,
+          tags: targetMember?.member?.tags,
+          streak: targetMember?.streak,
+          joinedAt: targetMember?.member?.joinedAt,
+        },
+        rect,
+        communityId,
+      );
+    }, 200);
+  };
+
+  const handleMemberMouseLeave = () => {
+    if (memberHoverTimerRef.current) {
+      clearTimeout(memberHoverTimerRef.current);
+      memberHoverTimerRef.current = null;
+    }
+    scheduleClose(400);
   };
 
   const handleProfileKeyDown = (event: React.KeyboardEvent, targetUserId: string, targetMember?: MemberData) => {
@@ -371,11 +404,13 @@ export default function MembersTab({
                       tabIndex={0}
                       aria-label={translate('viewProfileAction')}
                       onClick={(event) => openProfile(item.user?.id, item, event)}
+                      onMouseEnter={(event) => handleMemberMouseEnter(item.user?.id, item, event)}
+                      onMouseLeave={handleMemberMouseLeave}
                       onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id, item)}
                       className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/60 rounded-lg transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0 relative overflow-hidden">
+                        <div className="member-avatar-anchor w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0 relative overflow-hidden">
                           {item.user?.avatarUrl ? (
                             <Image src={item.user.avatarUrl} alt={item.user.fullName} fill className="object-cover" />
                           ) : (
@@ -486,11 +521,13 @@ export default function MembersTab({
                       tabIndex={0}
                       aria-label={translate('viewProfileAction')}
                       onClick={(event) => openProfile(item.user?.id, item, event)}
+                      onMouseEnter={(event) => handleMemberMouseEnter(item.user?.id, item, event)}
+                      onMouseLeave={handleMemberMouseLeave}
                       onKeyDown={(event) => handleProfileKeyDown(event, item.user?.id, item)}
                       className="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-all relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0 relative overflow-hidden">
+                        <div className="member-avatar-anchor w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0 relative overflow-hidden">
                           {item.user?.avatarUrl ? (
                             <Image src={item.user.avatarUrl} alt={item.user.fullName} fill className="object-cover" />
                           ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Tournament, tournamentsApi, TournamentParticipant, FootballRosterStatus } from '@/features/tournaments/api';
 import { ChevronDown, User, Award, ShieldCheck, XCircle, CheckCircle, Clock, UserPlus, Copy } from 'lucide-react';
@@ -24,7 +24,29 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
   const translate = useTranslations('TournamentDetail');
   const { user } = useAuthStore();
   const effectiveTournamentId = tournamentId || tournament.id;
-  const { openUserProfile } = useUserProfileModalStore();
+  const { openUserProfile, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const teamsHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMemberHover = (
+    userPayload: { id: string; fullName: string; avatarUrl?: string | null },
+    event: React.MouseEvent<HTMLElement>,
+  ) => {
+    if (!userPayload.id) return;
+    keepOpen();
+    if (teamsHoverTimerRef.current) clearTimeout(teamsHoverTimerRef.current);
+    const rect = event.currentTarget.getBoundingClientRect();
+    teamsHoverTimerRef.current = setTimeout(() => {
+      openUserProfile(userPayload, rect, tournament.communityId || undefined);
+    }, 200);
+  };
+
+  const handleMemberLeave = () => {
+    if (teamsHoverTimerRef.current) {
+      clearTimeout(teamsHoverTimerRef.current);
+      teamsHoverTimerRef.current = null;
+    }
+    scheduleClose(400);
+  };
   const [participants, setParticipants] = useState<TournamentParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
@@ -181,6 +203,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  if (teamsHoverTimerRef.current) clearTimeout(teamsHoverTimerRef.current);
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   const singleUserId = inlineSingleMember?.userId || team.registeredBy?.id || team.id;
                                   openUserProfile(
@@ -193,6 +216,17 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                     tournament.communityId || undefined,
                                   );
                                 }}
+                                onMouseEnter={(e) => {
+                                  const singleUserId = inlineSingleMember?.userId || team.registeredBy?.id || team.id;
+                                  if (singleUserId) {
+                                    handleMemberHover({
+                                      id: singleUserId,
+                                      fullName: inlineSingleName,
+                                      avatarUrl: inlineSingleAvatar,
+                                    }, e);
+                                  }
+                                }}
+                                onMouseLeave={handleMemberLeave}
                                 className="flex min-w-0 items-center gap-2 text-left hover:opacity-85 transition-opacity cursor-pointer group"
                               >
                                 <span className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 group-hover:border-blue-400 transition-colors" aria-hidden="true">
@@ -392,6 +426,7 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                         <button
                                           type="button"
                                           onClick={(e) => {
+                                            if (teamsHoverTimerRef.current) clearTimeout(teamsHoverTimerRef.current);
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             openUserProfile(
                                               {
@@ -403,6 +438,14 @@ export default function TeamsTab({ tournament, tournamentId, divisionId, partici
                                               tournament.communityId || undefined,
                                             );
                                           }}
+                                          onMouseEnter={(e) => {
+                                            handleMemberHover({
+                                              id: targetUserId,
+                                              fullName: member.fullName || translate('teamMember'),
+                                              avatarUrl: avatarSrc,
+                                            }, e);
+                                          }}
+                                          onMouseLeave={handleMemberLeave}
                                           className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-1 min-w-0 text-left cursor-pointer"
                                         >
                                           {CardContent}

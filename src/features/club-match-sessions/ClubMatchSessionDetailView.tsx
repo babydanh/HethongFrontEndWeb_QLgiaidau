@@ -189,7 +189,7 @@ function Avatar({
           clearTimeout(hoverTimerRef.current);
           hoverTimerRef.current = null;
         }
-        scheduleClose(1500);
+        scheduleClose(400);
       }}
     >
       {content}

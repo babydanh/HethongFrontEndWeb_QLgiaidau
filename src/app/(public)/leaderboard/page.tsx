@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { categoriesApi, Category } from "@/features/categories/api";
 import { rankingsApi, type FootballTeamRanking, PlayerRanking } from "@/features/rankings/api";
@@ -127,7 +127,29 @@ export default function LeaderboardPage() {
 
 
 
-    const { openUserProfile } = useUserProfileModalStore();
+    const { openUserProfile, keepOpen, scheduleClose } = useUserProfileModalStore();
+    const leaderboardHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleLeaderboardHover = (
+      userPayload: { id: string; fullName: string; avatarUrl?: string | null },
+      event: React.MouseEvent<HTMLElement>,
+    ) => {
+      if (!userPayload.id) return;
+      keepOpen();
+      if (leaderboardHoverTimerRef.current) clearTimeout(leaderboardHoverTimerRef.current);
+      const rect = event.currentTarget.getBoundingClientRect();
+      leaderboardHoverTimerRef.current = setTimeout(() => {
+        openUserProfile(userPayload, rect);
+      }, 200);
+    };
+
+    const handleLeaderboardLeave = () => {
+      if (leaderboardHoverTimerRef.current) {
+        clearTimeout(leaderboardHoverTimerRef.current);
+        leaderboardHoverTimerRef.current = null;
+      }
+      scheduleClose(400);
+    };
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
     const [rankings, setRankings] = useState<PlayerRanking[]>([]);
@@ -383,46 +405,47 @@ export default function LeaderboardPage() {
                                         {t('closeLookup')}
                                     </button>
                                 </div>
-                                {searchResult.map((u) => (
-                                    <button
-                                        type="button"
-                                        key={u.id}
-                                        onClick={(e) => {
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            openUserProfile(
-                                                {
-                                                    id: u.id,
-                                                    fullName: u.fullName || t('playerFallback'),
-                                                    avatarUrl: u.avatarUrl,
-                                                },
-                                                rect,
-                                            );
-                                        }}
-                                        className="w-full flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 bg-slate-50/70 hover:bg-blue-50/40 hover:border-blue-200 transition-all cursor-pointer group text-left"
-                                    >
-                                        <div
-                                            className="w-8 h-8 rounded-full relative overflow-hidden bg-slate-200 shrink-0 border-2 border-slate-200"
+                                {searchResult.map((u) => {
+                                    const userPayload = {
+                                        id: u.id,
+                                        fullName: u.fullName || t('playerFallback'),
+                                        avatarUrl: u.avatarUrl,
+                                    };
+                                    return (
+                                        <button
+                                            type="button"
+                                            key={u.id}
+                                            onClick={(e) => {
+                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                if (leaderboardHoverTimerRef.current) clearTimeout(leaderboardHoverTimerRef.current);
+                                                openUserProfile(userPayload, rect);
+                                            }}
+                                            onMouseEnter={(e) => handleLeaderboardHover(userPayload, e)}
+                                            onMouseLeave={handleLeaderboardLeave}
+                                            className="w-full flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 bg-slate-50/70 hover:bg-blue-50/40 hover:border-blue-200 transition-all cursor-pointer group text-left"
                                         >
-                                            {u.avatarUrl ? (
-                                                <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-bold text-[11px] uppercase">
-                                                    {u.fullName?.substring(0, 2) || t("initialsFallback")}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h4 className="font-bold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
-                                                {u.fullName || t('playerFallback')}
-                                            </h4>
-                                            <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
-                                        </div>
-                                        <div className="shrink-0 text-right">
-                                            <div className="max-w-36 truncate text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')} · {getLeaderboardFormatLabel(u, t)}</div>
-                                            <div className="text-sm font-black text-slate-900">{u.eloPoints === null ? '—' : `${u.eloPoints} ELO`}</div>
-                                        </div>
-                                    </button>
-                                ))}
+                                            <div className="w-8 h-8 rounded-full relative overflow-hidden bg-slate-200 shrink-0 border-2 border-slate-200">
+                                                {u.avatarUrl ? (
+                                                    <Image src={u.avatarUrl} alt="Avatar" fill className="object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-600 font-bold text-[11px] uppercase">
+                                                        {u.fullName?.substring(0, 2) || t("initialsFallback")}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="font-bold text-xs text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                                    {u.fullName || t('playerFallback')}
+                                                </h4>
+                                                <p className="text-[10px] text-slate-400 font-medium truncate">{u.email}</p>
+                                            </div>
+                                            <div className="shrink-0 text-right">
+                                                <div className="max-w-36 truncate text-[9px] font-bold uppercase text-slate-400">{u.categoryName || t('sportFallback')} · {getLeaderboardFormatLabel(u, t)}</div>
+                                                <div className="text-sm font-black text-slate-900">{u.eloPoints === null ? '—' : `${u.eloPoints} ELO`}</div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -547,6 +570,7 @@ export default function LeaderboardPage() {
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[1]);
                                                 if (!member?.id) return;
+                                                if (leaderboardHoverTimerRef.current) clearTimeout(leaderboardHoverTimerRef.current);
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 openUserProfile(
                                                     {
@@ -557,6 +581,17 @@ export default function LeaderboardPage() {
                                                     rect,
                                                 );
                                             }}
+                                            onMouseEnter={(e) => {
+                                                const member = getPrimaryRankingMember(rankings[1]);
+                                                if (member?.id) {
+                                                    handleLeaderboardHover({
+                                                        id: member.id,
+                                                        fullName: getRankingDisplayName(rankings[1], t('athleteFallback')),
+                                                        avatarUrl: member.avatarUrl,
+                                                    }, e);
+                                                }
+                                            }}
+                                            onMouseLeave={handleLeaderboardLeave}
                                             className="flex flex-col items-center hover:opacity-95 transition-opacity cursor-pointer"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
@@ -609,6 +644,7 @@ export default function LeaderboardPage() {
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[0]);
                                                 if (!member?.id) return;
+                                                if (leaderboardHoverTimerRef.current) clearTimeout(leaderboardHoverTimerRef.current);
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 openUserProfile(
                                                     {
@@ -619,6 +655,17 @@ export default function LeaderboardPage() {
                                                     rect,
                                                 );
                                             }}
+                                            onMouseEnter={(e) => {
+                                                const member = getPrimaryRankingMember(rankings[0]);
+                                                if (member?.id) {
+                                                    handleLeaderboardHover({
+                                                        id: member.id,
+                                                        fullName: getRankingDisplayName(rankings[0], t('athleteFallback')),
+                                                        avatarUrl: member.avatarUrl,
+                                                    }, e);
+                                                }
+                                            }}
+                                            onMouseLeave={handleLeaderboardLeave}
                                             className="flex flex-col items-center hover:opacity-95 transition-opacity cursor-pointer"
                                         >
                                             <div className="relative mb-5 transition-transform duration-300 group-hover:scale-105">
@@ -671,6 +718,7 @@ export default function LeaderboardPage() {
                                             onClick={(e) => {
                                                 const member = getPrimaryRankingMember(rankings[2]);
                                                 if (!member?.id) return;
+                                                if (leaderboardHoverTimerRef.current) clearTimeout(leaderboardHoverTimerRef.current);
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 openUserProfile(
                                                     {
@@ -681,6 +729,17 @@ export default function LeaderboardPage() {
                                                     rect,
                                                 );
                                             }}
+                                            onMouseEnter={(e) => {
+                                                const member = getPrimaryRankingMember(rankings[2]);
+                                                if (member?.id) {
+                                                    handleLeaderboardHover({
+                                                        id: member.id,
+                                                        fullName: getRankingDisplayName(rankings[2], t('athleteFallback')),
+                                                        avatarUrl: member.avatarUrl,
+                                                    }, e);
+                                                }
+                                            }}
+                                            onMouseLeave={handleLeaderboardLeave}
                                             className="flex flex-col items-center hover:opacity-95 transition-opacity cursor-pointer"
                                         >
                                             <div className="relative mb-4 transition-transform duration-300 group-hover:scale-105">
@@ -732,24 +791,27 @@ export default function LeaderboardPage() {
                                         {[3, 4, 5, 6, 7, 8, 9].map((idx) => {
                                             const player = rankings[idx];
                                             const rankNum = idx + 1;
+                                            const member = getPrimaryRankingMember(player);
+                                            const userPayload = member?.id ? {
+                                                id: member.id,
+                                                fullName: getRankingDisplayName(player, t('athleteFallback')),
+                                                avatarUrl: member.avatarUrl,
+                                            } : null;
                                             return (
                                                 <button 
                                                     type="button"
                                                     key={idx} 
-                                                    disabled={!getPrimaryRankingMember(player)?.id}
+                                                    disabled={!userPayload}
                                                     onClick={(e) => {
-                                                        const member = getPrimaryRankingMember(player);
-                                                        if (!member?.id) return;
+                                                        if (!userPayload) return;
+                                                        if (leaderboardHoverTimerRef.current) clearTimeout(leaderboardHoverTimerRef.current);
                                                         const rect = e.currentTarget.getBoundingClientRect();
-                                                        openUserProfile(
-                                                            {
-                                                                id: member.id,
-                                                                fullName: getRankingDisplayName(player, t('athleteFallback')),
-                                                                avatarUrl: member.avatarUrl,
-                                                            },
-                                                            rect,
-                                                        );
+                                                        openUserProfile(userPayload, rect);
                                                     }}
+                                                    onMouseEnter={(e) => {
+                                                        if (userPayload) handleLeaderboardHover(userPayload, e);
+                                                    }}
+                                                    onMouseLeave={handleLeaderboardLeave}
                                                     className="bg-white/80 backdrop-blur-xs rounded-lg border border-blue-100/60 p-3 flex flex-col items-center justify-between shadow-xs transition-all duration-300 hover:scale-105 hover:shadow-sm hover:border-blue-300 hover:text-blue-650 cursor-pointer"
                                                 >
                                                     <span className="text-[10px] font-bold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full mb-2">
@@ -976,7 +1038,29 @@ function RestRankingsTable({
   selectedMatchType: string;
 }) {
   const t = useTranslations("Leaderboard");
-  const { openUserProfile } = useUserProfileModalStore();
+  const { openUserProfile, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const tableHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTableHover = (
+    userPayload: { id: string; fullName: string; avatarUrl?: string | null },
+    event: React.MouseEvent<HTMLElement>,
+  ) => {
+    if (!userPayload.id) return;
+    keepOpen();
+    if (tableHoverTimerRef.current) clearTimeout(tableHoverTimerRef.current);
+    const rect = event.currentTarget.getBoundingClientRect();
+    tableHoverTimerRef.current = setTimeout(() => {
+      openUserProfile(userPayload, rect);
+    }, 200);
+  };
+
+  const handleTableLeave = () => {
+    if (tableHoverTimerRef.current) {
+      clearTimeout(tableHoverTimerRef.current);
+      tableHoverTimerRef.current = null;
+    }
+    scheduleClose(400);
+  };
   const listData = buildLeaderboardStandingSlots(
     rankings,
     categoryId,
@@ -1012,39 +1096,51 @@ function RestRankingsTable({
                                             #{rankNum}
                                         </td>
                                         <td className="py-2.5 px-3">
-                                                <button
-                                                type="button"
-                                                disabled={isPlaceholder || !getPrimaryRankingMember(rank)?.id}
-                                                onClick={(e) => {
-                                                    const member = getPrimaryRankingMember(rank);
-                                                    if (isPlaceholder || !member?.id) return;
-                                                    const rect = e.currentTarget.getBoundingClientRect();
-                                                    openUserProfile(
-                                                        {
-                                                            id: member.id,
-                                                            fullName: getRankingDisplayName(rank, t('athleteFallback')),
-                                                            avatarUrl: member.avatarUrl,
-                                                        },
-                                                        rect,
-                                                    );
-                                                }}
-                                                className={`flex items-center gap-2 hover:text-blue-600 transition-colors text-left cursor-pointer ${isPlaceholder ? "pointer-events-none" : ""}`}
-                                            >
-                                                {isPairRanking(rank) ? <RankingMembers ranking={rank} size="sm" /> : (
-                                                    <div
-                                                        className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border-2 bg-slate-100 shadow-xs"
-                                                        style={{
-                                                            borderColor: getStandingBorderColor(rank, '#e2e8f0'),
-                                                            boxShadow: rank ? `0 0 8px -2px ${getStandingBorderColor(rank, '#e2e8f0')}60` : undefined,
-                                                        }}
-                                                    >
-                                                        {getPrimaryRankingMember(rank)?.avatarUrl ? <Image src={getPrimaryRankingMember(rank)!.avatarUrl!} alt="Player" fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-[9px] font-bold uppercase text-slate-500">{isPlaceholder ? "?" : (getPrimaryRankingMember(rank)?.fullName?.slice(0, 2) || t("initialsFallback"))}</span>}
-                                                    </div>
-                                                )}
-                                                <span className={`font-bold truncate max-w-[100px] sm:max-w-[150px] ${isPlaceholder ? "text-slate-400 font-medium" : "text-slate-900"}`}>
-                                                    {getRankingDisplayName(rank, t("waiting"))}
-                                                </span>
-                                            </button>
+                                             <button
+                                                 type="button"
+                                                 disabled={isPlaceholder || !getPrimaryRankingMember(rank)?.id}
+                                                 onClick={(e) => {
+                                                     const member = getPrimaryRankingMember(rank);
+                                                     if (isPlaceholder || !member?.id) return;
+                                                     if (tableHoverTimerRef.current) clearTimeout(tableHoverTimerRef.current);
+                                                     const rect = e.currentTarget.getBoundingClientRect();
+                                                     openUserProfile(
+                                                         {
+                                                             id: member.id,
+                                                             fullName: getRankingDisplayName(rank, t('athleteFallback')),
+                                                             avatarUrl: member.avatarUrl,
+                                                         },
+                                                         rect,
+                                                     );
+                                                 }}
+                                                 onMouseEnter={(e) => {
+                                                     const member = getPrimaryRankingMember(rank);
+                                                     if (!isPlaceholder && member?.id) {
+                                                         handleTableHover({
+                                                             id: member.id,
+                                                             fullName: getRankingDisplayName(rank, t('athleteFallback')),
+                                                             avatarUrl: member.avatarUrl,
+                                                         }, e);
+                                                     }
+                                                 }}
+                                                 onMouseLeave={handleTableLeave}
+                                                 className={`flex items-center gap-2 hover:text-blue-600 transition-colors text-left cursor-pointer ${isPlaceholder ? "pointer-events-none" : ""}`}
+                                             >
+                                                 {isPairRanking(rank) ? <RankingMembers ranking={rank} size="sm" /> : (
+                                                     <div
+                                                         className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border-2 bg-slate-100 shadow-xs"
+                                                         style={{
+                                                             borderColor: getStandingBorderColor(rank, '#e2e8f0'),
+                                                             boxShadow: rank ? `0 0 8px -2px ${getStandingBorderColor(rank, '#e2e8f0')}60` : undefined,
+                                                         }}
+                                                     >
+                                                         {getPrimaryRankingMember(rank)?.avatarUrl ? <Image src={getPrimaryRankingMember(rank)!.avatarUrl!} alt="Player" fill className="object-cover" /> : <span className="flex h-full w-full items-center justify-center text-[9px] font-bold uppercase text-slate-500">{isPlaceholder ? "?" : (getPrimaryRankingMember(rank)?.fullName?.slice(0, 2) || t("initialsFallback"))}</span>}
+                                                     </div>
+                                                 )}
+                                                 <span className={`font-bold truncate max-w-[100px] sm:max-w-[150px] ${isPlaceholder ? "text-slate-400 font-medium" : "text-slate-900"}`}>
+                                                     {getRankingDisplayName(rank, t("waiting"))}
+                                                 </span>
+                                             </button>
                                         </td>
                                         <td className="py-2.5 px-3">
                                             {isPlaceholder ? (

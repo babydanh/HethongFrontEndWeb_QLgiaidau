@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
-import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight, Share2, CheckCircle2, Users, Clock } from 'lucide-react';
+import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight, Share2, CheckCircle2, Users, Clock, UserPlus, UserCheck, UserRoundX, MessageCircle } from 'lucide-react';
 import { PublicProfileSkeleton } from '@/components/skeletons/PublicProfileSkeleton';
 import Link from 'next/link';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
@@ -23,6 +23,9 @@ import { BRAND } from '@/constants/brand';
 import { isPublicRankingEligible } from '@/features/rankings/elo-display';
 import { cn } from '@/utils/cn';
 import ShareModal from '@/components/common/ShareModal';
+import { socialApi, type FriendshipStatusResponse } from '@/features/social/api';
+import { chatApi } from '@/features/chat/api';
+import toast from 'react-hot-toast';
 
 interface UserRank {
   categoryId: string;
@@ -140,6 +143,105 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
+  const [directMessagePolicy, setDirectMessagePolicy] = useState<{ canMessage: boolean; reasonCode: string | null } | null>(null);
+  const [friendship, setFriendship] = useState<FriendshipStatusResponse | null>(null);
+  const [isFriendshipLoading, setIsFriendshipLoading] = useState(false);
+  const [friendshipAction, setFriendshipAction] = useState<'send' | 'accept' | 'reject' | 'remove' | null>(null);
+
+  const isSelf = Boolean(user?.id && id && user.id === id);
+  const canMessage = !isSelf && directMessagePolicy?.canMessage === true;
+
+  useEffect(() => {
+    if (!id || !user?.id || user.id === id) return;
+    let isMounted = true;
+
+    chatApi
+      .getDirectMessagePolicy(id)
+      .then((policy) => {
+        if (isMounted) setDirectMessagePolicy(policy);
+      })
+      .catch(() => {
+        if (isMounted) setDirectMessagePolicy({ canMessage: false, reasonCode: 'POLICY_CHECK_FAILED' });
+      });
+
+    setIsFriendshipLoading(true);
+    socialApi
+      .getFriendshipStatus(id)
+      .then((status) => {
+        if (isMounted) setFriendship(status);
+      })
+      .catch(() => {
+        if (isMounted) setFriendship(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsFriendshipLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+      setDirectMessagePolicy(null);
+      setFriendship(null);
+    };
+  }, [id, user?.id]);
+
+  const handleFriendshipAction = async (action: 'send' | 'accept' | 'reject' | 'remove') => {
+    if (!id || !user?.id || friendshipAction) return;
+
+    if (action === 'remove') {
+      const message = friendship?.status === 'ACCEPTED'
+        ? 'Bạn có chắc chắn muốn hủy kết bạn với người này?'
+        : 'Bạn có chắc chắn muốn hủy lời mời kết bạn?';
+      if (!window.confirm(message)) return;
+    }
+
+    setFriendshipAction(action);
+    try {
+      const nextStatus = action === 'send'
+        ? await socialApi.sendFriendRequest(id)
+        : action === 'accept'
+          ? await socialApi.respondToFriendRequest(friendship?.id ?? '', 'ACCEPTED')
+          : action === 'reject'
+            ? await socialApi.respondToFriendRequest(friendship?.id ?? '', 'REJECTED')
+            : await socialApi.removeFriendship(friendship?.id ?? '');
+
+      setFriendship(nextStatus);
+      const successMsg = action === 'send'
+        ? 'Đã gửi lời mời kết bạn'
+        : action === 'accept'
+          ? 'Đã đồng ý kết bạn'
+          : action === 'reject'
+            ? 'Đã từ chối lời mời'
+            : friendship?.status === 'ACCEPTED'
+              ? 'Đã hủy kết bạn'
+              : 'Đã hủy lời mời';
+      toast.success(successMsg);
+    } catch {
+      toast.error('Thao tác không thành công');
+    } finally {
+      setFriendshipAction(null);
+    }
+  };
+
+  const handleOpenDirectChat = () => {
+    if (!id || isOpeningChat) return;
+    if (!canMessage) {
+      toast.error('Người dùng này tạm thời không nhận tin nhắn');
+      return;
+    }
+    setIsOpeningChat(true);
+    try {
+      window.dispatchEvent(
+        new CustomEvent('sporto:open-direct-chat', {
+          detail: { userId: id },
+        }),
+      );
+      setIsOpeningChat(false);
+    } catch {
+      setIsOpeningChat(false);
+    }
+  };
+
   const hideEloSection = profile?.isMock === true;
   const tabs = hideEloSection
     ? [
@@ -446,9 +548,100 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 </div>
               )}
 
-              {/* Ngày tham gia */}
+              {/* Action Buttons: Kết bạn & Nhắn tin (Chỉ hiện khi xem người khác) */}
+              {!isSelf && user?.id && (
+                <div className="w-full flex items-center gap-2 mt-4">
+                  {/* Nút Kết bạn */}
+                  {isFriendshipLoading ? (
+                    <div className="flex-1 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-xs text-slate-400 border border-slate-200">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5 text-blue-600" />
+                      Đang tải...
+                    </div>
+                  ) : friendship?.status === 'ACCEPTED' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleFriendshipAction('remove')}
+                      disabled={friendshipAction !== null}
+                      className="flex-1 h-9 rounded-lg border border-slate-200 bg-white hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                      title="Bấm để hủy kết bạn"
+                    >
+                      {friendshipAction === 'remove' ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      )}
+                      Bạn bè
+                    </button>
+                  ) : friendship?.status === 'PENDING' && friendship.direction === 'OUTGOING' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleFriendshipAction('remove')}
+                      disabled={friendshipAction !== null}
+                      className="flex-1 h-9 rounded-lg border border-slate-200 bg-white hover:border-rose-200 hover:text-rose-600 hover:bg-rose-50 text-slate-600 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                      title="Bấm để hủy lời mời kết bạn"
+                    >
+                      {friendshipAction === 'remove' ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <UserRoundX className="w-3.5 h-3.5 text-slate-400" />
+                      )}
+                      Đã gửi lời mời
+                    </button>
+                  ) : friendship?.status === 'PENDING' && friendship.direction === 'INCOMING' ? (
+                    <div className="flex-1 flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleFriendshipAction('accept')}
+                        disabled={friendshipAction !== null}
+                        className="flex-1 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1 transition-all shadow-2xs cursor-pointer"
+                      >
+                        {friendshipAction === 'accept' ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
+                        Đồng ý
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleFriendshipAction('reject')}
+                        disabled={friendshipAction !== null}
+                        className="h-9 px-2 rounded-lg border border-slate-200 bg-white hover:border-rose-200 hover:text-rose-600 text-slate-600 text-xs flex items-center justify-center transition-all cursor-pointer"
+                        title="Từ chối"
+                      >
+                        {friendshipAction === 'reject' ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserRoundX className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleFriendshipAction('send')}
+                      disabled={friendshipAction !== null}
+                      className="flex-1 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    >
+                      {friendshipAction === 'send' ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <UserPlus className="w-3.5 h-3.5" />
+                      )}
+                      Kết bạn
+                    </button>
+                  )}
+
+                  {/* Nút Nhắn tin */}
+                  {canMessage && (
+                    <button
+                      type="button"
+                      onClick={handleOpenDirectChat}
+                      disabled={isOpeningChat}
+                      className="flex-1 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-blue-600" />
+                      Nhắn tin
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Ngày tham gia - Sát góc dưới cùng bên trái */}
               {profile.createdAt && (
-                <div className="w-full mt-2.5 pt-1 text-[10px] text-slate-400 flex items-center justify-start gap-1">
+                <div className="w-full mt-3 pt-2 text-[10px] text-slate-400 flex items-center justify-start gap-1 border-t border-slate-50">
                   <Calendar className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                   <span>{translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}</span>
                 </div>

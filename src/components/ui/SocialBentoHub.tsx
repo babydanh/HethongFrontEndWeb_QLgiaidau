@@ -390,7 +390,7 @@ export function SocialMyClubsCard({
           </div>
         ) : (
           <div className="flex flex-col gap-1">
-            {displayClubs.slice(0, 5).map((club) => {
+            {displayClubs.slice(0, 3).map((club) => {
               // Ẩn fallback logo SportO mặc định trong CLB (chỉ hiển thị logo thật của CLB)
               const hasCustomLogo = Boolean(
                 club.logoUrl?.trim() &&

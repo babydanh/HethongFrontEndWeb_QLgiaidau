@@ -411,45 +411,17 @@ export default function QuickTournamentCreate() {
   useEffect(() => {
     if (typeof window === 'undefined' || draftHydratedRef.current) return;
     draftHydratedRef.current = true;
-    let savedDraft: QuickDraft | null = null;
+    // Xóa nháp cũ nếu còn lưu trong localStorage để form luôn mới tinh
     try {
-      const raw = window.localStorage.getItem(draftKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as QuickDraft;
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          savedDraft = parsed;
-          Object.entries(parsed).forEach(([key, value]) => {
-            if (key === 'scheduleDefaultsVersion') return;
-            if (value !== undefined && value !== null) setValue(key as keyof QuickValues, value as never, { shouldDirty: false });
-          });
-          toast.success(translate('draftRestored'), { id: 'quick-draft-restored' });
-        }
-      }
-    } catch {
       window.localStorage.removeItem(draftKey);
+    } catch {
+      // ignore
     }
 
-    // A cleared value in an existing draft is intentional; only seed new/older drafts.
-    const isCurrentDraft = savedDraft?.scheduleDefaultsVersion === QUICK_DRAFT_VERSION;
-    const hasRegistrationStart = Object.prototype.hasOwnProperty.call(savedDraft ?? {}, 'registrationStart');
-    if (!isCurrentDraft && (!hasRegistrationStart || !savedDraft?.registrationStart)) {
-      setValue('registrationStart', getVietnamNextRoundedIsoMinute(), { shouldValidate: true, shouldDirty: false });
-    }
-    const hasStartDate = Object.prototype.hasOwnProperty.call(savedDraft ?? {}, 'startDate');
-    if (!isCurrentDraft && (!hasStartDate || !savedDraft?.startDate)) {
-      // Mặc định ngày bắt đầu giải là 7 ngày sau, giờ làm tròn chẵn phút 00
-      setValue('startDate', getVietnamFutureRoundedHour(24 * 7), { shouldValidate: true, shouldDirty: false });
-    }
-  }, [draftKey, setValue, translate]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !draftHydratedRef.current) return;
-    const timer = window.setTimeout(() => {
-      const draft: QuickDraft = { ...(formValues as QuickValues), scheduleDefaultsVersion: QUICK_DRAFT_VERSION };
-      window.localStorage.setItem(draftKey, JSON.stringify(draft));
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [draftKey, formValues]);
+    // Thiết lập ngày bắt đầu và ngày mở đăng ký mặc định
+    setValue('registrationStart', getVietnamNextRoundedIsoMinute(), { shouldValidate: true, shouldDirty: false });
+    setValue('startDate', getVietnamFutureRoundedHour(24 * 7), { shouldValidate: true, shouldDirty: false });
+  }, [draftKey, setValue]);
 
   const userTouchedScheduleRef = useRef<{ registrationEnd: boolean; endDate: boolean }>({
     registrationEnd: false,

@@ -355,7 +355,7 @@ export function SocialMyClubsCard({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5 flex flex-col justify-between min-h-[248px]">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs p-3.5 flex flex-col">
       <div>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5">
@@ -377,7 +377,7 @@ export function SocialMyClubsCard({
         </div>
 
         {displayClubs.length === 0 ? (
-          <div className="p-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 text-center flex flex-col items-center justify-center gap-1.5 h-[170px]">
+          <div className="p-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/50 text-center flex flex-col items-center justify-center gap-1.5 py-6">
             <p className="text-xs text-slate-500 max-w-[200px]">
               {isAuthenticated ? 'Bạn chưa tham gia CLB nào' : translate('loginToSeeClubs')}
             </p>
@@ -389,8 +389,8 @@ export function SocialMyClubsCard({
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col gap-1.5">
-            {displayClubs.slice(0, 3).map((club) => {
+          <div className="flex flex-col gap-1">
+            {displayClubs.slice(0, 5).map((club) => {
               // Ẩn fallback logo SportO mặc định trong CLB (chỉ hiển thị logo thật của CLB)
               const hasCustomLogo = Boolean(
                 club.logoUrl?.trim() &&
@@ -402,7 +402,7 @@ export function SocialMyClubsCard({
                 <Link
                   key={club.id || club.name}
                   href={club.id ? `/communities/${club.id}` : '/communities'}
-                  className="flex items-center gap-2.5 p-1.5 rounded-lg border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all group"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors group"
                 >
                   <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 overflow-hidden relative border border-slate-200/80 p-0.5">
                     {hasCustomLogo ? (

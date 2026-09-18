@@ -13,6 +13,7 @@ interface RichTextEditorProps {
   label?: string;
   disabled?: boolean;
   compact?: boolean;
+  maxLength?: number;
 }
 
 interface EditorJSBlock {
@@ -187,7 +188,7 @@ interface EditorJSAPI {
   };
 }
 
-export default function RichTextEditor({ value, onChange, placeholder, error, label, disabled, compact = false }: RichTextEditorProps) {
+export default function RichTextEditor({ value, onChange, placeholder, error, label, disabled, compact = false, maxLength }: RichTextEditorProps) {
   const translate = useTranslations('RichTextEditor');
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -371,6 +372,15 @@ export default function RichTextEditor({ value, onChange, placeholder, error, la
         <div ref={containerRef} className={`prose prose-slate max-w-none text-slate-800 text-sm editorjs-container ${compact ? 'editorjs-container--compact' : ''}`} />
       </div>
       {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
+      {maxLength != null && (() => {
+        const len = value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length;
+        return (
+          <p className={`text-right text-xs ${len > maxLength ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
+            {len}/{maxLength}
+          </p>
+        );
+      })()}
+
 
       <style jsx global>{`
         .editorjs-container .codex-editor__redactor {

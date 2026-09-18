@@ -18,6 +18,7 @@ import { matchesApi } from "@/features/matches/api";
 import { socialApi, type FriendshipStatusResponse } from "@/features/social/api";
 import { Trophy, Flame } from "lucide-react";
 import toast from "react-hot-toast";
+import { useUserProfileModalStore } from "@/lib/zustand/userProfileModalStore";
 
 const MAX_MEMBER_TAGS = 3;
 const MAX_MEMBER_TAG_LENGTH = 15;
@@ -83,8 +84,10 @@ export default function UserProfilePopover({
   const getPresetLabel = (name: string) => getCommunityTagDisplayName(name, translate);
   const router = useRouter();
   const { user: currentUser } = useAuthStore();
+  const { keepOpen, scheduleClose } = useUserProfileModalStore();
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  const [isUnfriendHovered, setIsUnfriendHovered] = useState(false);
   const [fetchedDetails, setFetchedDetails] = useState<Partial<PopoverUserProfile> | null>(null);
   const [tagPresets, setTagPresets] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
@@ -608,6 +611,8 @@ export default function UserProfilePopover({
         style={{ top: `${top}px`, left: `${left}px`, position: "fixed" }}
         className="z-[99999] w-[340px] animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
+        onMouseEnter={keepOpen}
+        onMouseLeave={() => scheduleClose(1500)}
       >
         {/* Close button stays accessible during loading */}
         <button
@@ -633,6 +638,8 @@ export default function UserProfilePopover({
       }}
       className="z-[99999] w-[340px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-slate-800"
       onClick={(e) => e.stopPropagation()}
+      onMouseEnter={keepOpen}
+      onMouseLeave={() => scheduleClose(1500)}
     >
       {/* Cover Header */}
       <div className="relative h-24 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 overflow-hidden">
@@ -658,29 +665,39 @@ export default function UserProfilePopover({
       <div className="relative px-4 pb-4 pt-0">
         {/* Avatar positioned over header cleanly with official RankAvatar ring and shadow */}
         <div className="-mt-12 mb-3 flex items-end justify-between">
-          <RankAvatar
-            src={profileData.avatarUrl}
-            name={displayName}
-            size="lg"
-            className="h-16 w-16"
-            elo={
-              communityId
-                ? ((userClubRank?.matchesPlayed ?? 0) > 0 || (clubMatchesStats?.total ?? 0) > 0)
-                  ? (userClubRank?.eloPoints ?? null)
-                  : null
-                : primaryRank?.eloPoints
-            }
-            tierName={
-              communityId
-                ? ((userClubRank?.matchesPlayed ?? 0) > 0 || (clubMatchesStats?.total ?? 0) > 0)
-                  ? (userClubRank?.tierName ?? userClubRank?.tier?.name ?? null)
-                  : null
-                : primaryRank?.tierName
-            }
-            categoryName={communityId ? (userClubRank?.categoryName || clubCategory || null) : primaryRank?.categoryName}
-            matchesPlayed={communityId ? (userClubRank?.matchesPlayed ?? clubMatchesStats?.total ?? 0) : primaryRank?.matchesPlayed}
-            ringClassName="ring-4 ring-white shadow-md"
-          />
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              if (profileData.id) router.push(`/users/${profileData.id}`);
+            }}
+            className="cursor-pointer transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-full"
+            title={translate('viewProfile')}
+          >
+            <RankAvatar
+              src={profileData.avatarUrl}
+              name={displayName}
+              size="lg"
+              className="h-16 w-16"
+              elo={
+                communityId
+                  ? ((userClubRank?.matchesPlayed ?? 0) > 0 || (clubMatchesStats?.total ?? 0) > 0)
+                    ? (userClubRank?.eloPoints ?? null)
+                    : null
+                  : primaryRank?.eloPoints
+              }
+              tierName={
+                communityId
+                  ? ((userClubRank?.matchesPlayed ?? 0) > 0 || (clubMatchesStats?.total ?? 0) > 0)
+                    ? (userClubRank?.tierName ?? userClubRank?.tier?.name ?? null)
+                    : null
+                  : primaryRank?.tierName
+              }
+              categoryName={communityId ? (userClubRank?.categoryName || clubCategory || null) : primaryRank?.categoryName}
+              matchesPlayed={communityId ? (userClubRank?.matchesPlayed ?? clubMatchesStats?.total ?? 0) : primaryRank?.matchesPlayed}
+              ringClassName="ring-4 ring-white shadow-md"
+            />
+          </button>
 
           <div className="flex flex-wrap items-center gap-1.5 justify-end">
             {/* Community Role Badge */}
@@ -712,9 +729,19 @@ export default function UserProfilePopover({
         {/* Name, Verified Badge & Sub info */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <h4 className="truncate text-base font-bold text-slate-900">
-              {displayName}
-            </h4>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                if (profileData.id) router.push(`/users/${profileData.id}`);
+              }}
+              className="group flex items-center gap-1.5 text-left truncate cursor-pointer focus-visible:outline-none"
+              title={translate('viewProfile')}
+            >
+              <h4 className="truncate text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                {displayName}
+              </h4>
+            </button>
             {profileData.isVerified && (
               <span title={translate('verifiedAccount')} className="inline-flex items-center shrink-0">
                 <CheckCircle2 className="h-4 w-4 text-blue-500" />
@@ -1103,26 +1130,30 @@ export default function UserProfilePopover({
 
             if (friendship?.status === 'ACCEPTED') {
               return (
-                <div className={`flex gap-1.5 ${isFullWidth ? 'w-full' : 'flex-1 min-w-0'}`}>
-                  <button
-                    type="button"
-                    disabled
-                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-emerald-50 px-2 py-2 text-xs font-semibold text-emerald-700 disabled:cursor-not-allowed min-w-0 truncate"
-                  >
-                    <UserCheck className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{translate('friendAccepted')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFriendshipAction('remove')}
-                    disabled={friendshipAction !== null}
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 px-2 py-2 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  >
-                    {friendshipAction === 'remove' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    <UserRoundX className="h-3.5 w-3.5" />
-                    {translate('friendUnfriend')}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handleFriendshipAction('remove')}
+                  onMouseEnter={() => setIsUnfriendHovered(true)}
+                  onMouseLeave={() => setIsUnfriendHovered(false)}
+                  disabled={friendshipAction !== null}
+                  title={translate('friendConfirmUnfriend')}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 ${
+                    isUnfriendHovered
+                      ? 'border border-rose-200 bg-rose-50 text-rose-600'
+                      : 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                  } ${isFullWidth ? 'w-full' : 'flex-1'}`}
+                >
+                  {friendshipAction === 'remove' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                  ) : isUnfriendHovered ? (
+                    <UserRoundX className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+                  ) : (
+                    <UserCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  )}
+                  <span className="truncate">
+                    {isUnfriendHovered ? translate('friendUnfriend') : translate('friendAccepted')}
+                  </span>
+                </button>
               );
             }
 
@@ -1133,82 +1164,68 @@ export default function UserProfilePopover({
             );
           };
 
-          const renderProfileButton = (isFullWidth: boolean = false) => (
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                if (profileData.id) {
-                  router.push(`/users/${profileData.id}`);
-                }
-              }}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-98 border border-slate-200/80 ${isFullWidth ? 'w-full' : 'flex-1'}`}
-            >
-              <User className="h-3.5 w-3.5" />
-              {translate('profile')}
-            </button>
-          );
+          const renderMessageButton = (isFullWidth: boolean = false) => {
+            if (!canMessage) return null;
 
-          // CASE 1: With message button (keep existing 2-row layout: friendship row on top, [Nhắn tin] [Trang cá nhân] below)
-          if (showMessage) {
             return (
-              <div className="mt-3 space-y-2">
-                {showFriendship && (
-                  <div>
-                    {renderFriendshipButton(true)}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={isOpeningChat || !canMessage}
-                    onClick={async () => {
-                      if (!profileData.id || isOpeningChat) return;
-                      if (!canMessage) {
-                        toast.error(translate('strangerMessagesDisabled'));
-                        return;
-                      }
-                      setIsOpeningChat(true);
-                      try {
-                        window.dispatchEvent(
-                          new CustomEvent('sporto:open-direct-chat', {
-                            detail: { userId: profileData.id },
-                          }),
-                        );
-                        setIsOpeningChat(false);
-                        onClose();
-                      } catch {
-                        setIsOpeningChat(false);
-                      }
-                    }}
-                    title={!canMessage ? translate('strangerMessagesDisabled') : undefined}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    {isOpeningChat ? translate('chatOpening') : translate('message')}
-                  </button>
-                  {renderProfileButton(false)}
-                </div>
+              <button
+                type="button"
+                disabled={isOpeningChat}
+                onClick={async () => {
+                  if (!profileData.id || isOpeningChat) return;
+                  setIsOpeningChat(true);
+                  try {
+                    window.dispatchEvent(
+                      new CustomEvent('sporto:open-direct-chat', {
+                        detail: { userId: profileData.id },
+                      }),
+                    );
+                    setIsOpeningChat(false);
+                    onClose();
+                  } catch {
+                    setIsOpeningChat(false);
+                  }
+                }}
+                className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 ${
+                  isFullWidth ? 'w-full' : 'flex-1'
+                }`}
+              >
+                <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{isOpeningChat ? translate('chatOpening') : translate('message')}</span>
+              </button>
+            );
+          };
+
+          if (isSelf) {
+            return null;
+          }
+
+          if (showFriendship && showMessage) {
+            return (
+              <div className="mt-3 flex gap-2 items-center">
+                {renderFriendshipButton(false)}
+                {renderMessageButton(false)}
               </div>
             );
           }
 
-          // CASE 2: No message button, but has friendship (put Friendship and Profile side-by-side)
           if (showFriendship) {
             return (
-              <div className="mt-3 flex gap-2">
-                {renderFriendshipButton(false)}
-                {renderProfileButton(false)}
+              <div className="mt-3">
+                {renderFriendshipButton(true)}
               </div>
             );
           }
 
-          // CASE 3: Self profile or no friendship actions (Profile button only full width)
-          return (
-            <div className="mt-3">
-              {renderProfileButton(true)}
-            </div>
-          );
+          if (showMessage) {
+            return (
+              <div className="mt-3">
+                {renderMessageButton(true)}
+              </div>
+            );
+          }
+
+          return null;
         })()}
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -136,21 +136,23 @@ function ClubLogoWithFallback({
   );
 }
 
-function Avatar({
+function UserAvatar({
+  userId,
   name,
   avatarUrl,
-  userId,
   mock = false,
-  className = 'h-11 w-11',
+  className = 'h-9 w-9',
 }: {
-  name: string | null | undefined;
-  avatarUrl?: string | null;
   userId?: string | null;
+  name?: string | null;
+  avatarUrl?: string | null;
   mock?: boolean;
   className?: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const openUserById = useUserProfileModalStore((state) => state.openUserById);
+  const { openUserById, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const content = avatarUrl && !imageFailed ? (
     <img
       src={avatarUrl}
@@ -172,7 +174,22 @@ function Avatar({
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
+        if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
         openUserById(userId, name || '', avatarUrl || null, event.currentTarget.getBoundingClientRect());
+      }}
+      onMouseEnter={(event) => {
+        keepOpen();
+        const rect = event.currentTarget.getBoundingClientRect();
+        hoverTimerRef.current = setTimeout(() => {
+          openUserById(userId, name || '', avatarUrl || null, rect);
+        }, 250);
+      }}
+      onMouseLeave={() => {
+        if (hoverTimerRef.current) {
+          clearTimeout(hoverTimerRef.current);
+          hoverTimerRef.current = null;
+        }
+        scheduleClose(1500);
       }}
     >
       {content}

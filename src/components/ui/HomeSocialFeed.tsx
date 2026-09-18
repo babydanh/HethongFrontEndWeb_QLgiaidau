@@ -503,7 +503,8 @@ function SessionDetailModal({
   const [pendingRequests, setPendingRequests] = useState<Array<{ userId?: string; name: string; avatarUrl?: string | null; note?: string }>>([]);
   const [slotPage, setSlotPage] = useState(1);
   const SLOTS_PER_PAGE = 16;
-  const openUserById = useUserProfileModalStore((state) => state.openUserById);
+  const { openUserById, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const hoverOpenTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Lọc bỏ bất kỳ request nào có tên/id trùng với người đã vào joinedPlayers hoặc trùng với Host
   const activePendingRequests = useMemo(() => {
@@ -514,8 +515,42 @@ function SessionDetailModal({
 
   const handleOpenHostProfile = (e: React.MouseEvent) => {
     if (!identity?.id) return;
+    if (hoverOpenTimerRef.current) clearTimeout(hoverOpenTimerRef.current);
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     openUserById(identity.id, identity.name, identity.avatarUrl || null, rect);
+  };
+
+  const handleHostMouseEnter = (e: React.MouseEvent) => {
+    if (!identity?.id) return;
+    keepOpen();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    hoverOpenTimerRef.current = setTimeout(() => {
+      openUserById(identity.id, identity.name, identity.avatarUrl || null, rect);
+    }, 250);
+  };
+
+  const handleHostMouseLeave = () => {
+    if (hoverOpenTimerRef.current) {
+      clearTimeout(hoverOpenTimerRef.current);
+      hoverOpenTimerRef.current = null;
+    }
+    scheduleClose(1500);
+  };
+
+  const triggerUserHoverOpen = (userId: string, name: string, avatarUrl: string | null, rect: DOMRect) => {
+    keepOpen();
+    if (hoverOpenTimerRef.current) clearTimeout(hoverOpenTimerRef.current);
+    hoverOpenTimerRef.current = setTimeout(() => {
+      openUserById(userId, name, avatarUrl, rect);
+    }, 250);
+  };
+
+  const cancelUserHoverOpen = () => {
+    if (hoverOpenTimerRef.current) {
+      clearTimeout(hoverOpenTimerRef.current);
+      hoverOpenTimerRef.current = null;
+    }
+    scheduleClose(1500);
   };
 
   const handleJoin = async () => {
@@ -603,6 +638,8 @@ function SessionDetailModal({
             <button
               type="button"
               onClick={handleOpenHostProfile}
+              onMouseEnter={handleHostMouseEnter}
+              onMouseLeave={handleHostMouseLeave}
               className="group flex items-center gap-2.5 min-w-0 text-left cursor-pointer focus-visible:outline-none"
               title="Xem trang cá nhân của host"
             >
@@ -762,14 +799,21 @@ function SessionDetailModal({
                             if (joinedPlayer) {
                               const isThisHost = slotNum === 1;
                               const isMe = (isThisHost && isHost) || joinedPlayer.name === 'Bạn' || (currentUser && (joinedPlayer.userId === currentUser.id || joinedPlayer.name === currentUser.fullName));
+                              const targetUserId = joinedPlayer.userId || (isThisHost ? identity?.id : undefined) || 'sample-user';
                               return (
                                 <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                      openUserById(joinedPlayer.userId || (isThisHost ? identity?.id : undefined) || 'sample-user', joinedPlayer.name, joinedPlayer.avatarUrl || null, rect);
+                                      if (hoverOpenTimerRef.current) clearTimeout(hoverOpenTimerRef.current);
+                                      openUserById(targetUserId, joinedPlayer.name, joinedPlayer.avatarUrl || null, rect);
                                     }}
+                                    onMouseEnter={(e) => {
+                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                      triggerUserHoverOpen(targetUserId, joinedPlayer.name, joinedPlayer.avatarUrl || null, rect);
+                                    }}
+                                    onMouseLeave={cancelUserHoverOpen}
                                     className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all ${isMe ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
                                     style={{
                                       backgroundColor: joinedPlayer.initialsBg || '#3b82f6',
@@ -802,14 +846,21 @@ function SessionDetailModal({
                             const pendingPlayer = activePendingRequests[pendingIndex];
                             if (pendingPlayer) {
                               const isMyPending = pendingPlayer.name === 'Bạn' || (currentUser && (pendingPlayer.userId === currentUser.id || pendingPlayer.name === currentUser.fullName));
+                              const pendingUserId = pendingPlayer.userId || 'sample-user';
                               return (
                                 <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                      openUserById(pendingPlayer.userId || 'sample-user', pendingPlayer.name, pendingPlayer.avatarUrl || null, rect);
+                                      if (hoverOpenTimerRef.current) clearTimeout(hoverOpenTimerRef.current);
+                                      openUserById(pendingUserId, pendingPlayer.name, pendingPlayer.avatarUrl || null, rect);
                                     }}
+                                    onMouseEnter={(e) => {
+                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                      triggerUserHoverOpen(pendingUserId, pendingPlayer.name, pendingPlayer.avatarUrl || null, rect);
+                                    }}
+                                    onMouseLeave={cancelUserHoverOpen}
                                     className="group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-amber-400 bg-amber-50 text-xs font-bold text-amber-700 shadow-xs cursor-pointer hover:border-amber-500 hover:scale-105 transition-all"
                                     title={`Bấm để xem hồ sơ: ${pendingPlayer.name}${pendingPlayer.note ? ` (${pendingPlayer.note})` : ''}`}
                                   >
@@ -893,8 +944,14 @@ function SessionDetailModal({
                               type="button"
                               onClick={(e) => {
                                 const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                if (hoverOpenTimerRef.current) clearTimeout(hoverOpenTimerRef.current);
                                 openUserById(req.userId || 'sample-user', req.name, req.avatarUrl || null, rect);
                               }}
+                              onMouseEnter={(e) => {
+                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                triggerUserHoverOpen(req.userId || 'sample-user', req.name, req.avatarUrl || null, rect);
+                              }}
+                              onMouseLeave={cancelUserHoverOpen}
                               className="group flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer hover:opacity-80 transition-opacity"
                               title={`Xem hồ sơ của ${req.name}`}
                             >

@@ -155,6 +155,8 @@ export interface Tournament {
     name: string;
     locationAddress: string;
   } | null;
+  courtsCount?: number;
+  courtCount?: number;
   currency: string;
   categoryId: string;
   logoUrl?: string | null;

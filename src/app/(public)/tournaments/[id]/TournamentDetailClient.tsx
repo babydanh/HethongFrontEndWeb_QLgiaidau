@@ -1063,49 +1063,42 @@ const commonTranslate = useTranslations('Common');
         </div>
 
       {/* Key Details Rows */}
-      <div className="space-y-3 pt-3 border-t border-slate-100">
+      <div className="space-y-3 pt-3 border-t border-slate-100 text-sm">
         {/* Dates */}
         <div className="flex items-start gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
-            <Calendar className="w-3.5 h-3.5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {translate('status.startDate') || 'Thời gian thi đấu'}
-            </span>
-            <p className="text-sm font-extrabold text-slate-900 leading-snug">
-              {activeTournament.startDate ? (
-                <>
-                  {formatDate(activeTournament.startDate)}
-                  {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
-                </>
-              ) : (
-                <span className="text-slate-400 font-normal">{translate('dateNotSet')}</span>
-              )}
-            </p>
-          </div>
+          <Calendar className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+          <p className="font-semibold text-slate-800 leading-snug">
+            {activeTournament.startDate ? (
+              <>
+                {formatDate(activeTournament.startDate)}
+                {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
+              </>
+            ) : (
+              <span className="text-slate-400 font-normal">{translate('dateNotSet')}</span>
+            )}
+          </p>
         </div>
 
         {/* Location */}
         <div className="flex items-start gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 mt-0.5">
-            <MapPin className="w-3.5 h-3.5" />
-          </div>
+          <MapPin className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1">
-            <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {translate('locationTitle') || 'Địa điểm'}
-            </span>
-            <p className="text-sm font-semibold text-slate-800 leading-relaxed break-words" title={getTournamentLocationLabel(activeTournament)}>
+            <p className="font-semibold text-slate-800 leading-snug break-words" title={getTournamentLocationLabel(activeTournament)}>
               {getTournamentLocationLabel(activeTournament) || (
                 <span className="text-slate-400 font-normal">{translate('venueNotUpdated')}</span>
               )}
             </p>
+            {activeTournament.courtsCount ? (
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeTournament.courtsCount} {translate('courtsCountSuffix') || 'sân thi đấu'}
+              </p>
+            ) : null}
             {getTournamentLocationLabel(activeTournament) && (
               <a
                 href={`https://maps.google.com/?q=${encodeURIComponent(getTournamentLocationLabel(activeTournament))}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline mt-0.5"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline mt-1"
               >
                 <span>Xem bản đồ</span>
                 <ArrowUpRight className="w-3 h-3" />
@@ -1114,38 +1107,24 @@ const commonTranslate = useTranslations('Common');
           </div>
         </div>
 
-        {/* Divisions Count & Participants Grid */}
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-dashed border-slate-100">
-          {/* Divisions */}
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
-            <div className="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <Trophy className="w-3 h-3" />
-            </div>
-            <div className="min-w-0">
-              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
-                {translate('competitionContentTitle') || 'Nội dung'}
-              </span>
-              <p className="text-xs font-black text-slate-900 truncate">
-                {divisionsList.length || 1} <span className="font-medium text-slate-500 text-[11px]">nội dung</span>
-              </p>
-            </div>
-          </div>
+        {/* Divisions Count */}
+        <div className="flex items-center gap-2.5">
+          <Trophy className="w-4 h-4 text-slate-500 shrink-0" />
+          <p className="font-normal text-slate-700">
+            <span className="font-bold text-slate-900">{divisionsList.length || 1}</span>{' '}
+            <span>{translate('competitionContentTitle') || 'Nội dung thi đấu'}</span>
+          </p>
+        </div>
 
-          {/* Participants / Teams */}
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
-            <div className="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-              <Users className="w-3 h-3" />
-            </div>
-            <div className="min-w-0">
-              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
-                {translate('participantsCount') || 'Đăng ký'}
-              </span>
-              <p className="text-xs font-black text-slate-900 truncate">
-                {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}{' '}
-                <span className="font-medium text-slate-500 text-[11px]">hồ sơ</span>
-              </p>
-            </div>
-          </div>
+        {/* Participants / Teams Count */}
+        <div className="flex items-center gap-2.5">
+          <Users className="w-4 h-4 text-slate-500 shrink-0" />
+          <p className="font-normal text-slate-700">
+            <span className="font-bold text-slate-900">
+              {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}
+            </span>{' '}
+            <span>{translate('participantsCount') || 'Số lượng hồ sơ'}</span>
+          </p>
         </div>
       </div>
 

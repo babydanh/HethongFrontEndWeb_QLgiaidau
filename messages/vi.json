@@ -8807,6 +8807,8 @@
     "clubContextLabel": "THUỘC CÂU LẠC BỘ",
     "clubSessionLabel": "Buổi giao lưu",
     "clubContextHint": "Thành viên CLB và các trận tự do",
+    "hostAdmin": "Host Admin",
+    "registrationSlotSubtitle": "Danh sách slot đăng ký vào sân",
     "overviewTitle": "Tổng quan buổi giao lưu",
     "overviewHint": "Tạo trận tự do từ danh sách thành viên",
     "registrationTitle": "Xác nhận tham gia",

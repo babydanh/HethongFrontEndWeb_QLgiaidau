@@ -440,202 +440,397 @@ export function ClubMatchSessionDetailView({
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-7 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1280px] space-y-5">
-        <Link href={`/communities/${communityId}/manage/tournaments`} className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:text-blue-900">
-          <ChevronLeft className="h-4 w-4" />
-          {t('back')}
-        </Link>
+    <main className="min-h-screen bg-slate-100/70 py-6 sm:py-8 px-4 sm:px-6">
+      {/* ── Card 1: Master Monolith Container ── */}
+      <div className="mx-auto max-w-6xl w-full bg-white rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden p-6 sm:p-8 md:p-10 space-y-6">
+        {/* Top Bar: Back Link + Organizer Action Buttons */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+          <Link
+            href={`/communities/${communityId}/manage/tournaments`}
+            className="inline-flex items-center text-xs sm:text-sm font-semibold text-slate-500 hover:text-blue-600 transition group"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1.5 transition group-hover:-translate-x-0.5" />
+            {t('back')}
+          </Link>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          {/* ── Left Column: Header + Tabs content ── */}
-          <div className="min-w-0 space-y-5">
-            {/* Header + Tabs unified card */}
-            <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
-              <div className="p-5 sm:p-7">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <Badge className={`border px-3 py-1 text-xs font-semibold ${statusClasses(session.status)}`}>{t(`status.${session.status}`)}</Badge>
-                      <Badge className="border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{session.isRanked ? t('rankedShort') : t('unrankedShort')}</Badge>
-                      <Badge className="border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">{t('sessionType')}</Badge>
-                    </div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{session.resolvedName}</h1>
-                    {session.description ? (
-                      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">{session.description}</p>
-                    ) : (
-                      <p className="mt-2 text-sm text-slate-400">{t('noDescription')}</p>
-                    )}
-                  </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {session.capabilities?.canManage && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 border border-slate-200/80 mr-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>{t('hostAdmin')}</span>
+              </div>
+            )}
 
-                  {/* Top-right compact organizer actions */}
+            {session.capabilities?.canManage && (
+              <>
+                {['OPEN', 'LIVE'].includes(session.status) && (
+                  <Button size="sm" disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')} className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-xs">
+                    {t('closeRegistration')}
+                  </Button>
+                )}
+                {!['ENDED', 'CANCELLED'].includes(session.status) && (
+                  <Button size="sm" disabled={busy} variant="secondary" onClick={() => onTransition('END')} className="px-2.5 py-1 text-xs font-medium text-blue-700 hover:text-blue-800 bg-blue-50 border border-blue-200/80 rounded-lg hover:bg-blue-100 transition shadow-xs">
+                    {t('endSession')}
+                  </Button>
+                )}
+                {!['ENDED', 'CANCELLED'].includes(session.status) && (
+                  <Button size="sm" disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')} className="px-2.5 py-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition border border-transparent hover:border-slate-200">
+                    {t('cancelSession')}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ── Main Layout Grid: Split Left (Seamless) and Right (The Only Nested Card) ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          {/* ── Left Column: Seamless Column (Hoàn toàn phẳng, không lồng card con) ── */}
+          <section className="lg:col-span-7 space-y-6">
+            <div className="space-y-4">
+              {/* Badges row */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full border ${statusClasses(session.status)}`}>
+                  {session.status === 'OPEN' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />}
+                  {t(`status.${session.status}`)}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200/70">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                  {session.isRanked ? t('rankedShort') : t('unrankedShort')}
+                </span>
+                <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                  {t('sessionType')}
+                </span>
+              </div>
+
+              {/* Title & Community subtext */}
+              <div className="space-y-1.5">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {session.resolvedName}
+                </h1>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">{communityName || t('clubSessionLabel')}</span>
+                  <span>•</span>
+                  <span>{t('clubContextHint')}</span>
                   {session.capabilities?.canManage && (
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
-                      {['OPEN', 'LIVE'].includes(session.status) && (
-                        <Button size="sm" disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')}>
-                          {t('closeRegistration')}
-                        </Button>
+                    <>
+                      <span>•</span>
+                      <span className="text-blue-600 font-medium">{t('hostAdmin')}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Seamless Schedule/Time info box */}
+              {(session.startAt || session.endAt || session.description) && (
+                <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-start gap-2.5">
+                    <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg shrink-0 mt-0.5">
+                      <CalendarDays className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-800 text-sm">
+                        {communityName || t('clubSessionLabel')}
+                      </div>
+                      {session.description && (
+                        <p className="text-slate-500 mt-0.5 line-clamp-2">{session.description}</p>
                       )}
-                      {!['ENDED', 'CANCELLED'].includes(session.status) && (
-                        <Button size="sm" disabled={busy} variant="secondary" onClick={() => onTransition('END')}>
-                          {t('endSession')}
-                        </Button>
-                      )}
-                      {!['ENDED', 'CANCELLED'].includes(session.status) && (
-                        <Button size="sm" disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')}>
-                          {t('cancelSession')}
-                        </Button>
-                      )}
+                    </div>
+                  </div>
+                  {session.startAt && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200/70 shrink-0 self-start sm:self-center text-slate-700 font-medium">
+                      <Clock3 className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>{formatSessionDate(session.startAt, locale, '')}</span>
                     </div>
                   )}
                 </div>
-
-                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-100 pt-4 text-sm text-slate-500">
-                  {session.startAt && <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-blue-600" />{formatSessionDate(session.startAt, locale, '')}</span>}
-                  {session.endAt && <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-blue-600" />{formatSessionDate(session.endAt, locale, '')}</span>}
-                  <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-blue-600" />{session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
-                </div>
-              </div>
-
-              {/* Tab navigation docked seamlessly at bottom of header */}
-              <nav className="flex h-fit min-w-0 overflow-x-auto border-t border-slate-200/80 bg-slate-50/50 px-4" aria-label={t('tabNavigation')}>
-                {tabs.map((tab) => (
-                  <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
-                    {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
-                  </SessionTabButton>
-                ))}
-              </nav>
-            </section>
-
-        <div className="space-y-4">
-
-        {activeTab === 'overview' && <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 grid lg:grid-cols-[1.25fr_.75fr]">
-          <div className="p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">{t('sessionType')}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{t('overviewTitle')}</h2></div>
-              <span className="text-sm font-medium text-slate-500">{t('counts', { participants: activeParticipants.length, matches: matches.length })}</span>
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <SummaryMetric icon={<Users className="h-4 w-4" />} value={`${activeParticipants.length}/${session.maxParticipants}`} label={t('participants')} />
-              <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(matches.length)} label={t('matches')} />
-              <SummaryMetric icon={<Radio className="h-4 w-4" />} value={String(liveMatches.length)} label={t('liveMatches')} />
-              <SummaryMetric icon={<CheckCircle2 className="h-4 w-4" />} value={String(completedMatches.length)} label={t('completedMatches')} />
-            </div>
-            <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/50 p-4 text-sm text-slate-600">
-              <p className="font-semibold text-slate-800">{t('overviewHint')}</p>
-              <p className="mt-1 leading-6">{t('registrationOpensImmediately')} {t('pairingDerivedHint')}.</p>
-            </div>
-          </div>
-          <div className="p-5 sm:p-6 bg-slate-50/40">
-            <h2 className="text-lg font-bold text-slate-900">{t('basicInfoTitle')}</h2>
-            <div className="mt-5 space-y-4 text-sm">
-              {session.startAt && <InfoRow icon={<CalendarDays className="h-4 w-4" />} label={t('startAt')} value={formatSessionDate(session.startAt, locale, '')} />}
-              {session.endAt && <InfoRow icon={<Clock3 className="h-4 w-4" />} label={t('endAt')} value={formatSessionDate(session.endAt, locale, '')} />}
-              <InfoRow icon={<ShieldCheck className="h-4 w-4" />} label={t('ranked')} value={session.isRanked ? t('rankedHint') : t('unrankedHint')} />
-              {session.capabilities?.canManage && (
-                <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                  <span>
-                    <span className="block text-xs font-semibold text-slate-800">Cho phép thành viên nhập điểm</span>
-                    <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">Áp dụng cho toàn bộ buổi giao lưu.</span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={session.memberScoringEnabled !== false}
-                    onChange={(event) => onUpdateMemberScoring(event.target.checked)}
-                    disabled={busy}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </label>
               )}
             </div>
-          </div>
-        </section>}
 
-        {activeTab === 'participants' && <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs divide-y divide-slate-100">
-          <div className="p-5 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div><h2 className="text-lg font-bold text-slate-900">{t('participants')}</h2><p className="mt-1 text-sm text-slate-500">{t('participantsOnlyHint')}</p></div>
-            <span className="text-sm font-medium text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
-          </div>
+            {/* Seamless Tab Navigation */}
+            <nav className="flex h-fit min-w-0 overflow-x-auto border-b border-slate-200/80 gap-2" aria-label={t('tabNavigation')}>
+              {tabs.map((tab) => (
+                <SessionTabButton key={tab.id} active={activeTab === tab.id} icon={tab.icon} onClick={() => setActiveTab(tab.id)}>
+                  {tab.label}{typeof tab.count === 'number' && <span className="ml-1 text-xs opacity-70">({tab.count})</span>}
+                </SessionTabButton>
+              ))}
+            </nav>
 
-          <div className="mt-5 space-y-2">
-            {activeParticipants.map((item) => {
-              return (
-                <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
-                  <div className="flex min-w-0 items-center gap-3"><Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" /><div className="min-w-0"><p title={item.fullName || undefined} className="truncate text-sm font-semibold text-slate-900">{shortDisplayName(item.fullName)}</p><p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p></div>{item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] font-medium text-amber-700">{t('mockPlayer')}</Badge>}</div>
-                  <span className="text-xs font-medium text-slate-400">{t('joinedLabel')}</span>
+            {/* Tab content - rendered seamless without nested outer card */}
+            <div className="space-y-6 pt-1">
+              {activeTab === 'overview' && (
+                <div className="space-y-6">
+                  {/* Metric Overview */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-blue-600" />
+                        {t('overviewTitle')}
+                      </h3>
+                      <span className="text-xs font-medium text-slate-500">
+                        {t('counts', { participants: activeParticipants.length, matches: matches.length })}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <SummaryMetric icon={<Users className="h-4 w-4" />} value={`${activeParticipants.length}/${session.maxParticipants}`} label={t('participants')} />
+                      <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(matches.length)} label={t('matches')} />
+                      <SummaryMetric icon={<Radio className="h-4 w-4" />} value={String(liveMatches.length)} label={t('liveMatches')} />
+                      <SummaryMetric icon={<CheckCircle2 className="h-4 w-4" />} value={String(completedMatches.length)} label={t('completedMatches')} />
+                    </div>
+                  </div>
+
+                  {/* Rules & Session Details */}
+                  <div className="space-y-3 pt-2">
+                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-blue-600" />
+                      {t('basicInfoTitle')}
+                    </h3>
+                    <div className="space-y-2 text-sm text-slate-600">
+                      {session.startAt && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-blue-600 font-bold">•</span>
+                          <span><strong>{t('startAt')}:</strong> {formatSessionDate(session.startAt, locale, '')}</span>
+                        </div>
+                      )}
+                      {session.endAt && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-blue-600 font-bold">•</span>
+                          <span><strong>{t('endAt')}:</strong> {formatSessionDate(session.endAt, locale, '')}</span>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-600 font-bold">•</span>
+                        <span><strong>{t('ranked')}:</strong> {session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
+                      </div>
+                    </div>
+
+                    {session.capabilities?.canManage && (
+                      <div className="pt-2">
+                        <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/50 p-3 hover:bg-slate-50 transition">
+                          <span>
+                            <span className="block text-xs font-semibold text-slate-800">Cho phép thành viên nhập điểm</span>
+                            <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">Áp dụng cho toàn bộ buổi giao lưu.</span>
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={session.memberScoringEnabled !== false}
+                            onChange={(event) => onUpdateMemberScoring(event.target.checked)}
+                            disabled={busy}
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-          {participantCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreParticipants}>{t('loadMore')}</Button>}
+              )}
 
-          {session.capabilities?.canManage && (
-            <div className="mt-5 border-t border-slate-100 pt-5">
-              <div className="mb-3 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><UserPlus className="h-4 w-4 text-blue-600" /><h3 className="font-semibold text-slate-900">{t('assignSelected')}</h3></div>{session.status === 'OPEN' && <Button type="button" size="sm" variant="outline" aria-expanded={mockFormOpen} aria-label={t('createMockParticipant')} title={t('createMockParticipant')} onClick={() => setMockFormOpen((value) => !value)}><Plus className="h-4 w-4" /><span className="sr-only">{t('createMockParticipant')}</span></Button>}</div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {clubMembers.map((record) => {
-                  const userId = record.member.userId;
-                  const checked = selectedMembers.includes(userId);
-                  return <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200/80 p-3 transition hover:border-blue-300"><input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} /><Avatar name={record.user.fullName} userId={userId} avatarUrl={record.user.avatarUrl} className="h-8 w-8" /><span title={record.user.fullName || undefined} className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{shortDisplayName(record.user.fullName)}</span>{activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700">{t('active')}</Badge>}</label>;
-                })}
-              </div>
-              {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreMembers}>{t('loadMoreMembers')}</Button>}
-              <div className="mt-3 flex flex-wrap gap-2"><Button variant="outline" disabled={busy || selectedMembers.length === 0} onClick={onForceSelected}>{t('assignSelected')}</Button></div>
-              {session.status === 'OPEN' && mockFormOpen && <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3"><input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onCreateMock(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" /><Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={onCreateMock}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button><span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span></div>}
+              {activeTab === 'participants' && (
+                <div className="space-y-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        {t('participants')}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">{t('participantsOnlyHint')}</p>
+                    </div>
+                    <span className="text-xs font-bold text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {activeParticipants.map((item) => (
+                      <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" />
+                          <div className="min-w-0">
+                            <p title={item.fullName || undefined} className="truncate text-sm font-semibold text-slate-900">{shortDisplayName(item.fullName)}</p>
+                            <p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p>
+                          </div>
+                          {item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] font-medium text-amber-700">{t('mockPlayer')}</Badge>}
+                        </div>
+                        <span className="text-xs font-medium text-slate-400">{t('joinedLabel')}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {participantCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreParticipants}>{t('loadMore')}</Button>}
+
+                  {session.capabilities?.canManage && (
+                    <div className="mt-5 border-t border-slate-100 pt-5">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <UserPlus className="h-4 w-4 text-blue-600" />
+                          <h4 className="font-semibold text-slate-900 text-sm">{t('assignSelected')}</h4>
+                        </div>
+                        {session.status === 'OPEN' && (
+                          <Button type="button" size="sm" variant="outline" aria-expanded={mockFormOpen} aria-label={t('createMockParticipant')} title={t('createMockParticipant')} onClick={() => setMockFormOpen((value) => !value)}>
+                            <Plus className="h-4 w-4" />
+                            <span className="sr-only">{t('createMockParticipant')}</span>
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {clubMembers.map((record) => {
+                          const userId = record.member.userId;
+                          const checked = selectedMembers.includes(userId);
+                          return (
+                            <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200/80 p-3 transition hover:border-blue-300">
+                              <input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} />
+                              <Avatar name={record.user.fullName} userId={userId} avatarUrl={record.user.avatarUrl} className="h-8 w-8" />
+                              <span title={record.user.fullName || undefined} className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{shortDisplayName(record.user.fullName)}</span>
+                              {activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700">{t('active')}</Badge>}
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreMembers}>{t('loadMoreMembers')}</Button>}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button variant="outline" disabled={busy || selectedMembers.length === 0} onClick={onForceSelected}>{t('assignSelected')}</Button>
+                      </div>
+                      {session.status === 'OPEN' && mockFormOpen && (
+                        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                          <input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onCreateMock(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" />
+                          <Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={onCreateMock}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button>
+                          <span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {session.viewerParticipant?.status === 'ACTIVE' && (
+                    <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div>
+                        <div><h4 className="text-base font-bold text-slate-900">{t('preferences')}</h4><p className="mt-1 text-xs text-slate-500">{t('preferencesHint')}</p></div>
+                      </div>
+                      <div className="mt-4 grid gap-3 md:grid-cols-3">
+                        {[
+                          { value: preferredPartners, setValue: setPreferredPartners, label: t('preferredPartner') },
+                          { value: preferredOpponents, setValue: setPreferredOpponents, label: t('preferredOpponent') },
+                          { value: avoidedPlayers, setValue: setAvoidedPlayers, label: t('avoidPlayer') },
+                        ].map((field) => (
+                          <label key={field.label} className="space-y-2">
+                            <span className="text-xs font-semibold text-slate-800">{field.label}</span>
+                            <select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>
+                              {preferenceOptions.map((item) => (
+                                <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>
+                                  {shortDisplayName(item.fullName)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
+                      </div>
+                      <Button className="mt-4" variant="outline" disabled={busy} onClick={onSavePreferences}>{t('savePreferences')}</Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'matches' && (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <Swords className="w-5 h-5 text-blue-600" />
+                        {t('matches')}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-slate-500">{t('openScoring')}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {session.capabilities?.canCreateMatch && (
+                        <Button size="sm" disabled={busy} onClick={() => setPairingOpen(true)}>
+                          <Swords className="mr-1.5 h-4 w-4" />{t('createMatch')}
+                        </Button>
+                      )}
+                      <select aria-label={t('matchStatusFilter')} className="h-9 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}>
+                        <option value="">{t('allMatchStatuses')}</option>
+                        {(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => (
+                          <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {matches.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">{t('noMatches')}</div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} />)}</div>
+                  )}
+                  {matchCursor && (
+                    <div className="flex justify-center"><Button variant="outline" size="sm" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'statistics' && (
+                <StatisticsPanel stats={playerStats} completedMatches={completedMatches.length} t={t} />
+              )}
             </div>
-          )}
-          </div>
+          </section>
 
-          {session.viewerParticipant?.status === 'ACTIVE' && <div className="p-5 sm:p-6 bg-slate-50/30">
-          <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div><div><h2 className="text-lg font-bold text-slate-900">{t('preferences')}</h2><p className="mt-1 text-sm text-slate-500">{t('preferencesHint')}</p></div></div>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {[
-              { value: preferredPartners, setValue: setPreferredPartners, label: t('preferredPartner') },
-              { value: preferredOpponents, setValue: setPreferredOpponents, label: t('preferredOpponent') },
-              { value: avoidedPlayers, setValue: setAvoidedPlayers, label: t('avoidPlayer') },
-            ].map((field) => <label key={field.label} className="space-y-2"><span className="text-sm font-semibold text-slate-800">{field.label}</span><select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>{preferenceOptions.map((item) => <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>{shortDisplayName(item.fullName)}</option>)}</select></label>)}
-          </div>
-          <Button className="mt-4" variant="outline" disabled={busy} onClick={onSavePreferences}>{t('savePreferences')}</Button>
-          </div>}
-        </section>}
-
-        {activeTab === 'matches' && <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold text-slate-900">{t('matches')}</h2><p className="mt-1 text-sm text-slate-500">{t('openScoring')}</p></div><div className="flex flex-wrap items-center gap-2">{session.capabilities?.canCreateMatch && <Button disabled={busy} onClick={() => setPairingOpen(true)}><Swords className="mr-2 h-4 w-4" />{t('createMatch')}</Button>}<select aria-label={t('matchStatusFilter')} className="h-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium" value={matchStatus} onChange={(event) => setMatchStatus(event.target.value)}><option value="">{t('allMatchStatuses')}</option>{(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((status) => <option key={status} value={status}>{t(`matchStatus.${status}`)}</option>)}</select></div></div>
-          {matches.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{t('noMatches')}</div> : <div className="grid gap-4 lg:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} />)}</div>}
-          {matchCursor && <div className="flex justify-center"><Button variant="outline" disabled={loadingMore} onClick={onLoadMoreMatches}>{t('loadMore')}</Button></div>}
-        </section>}
-
-        {activeTab === 'statistics' && <StatisticsPanel stats={playerStats} completedMatches={completedMatches.length} t={t} />}
-        </div>
-        </div>
-
-        {/* ── Right Column: Club Context + Registration Roster connected card ── */}
-        <div className="min-w-0">
-          <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs divide-y divide-slate-100">
-            <aside className="p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('clubContextLabel')}</p>
-              <div className="mt-3 flex items-center gap-3">
-                {Boolean(communityLogoUrl) && (
+          {/* ── Right Column: Card con DUY NHẤT (Right Nested Card) ── */}
+          <aside className="lg:col-span-5" data-purpose="registration-card">
+            <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-6 shadow-sm">
+              {/* Card Header: Club branding with blue tick */}
+              <div className="flex items-center gap-3.5 pb-4 mb-4 border-b border-slate-200/80">
+                {communityLogoUrl ? (
                   <img
-                    src={communityLogoUrl!}
+                    src={communityLogoUrl}
                     alt={communityName || t('clubSessionLabel')}
-                    className="h-11 w-11 rounded-full border-2 border-white object-cover shadow-sm shrink-0"
+                    className="w-12 h-12 rounded-full border border-blue-200 object-cover shadow-sm shrink-0"
                   />
+                ) : (
+                  <div className="w-12 h-12 rounded-full border border-blue-200 bg-blue-50 flex items-center justify-center text-blue-600 font-extrabold text-xs tracking-wider shadow-sm shrink-0">
+                    SPORTO
+                  </div>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate font-bold text-slate-900">{communityName || t('clubSessionLabel')}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{t('clubContextHint')}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-slate-900 truncate">
+                      {communityName || t('clubSessionLabel')}
+                    </span>
+                    <svg className="w-4 h-4 text-blue-600 fill-current shrink-0" viewBox="0 0 20 20">
+                      <path clipRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fillRule="evenodd" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-slate-500 truncate">{t('clubContextHint')}</p>
                 </div>
               </div>
-            </aside>
 
-            <RegistrationRoster slots={slots} activeCount={activeParticipants.length} maxParticipants={session.maxParticipants} t={t} canJoin={session.capabilities?.canJoin === true} canWithdraw={session.capabilities?.canWithdraw === true} busy={busy} onJoin={onJoin} onWithdraw={onWithdraw} />
-          </div>
+              {/* Registration Roster */}
+              <RegistrationRoster
+                slots={slots}
+                activeCount={activeParticipants.length}
+                maxParticipants={session.maxParticipants}
+                t={t}
+                canJoin={session.capabilities?.canJoin === true}
+                canWithdraw={session.capabilities?.canWithdraw === true}
+                busy={busy}
+                onJoin={onJoin}
+                onWithdraw={onWithdraw}
+              />
+            </div>
+          </aside>
         </div>
       </div>
-          {pairingOpen && <PairingModal participants={activeParticipants} sideAPlayers={sideAPlayers} sideBPlayers={sideBPlayers} pairingReady={pairingReady} busy={busy} t={t} assignPlayer={assignPlayer} onClose={() => setPairingOpen(false)} onCreate={() => { setPairingOpen(false); onCreateMatch(); }} />}
-      </div>
+
+      {pairingOpen && (
+        <PairingModal
+          participants={activeParticipants}
+          sideAPlayers={sideAPlayers}
+          sideBPlayers={sideBPlayers}
+          pairingReady={pairingReady}
+          busy={busy}
+          t={t}
+          assignPlayer={assignPlayer}
+          onClose={() => setPairingOpen(false)}
+          onCreate={() => {
+            setPairingOpen(false);
+            onCreateMatch();
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -669,49 +864,121 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
   const currentPage = Math.min(page, pageCount - 1);
   const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  return <div className="p-5">
-    {/* Header */}
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="text-sm font-bold text-slate-900">{t('registrationTitle')}</h2>
-      <span className="text-xs font-bold text-slate-500">{activeCount}/{maxParticipants}</span>
-    </div>
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-slate-200/80">
+        <div>
+          <h2 className="text-base font-bold text-slate-900">{t('registrationTitle')}</h2>
+          <p className="text-xs text-slate-500">{t('registrationSlotSubtitle')}</p>
+        </div>
+        <div className="text-right">
+          <span className="text-base font-extrabold text-blue-600">{activeCount}</span>
+          <span className="text-xs font-semibold text-slate-400">/{maxParticipants}</span>
+        </div>
+      </div>
 
-    <div className="mt-4 grid grid-cols-4 gap-x-2 gap-y-4">
-      {visibleSlots.map((item, index) => {
-        const slotNumber = currentPage * pageSize + index + 1;
-        if (!item) {
-          const emptySlot = <>
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-slate-200 bg-white text-lg font-light text-slate-400">+</div>
-            <p className="mt-1 text-[10px] font-medium text-slate-400 text-center truncate">Slot #{slotNumber}</p>
-          </>;
-          return canJoin
-            ? <button key={`slot-${slotNumber}`} type="button" disabled={busy} onClick={onJoin} className="min-w-0 cursor-pointer rounded-xl p-1 text-center transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">{emptySlot}</button>
-            : <div key={`slot-${slotNumber}`} className="min-w-0 text-center">{emptySlot}</div>;
-        }
-        return <div key={item.participant.id} className="min-w-0 text-center">
-          <div className="flex justify-center">
-            <Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-11 w-11" />
-          </div>
-          <p title={item.fullName || undefined} className="mt-1 truncate text-[11px] font-semibold text-slate-700">{shortDisplayName(item.fullName) || `#${slotNumber}`}</p>
-        </div>;
-      })}
-    </div>
+      {/* Slots Grid: 4 columns */}
+      <div className="grid grid-cols-4 gap-y-4 gap-x-3 py-6">
+        {visibleSlots.map((item, index) => {
+          const slotNumber = currentPage * pageSize + index + 1;
+          if (!item) {
+            const emptySlot = (
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full border-[1.5px] border-dashed border-slate-300 bg-white flex items-center justify-center text-slate-400 transition group-hover:border-blue-500 group-hover:text-blue-600 group-hover:bg-blue-50/50">
+                  <span className="text-lg font-light leading-none">+</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1.5 font-medium">Slot #{slotNumber}</span>
+              </div>
+            );
+            return canJoin ? (
+              <button
+                key={`slot-${slotNumber}`}
+                type="button"
+                disabled={busy}
+                onClick={onJoin}
+                className="group flex flex-col items-center cursor-pointer transition disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {emptySlot}
+              </button>
+            ) : (
+              <div key={`slot-${slotNumber}`} className="flex flex-col items-center">
+                {emptySlot}
+              </div>
+            );
+          }
+          return (
+            <div key={item.participant.id} className="flex flex-col items-center min-w-0">
+              <Avatar
+                name={item.fullName}
+                userId={item.participant.userId}
+                avatarUrl={item.avatarUrl}
+                mock={item.isMock}
+                className="w-12 h-12"
+              />
+              <span
+                title={item.fullName || undefined}
+                className="text-[11px] font-medium text-slate-700 mt-1.5 truncate max-w-[70px] text-center"
+              >
+                {shortDisplayName(item.fullName) || `Slot #${slotNumber}`}
+              </span>
+            </div>
+          );
+        })}
+      </div>
 
-    {pageCount > 1 && <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><Button size="sm" variant="outline" aria-label={t('previousPage')} title={t('previousPage')} disabled={currentPage === 0} onClick={() => setPage((value) => Math.max(value - 1, 0))}><ChevronLeft className="h-4 w-4" /></Button><span className="text-xs font-medium text-slate-500">{t('rosterPage', { page: currentPage + 1, pages: pageCount })}</span><Button size="sm" variant="outline" aria-label={t('nextPage')} title={t('nextPage')} disabled={currentPage === pageCount - 1} onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}><ChevronRight className="h-4 w-4" /></Button></div>}
-    {canWithdraw ? (
-      <div className="mt-4 border-t border-slate-100 pt-3">
-        <Button className="w-full" size="sm" variant="outline" disabled={busy} onClick={onWithdraw}>
+      {/* Pagination Bar */}
+      {pageCount > 1 && (
+        <div className="flex items-center justify-between py-3 border-t border-slate-200 text-xs text-slate-500 mb-5">
+          <button
+            type="button"
+            className="p-1.5 rounded-lg border border-slate-200 hover:bg-white text-slate-400 hover:text-slate-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label={t('previousPage')}
+            title={t('previousPage')}
+            disabled={currentPage === 0}
+            onClick={() => setPage((value) => Math.max(value - 1, 0))}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="font-medium text-slate-600">
+            {t('rosterPage', { page: currentPage + 1, pages: pageCount })}
+          </span>
+          <button
+            type="button"
+            className="p-1.5 rounded-lg border border-slate-200 hover:bg-white text-slate-600 hover:text-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label={t('nextPage')}
+            title={t('nextPage')}
+            disabled={currentPage === pageCount - 1}
+            onClick={() => setPage((value) => Math.min(value + 1, pageCount - 1))}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Primary Action Button */}
+      {canWithdraw ? (
+        <Button
+          className="w-full rounded-xl py-3.5 px-6 font-semibold shadow-md transition-all flex items-center justify-center gap-2"
+          variant="outline"
+          disabled={busy}
+          onClick={onWithdraw}
+        >
           {t('withdraw')}
         </Button>
-      </div>
-    ) : canJoin ? (
-      <div className="mt-4 border-t border-slate-100 pt-3">
-        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold" size="sm" disabled={busy} onClick={onJoin}>
-          {t('join')}
-        </Button>
-      </div>
-    ) : null}
-  </div>;
+      ) : canJoin ? (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onJoin}
+          className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span>{t('join')}</span>
+          <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 function PairingModal({ participants, sideAPlayers, sideBPlayers, pairingReady, busy, t, assignPlayer, onClose, onCreate }: {

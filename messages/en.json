@@ -8803,6 +8803,8 @@
     "clubContextLabel": "CLUB COMMUNITY",
     "clubSessionLabel": "Social session",
     "clubContextHint": "Club members and free-pair matches",
+    "hostAdmin": "Host Admin",
+    "registrationSlotSubtitle": "Registered slot list",
     "overviewTitle": "Session overview",
     "overviewHint": "Create free-pair matches from the member list",
     "registrationTitle": "Confirmed participants",

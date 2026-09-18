@@ -565,14 +565,15 @@ function SessionDetailModal({
 
         {/* ── 2-Column Body ── */}
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] divide-y md:divide-y-0 md:divide-x divide-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-[1.35fr_1fr] divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-full">
 
             {/* Left column: Session details + Note */}
-            <div className="p-6 space-y-5">
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-2">
+            <div className="p-6 space-y-4 flex flex-col justify-between">
+              <div className="space-y-3.5">
+                {/* Badges: Thiếu người, Buổi giao lưu, Môn (chữ trắng nền màu đậm) */}
+                <div className="flex flex-wrap items-center gap-1.5">
                   {slots && (
-                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${
+                    <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold border ${
                       isFull
                         ? 'border-slate-200 bg-slate-100 text-slate-600'
                         : 'border-amber-200 bg-amber-50 text-amber-700'
@@ -581,77 +582,77 @@ function SessionDetailModal({
                       {getMissingLabel(slots.current, slots.max)}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                  <span className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
                     Buổi giao lưu
                   </span>
                   {item.sport && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                    <span className="inline-flex items-center rounded-md bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white shadow-xs">
                       {item.sport}
                     </span>
                   )}
                 </div>
+
+                {/* Title */}
                 <h2 className="text-lg font-bold text-slate-900 leading-tight">{item.title}</h2>
+
+                {/* Top Location & Time Quick-info bar */}
+                <div className="rounded-lg border border-slate-100 bg-slate-50/80 p-3 space-y-2 text-xs text-slate-700">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
+                    <span className="font-medium leading-relaxed">{item.location}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-600 pt-1 border-t border-slate-200/60">
+                    {item.playDate && (
+                      <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                        <CalendarDays className="h-3.5 w-3.5 text-blue-600" />
+                        <span>
+                          {(() => {
+                            const [y, m, d] = item.playDate.split('-');
+                            return `${d}/${m}/${y}`;
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                      <Clock3 className="h-3.5 w-3.5 text-blue-600" />
+                      <span>{item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description (Rich Text support) */}
                 {item.rawDescription ? (
                   hasHtmlDescription ? (
                     <div
-                      className="mt-2 text-xs text-slate-600 leading-relaxed prose prose-sm max-w-none [&>p]:mb-1.5 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4"
+                      className="text-xs text-slate-600 leading-relaxed prose prose-sm max-w-none [&>p]:mb-1.5 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4"
                       dangerouslySetInnerHTML={{ __html: item.rawDescription }}
                     />
                   ) : (
-                    <p className="mt-1.5 text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{item.rawDescription}</p>
+                    <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{item.rawDescription}</p>
                   )
                 ) : item.description ? (
-                  <p className="mt-1.5 text-xs text-slate-500 leading-relaxed">{item.description}</p>
+                  <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
                 ) : null}
-              </div>
 
-              {/* Core Info Rows */}
-              <div className="rounded-lg border border-slate-100 bg-slate-50/70 p-3.5 space-y-2.5 text-xs text-slate-700">
-                {item.playDate && (
-                  <div className="flex items-center gap-2.5">
-                    <CalendarDays className="h-4 w-4 shrink-0 text-blue-600" />
-                    <span className="font-semibold">
-                      {(() => {
-                        const [y, m, d] = item.playDate.split('-');
-                        return `${d}/${m}/${y}`;
-                      })()}
-                    </span>
+                {/* Rules if available */}
+                {item.rules && item.rules.length > 0 && (
+                  <div className="pt-2">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Quy định buổi chơi</h3>
+                    <ul className="space-y-1.5">
+                      {item.rules.map((rule, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-blue-600 mt-0.5" />
+                          <span>{rule}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-                <div className="flex items-center gap-2.5">
-                  <Clock3 className="h-4 w-4 shrink-0 text-blue-600" />
-                  <span className="font-semibold">{item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}</span>
-                </div>
-                {slots && (
-                  <div className="flex items-center gap-2.5">
-                    <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
-                    <span className="font-bold text-emerald-700">{slots.feePerSlot}/người · Chia tiền sân</span>
-                  </div>
-                )}
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
-                  <span>{item.location}</span>
-                </div>
               </div>
-
-              {/* Rules if available */}
-              {item.rules && item.rules.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Quy định buổi chơi</h3>
-                  <ul className="space-y-1.5">
-                    {item.rules.map((rule, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-blue-600 mt-0.5" />
-                        <span>{rule}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
               {/* Note input when not yet joined */}
               {!isJoined && !isFull && (
-                <div>
+                <div className="pt-2">
                   <label className="text-xs font-bold text-slate-700 mb-1.5 block">
                     Ghi chú gửi kèm <span className="font-normal text-slate-400">(không bắt buộc)</span>
                   </label>
@@ -739,37 +740,47 @@ function SessionDetailModal({
           </div>
         </div>
 
-        {/* ── Footer Actions ── */}
-        <div className="border-t border-slate-100 bg-white px-6 py-4 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            Đóng
-          </button>
-          {isJoined && (
+        {/* ── Footer Actions: Fee displayed on the left, buttons on the right ── */}
+        <div className="border-t border-slate-100 bg-white px-6 py-3.5 flex items-center justify-between gap-3">
+          {slots ? (
+            <div className="flex items-center gap-2 text-xs">
+              <Sparkles className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span className="font-bold text-emerald-700 text-sm">{slots.feePerSlot}/người</span>
+              <span className="text-slate-400">· Chia tiền sân</span>
+            </div>
+          ) : <div />}
+
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={handleLeave}
-              disabled={isActionLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-5 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
+              onClick={onClose}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
             >
-              <X className="h-4 w-4" />
-              {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi'}
+              Đóng
             </button>
-          )}
-          {!isJoined && !isFull && (
-            <button
-              type="button"
-              onClick={handleJoin}
-              disabled={isActionLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-50"
-            >
-              <UserPlus className="h-4 w-4" />
-              {isActionLoading ? 'Đang xử lý...' : 'Tham gia ngay'}
-            </button>
-          )}
+            {isJoined && (
+              <button
+                type="button"
+                onClick={handleLeave}
+                disabled={isActionLoading}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+                {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi'}
+              </button>
+            )}
+            {!isJoined && !isFull && (
+              <button
+                type="button"
+                onClick={handleJoin}
+                disabled={isActionLoading}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-50"
+              >
+                <UserPlus className="h-4 w-4" />
+                {isActionLoading ? 'Đang xử lý...' : 'Tham gia ngay'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

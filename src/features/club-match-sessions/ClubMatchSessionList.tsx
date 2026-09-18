@@ -32,7 +32,7 @@ export function ClubMatchSessionCard({
   const t = useTranslations('ClubMatchSession');
   const href = session.pairingMode === 'BRACKET' && session.bracketTournamentId
     ? session.capabilities?.canManage
-      ? `/organizer/tournaments/${session.bracketTournamentId}/manage?tab=bracket`
+      ? `/lite/tournaments/${session.bracketTournamentId}/manage?tab=bracket`
       : `/tournaments/${session.bracketTournamentId}?tab=bracket`
     : `/communities/${communityId}/match-sessions/${session.id}`;
   const isBracket = session.pairingMode === 'BRACKET';

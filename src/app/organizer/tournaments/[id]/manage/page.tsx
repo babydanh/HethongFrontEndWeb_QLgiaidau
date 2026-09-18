@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/DropdownMenu';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { isClubSuperLiteTournament } from '@/features/tournaments/lite-qr';
 import { useManageState } from './components/useManageState';
 import { TournamentStepper } from './components/TournamentStepper';
 import { BasicInfoTab } from './components/BasicInfoTab';
@@ -164,6 +165,13 @@ export default function TournamentManagePage({ params }: { params: Promise<{ id:
   const s = useManageState(id);
   const router = useRouter();
   const translate = useTranslations('OrganizerManage');
+
+  // Auto-redirect Club Super Lite tournaments to the dedicated Lite Tournament workspace
+  useEffect(() => {
+    if (s.tournament && isClubSuperLiteTournament(s.tournament)) {
+      router.replace(`/lite/tournaments/${id}/manage`);
+    }
+  }, [id, router, s.tournament]);
   const commonTranslate = useTranslations('Common');
   const displayTranslate = useTranslations('TournamentDisplay');
   const ruleTranslate = useTranslations('TournamentDetail');

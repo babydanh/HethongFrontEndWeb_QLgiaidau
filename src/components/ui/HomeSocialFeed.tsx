@@ -47,6 +47,7 @@ interface ClubIdentity {
 }
 
 interface JoinedPlayer {
+  userId?: string;
   name: string;
   initialsBg: string;
   avatarUrl?: string | null;
@@ -478,7 +479,7 @@ function SessionDetailModal({
   const [note, setNote] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [pendingRequests, setPendingRequests] = useState<Array<{ name: string; note?: string }>>([]);
+  const [pendingRequests, setPendingRequests] = useState<Array<{ userId?: string; name: string; avatarUrl?: string | null; note?: string }>>([]);
   const [slotPage, setSlotPage] = useState(1);
   const SLOTS_PER_PAGE = 16;
   const openUserById = useUserProfileModalStore((state) => state.openUserById);
@@ -512,7 +513,7 @@ function SessionDetailModal({
     toast.success('Đã hủy yêu cầu xin tham gia');
   };
 
-  const handleApproveRequest = async (req: { name: string; note?: string }) => {
+  const handleApproveRequest = async (req: { userId?: string; name: string; avatarUrl?: string | null; note?: string }) => {
     setPendingRequests((prev) => prev.filter((p) => p !== req));
     if (req.name === 'Bạn') {
       setIsPending(false);
@@ -520,14 +521,14 @@ function SessionDetailModal({
       await onJoin();
     } else {
       if (slots && slots.joinedPlayers) {
-        slots.joinedPlayers.push({ name: req.name, initialsBg: '#10b981' });
+        slots.joinedPlayers.push({ userId: req.userId, name: req.name, avatarUrl: req.avatarUrl, initialsBg: '#10b981' });
         slots.current = Math.min(slots.current + 1, slots.max);
       }
     }
     toast.success(`Đã duyệt yêu cầu của ${req.name}!`);
   };
 
-  const handleRejectRequest = (req: { name: string; note?: string }) => {
+  const handleRejectRequest = (req: { userId?: string; name: string; avatarUrl?: string | null; note?: string }) => {
     setPendingRequests((prev) => prev.filter((p) => p !== req));
     if (req.name === 'Bạn') {
       setIsPending(false);
@@ -730,8 +731,13 @@ function SessionDetailModal({
                               const isMe = joinedPlayer.name === 'Bạn';
                               return (
                                 <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
-                                  <div
-                                    className={`relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs ${isMe && isJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                      openUserById(joinedPlayer.userId || 'sample-user', joinedPlayer.name, joinedPlayer.avatarUrl || null, rect);
+                                    }}
+                                    className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all ${isMe && isJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
                                     style={{
                                       backgroundColor: joinedPlayer.initialsBg || '#3b82f6',
                                       ...(joinedPlayer.avatarUrl
@@ -742,13 +748,13 @@ function SessionDetailModal({
                                           }
                                         : {}),
                                     }}
-                                    title={`Slot #${slotNum}: ${joinedPlayer.name}`}
+                                    title={`Bấm để xem trang cá nhân của ${joinedPlayer.name}`}
                                   >
                                     {!joinedPlayer.avatarUrl && getInitials(joinedPlayer.name)}
                                     {isMe && isJoined && (
                                       <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">✓</span>
                                     )}
-                                  </div>
+                                  </button>
                                   <span className="text-[11px] font-semibold text-slate-700 text-center truncate w-full">
                                     {isMe ? 'Bạn' : joinedPlayer.name.split(' ').pop()}
                                   </span>
@@ -763,13 +769,18 @@ function SessionDetailModal({
                               const isMyPending = pendingPlayer.name === 'Bạn';
                               return (
                                 <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
-                                  <div
-                                    className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-amber-400 bg-amber-50 text-xs font-bold text-amber-700 shadow-xs"
-                                    title={`Slot #${slotNum} - Chờ duyệt: ${pendingPlayer.name}${pendingPlayer.note ? ` (${pendingPlayer.note})` : ''}`}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                      openUserById(pendingPlayer.userId || 'sample-user', pendingPlayer.name, pendingPlayer.avatarUrl || null, rect);
+                                    }}
+                                    className="group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-amber-400 bg-amber-50 text-xs font-bold text-amber-700 shadow-xs cursor-pointer hover:border-amber-500 hover:scale-105 transition-all"
+                                    title={`Bấm để xem hồ sơ: ${pendingPlayer.name}${pendingPlayer.note ? ` (${pendingPlayer.note})` : ''}`}
                                   >
                                     {getInitials(pendingPlayer.name)}
                                     <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[8px] text-white">⏳</span>
-                                  </div>
+                                  </button>
                                   <span className="text-[10px] font-medium text-amber-700 text-center truncate w-full">
                                     {isMyPending ? 'Bạn (Chờ)' : pendingPlayer.name.split(' ').pop()}
                                   </span>
@@ -842,23 +853,38 @@ function SessionDetailModal({
                       </div>
                       <div className="space-y-1.5 max-h-32 overflow-y-auto">
                         {pendingRequests.map((req, idx) => (
-                          <div key={idx} className="flex items-center justify-between gap-2 bg-white px-2.5 py-1.5 rounded-md border border-amber-100 shadow-2xs text-xs">
-                            <div className="min-w-0 flex-1">
-                              <span className="font-bold text-slate-800">{req.name}</span>
-                              {req.note && <p className="text-[11px] text-slate-500 truncate">{req.note}</p>}
-                            </div>
+                          <div key={idx} className="flex items-center justify-between gap-2 bg-white px-2.5 py-2 rounded-lg border border-amber-100 shadow-2xs text-xs">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                openUserById(req.userId || 'sample-user', req.name, req.avatarUrl || null, rect);
+                              }}
+                              className="group flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer hover:opacity-80 transition-opacity"
+                              title={`Xem hồ sơ của ${req.name}`}
+                            >
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200 group-hover:border-blue-400 transition-colors">
+                                {getInitials(req.name)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate block">
+                                  {req.name}
+                                </span>
+                                {req.note && <p className="text-[11px] text-slate-500 truncate">{req.note}</p>}
+                              </div>
+                            </button>
                             <div className="flex items-center gap-1 shrink-0">
                               <button
                                 type="button"
                                 onClick={() => handleApproveRequest(req)}
-                                className="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] transition-colors"
+                                className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-2xs"
                               >
                                 Đồng ý
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleRejectRequest(req)}
-                                className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[10px] transition-colors"
+                                className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] transition-colors cursor-pointer"
                               >
                                 Từ chối
                               </button>

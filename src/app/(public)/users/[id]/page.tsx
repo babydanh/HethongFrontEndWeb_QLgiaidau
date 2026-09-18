@@ -639,9 +639,9 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                 </div>
               )}
 
-              {/* Ngày tham gia - Sát góc dưới cùng bên trái */}
+              {/* Ngày tham gia - Sát góc dưới cùng bên trái, không có gạch xám */}
               {profile.createdAt && (
-                <div className="w-full mt-3 pt-2 text-[10px] text-slate-400 flex items-center justify-start gap-1 border-t border-slate-50">
+                <div className="w-full mt-3 -mb-2 text-[10px] text-slate-400 flex items-center justify-start gap-1">
                   <Calendar className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                   <span>{translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}</span>
                 </div>

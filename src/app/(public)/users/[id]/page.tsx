@@ -319,12 +319,6 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         >
           <ArrowLeft className="w-4 h-4" /> {translate('back')}
         </button>
-        <ReportViolationButton
-          targetType="USER"
-          targetId={profile.id}
-          targetLabel={profile.fullName}
-          hidden={user?.id === profile.id}
-        />
       </div>
 
       {/* ─── Cover Banner (Độc lập ở trên cùng) ─── */}
@@ -363,8 +357,8 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none" />
 
-        {/* Action Button: Nút chia sẻ góc trên phải */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30">
+        {/* Action Buttons: Nút chia sẻ & Báo cáo icon bé ở góc trên cùng phải của banner */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 flex items-center gap-2">
           <button
             type="button"
             onClick={() => setIsShareModalOpen(true)}
@@ -374,6 +368,14 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
           >
             <Share2 className="w-4 h-4 text-white" />
           </button>
+          <ReportViolationButton
+            targetType="USER"
+            targetId={profile.id}
+            targetLabel={profile.fullName}
+            hidden={user?.id === profile.id}
+            compact={true}
+            className="!h-9 !w-9 !p-0 !rounded-lg !bg-black/40 hover:!bg-black/60 !text-white hover:!text-rose-400 !border !border-white/20 !shadow-md backdrop-blur-md active:scale-95 cursor-pointer"
+          />
         </div>
       </div>
 
@@ -443,18 +445,6 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   ))}
                 </div>
               )}
-
-              {/* Action Buttons in Left Profile Card: Chia sẻ hồ sơ */}
-              <div className="w-full flex flex-col gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="w-full h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-                >
-                  <Share2 className="w-3.5 h-3.5 text-slate-500" />
-                  Chia sẻ hồ sơ
-                </button>
-              </div>
 
               {/* Ngày tham gia */}
               {profile.createdAt && (

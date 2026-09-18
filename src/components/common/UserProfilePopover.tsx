@@ -636,7 +636,7 @@ export default function UserProfilePopover({
         left: `${left}px`,
         position: "fixed",
       }}
-      className="z-[99999] w-[340px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-slate-800"
+      className="z-[99999] w-[340px] max-h-[90vh] overflow-hidden overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-slate-800"
       onClick={(e) => e.stopPropagation()}
       onMouseEnter={keepOpen}
       onMouseLeave={() => scheduleClose(1500)}

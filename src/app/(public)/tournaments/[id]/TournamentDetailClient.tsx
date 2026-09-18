@@ -180,7 +180,8 @@ const commonTranslate = useTranslations('Common');
     user.id === (activeTournament as { createdBy?: string })?.createdBy ||
     user.id === tournament?.parent?.createdBy
   );
-  const { openUserById, openUserProfile } = useUserProfileModalStore();
+  const { openUserById, openUserProfile, keepOpen, scheduleClose } = useUserProfileModalStore();
+  const organizerHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [activeTab, setActiveTab] = useState<TournamentDetailTab>(() => {
     const tabParam = searchParams?.get('tab');
     if (tabParam === 'results' && !initialHasResults) {
@@ -956,13 +957,33 @@ const commonTranslate = useTranslations('Common');
 
     const handleOrganizerClick = (e: React.MouseEvent<HTMLElement>) => {
       if (!organizerId) return;
+      if (organizerHoverTimerRef.current) clearTimeout(organizerHoverTimerRef.current);
       const rect = e.currentTarget.getBoundingClientRect();
       openUserById(organizerId, organizer?.fullName || displayName, organizer?.avatarUrl || null, rect);
+    };
+
+    const handleOrganizerMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+      if (!organizerId) return;
+      keepOpen();
+      const rect = e.currentTarget.getBoundingClientRect();
+      organizerHoverTimerRef.current = setTimeout(() => {
+        openUserById(organizerId, organizer?.fullName || displayName, organizer?.avatarUrl || null, rect);
+      }, 250);
+    };
+
+    const handleOrganizerMouseLeave = () => {
+      if (organizerHoverTimerRef.current) {
+        clearTimeout(organizerHoverTimerRef.current);
+        organizerHoverTimerRef.current = null;
+      }
+      scheduleClose(1500);
     };
 
     return (
       <div
         onClick={isClickable ? handleOrganizerClick : undefined}
+        onMouseEnter={isClickable ? handleOrganizerMouseEnter : undefined}
+        onMouseLeave={isClickable ? handleOrganizerMouseLeave : undefined}
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
         onKeyDown={isClickable ? (e) => {

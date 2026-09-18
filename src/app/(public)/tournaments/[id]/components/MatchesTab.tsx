@@ -735,7 +735,6 @@ export default function MatchesTab({ tournament, tournamentId, divisionId }: Pro
           courts={resolvedPublicCourts}
           divisions={tournament.divisions as unknown as Division[]}
           selectedDivisionId={divisionId}
-          onSwitchToList={() => setViewMode('list')}
           onOpenMatchDetail={(m) => {
             if (typeof window !== 'undefined') {
               window.location.href = `/live/${m.id}`;

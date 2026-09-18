@@ -10,13 +10,9 @@ import {
   ZoomOut,
   Maximize2,
   Minimize2,
-  ChevronLeft,
-  ChevronRight,
   Search,
   Flame,
-  Layers,
   ExternalLink,
-  SlidersHorizontal,
 } from 'lucide-react';
 import type { BracketMatch, Tournament, Division } from '@/features/tournaments/api';
 import { useTranslations } from 'next-intl';
@@ -383,7 +379,7 @@ export default function PublicCourtScheduleBoard({
   const configuredStepMinutes = Number(tournamentConfig.stepMinutes || tournamentConfig.gridIncrementMinutes) || 15;
   const configuredMinutesPerSet = Number(tournamentConfig.minutesPerSet) || 15;
 
-  const [stepMinutes, setStepMinutes] = useState<number>(configuredStepMinutes);
+  const stepMinutes = configuredStepMinutes;
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -564,12 +560,6 @@ export default function PublicCourtScheduleBoard({
   const gridTotalHeight = totalSlots * cellHeight;
 
   // 6. Navigation Controls
-  const handleScroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    const offset = direction === 'left' ? -380 : 380;
-    scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
-  };
-
   const handleZoom = (delta: number) => {
     setZoomLevel((prev) => Math.max(0.7, Math.min(1.4, Math.round((prev + delta) * 10) / 10)));
   };
@@ -629,87 +619,41 @@ export default function PublicCourtScheduleBoard({
         isFullscreen ? 'fixed inset-0 !z-50 bg-white rounded-none border-none h-screen w-screen' : 'w-full'
       }`}
     >
-      {/* ── 1. TOP TOOLBAR RIBBON (Date, Step Switcher, Search, Zoom, Fullscreen) ── */}
+      {/* ── 1. TOP TOOLBAR RIBBON (Date, Search, Zoom, Fullscreen) ── */}
       <div className="p-2.5 sm:p-3 border-b border-slate-200/90 bg-white flex flex-col gap-2.5 relative z-10">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          {/* Left: View Mode Pills + Date Selector Pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-
-            {onSwitchToList && (
-              <div className="flex items-center bg-slate-100/90 p-0.5 rounded-lg border border-slate-200/80 shadow-2xs">
+          {/* Left: Date Selector Pills (Only dates in setting or with matches) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-full sm:max-w-[650px] p-0.5 scrollbar-none">
+            {availableScheduleDates.map((dateStr) => {
+              const isActive = dateStr === activeDate;
+              const matchCount = matchesByDateCount[dateStr] || 0;
+              return (
                 <button
+                  key={dateStr}
                   type="button"
-                  className="px-2.5 py-1 rounded-md text-xs font-bold bg-white text-slate-900 shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Calendar className="h-3.5 w-3.5 text-slate-700" />
-                  <span>{translate('viewModeTimeline')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={onSwitchToList}
-                  className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/70 transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Layers className="h-3.5 w-3.5" />
-                  <span>{translate('viewModeList')}</span>
-                </button>
-              </div>
-            )}
-
-            {/* Date Selector Pills (Only dates in setting or with matches) */}
-            <div className="flex items-center gap-1 overflow-x-auto max-w-[540px] p-0.5 scrollbar-none">
-              {availableScheduleDates.map((dateStr) => {
-                const isActive = dateStr === activeDate;
-                const matchCount = matchesByDateCount[dateStr] || 0;
-                return (
-                  <button
-                    key={dateStr}
-                    type="button"
-                    onClick={() => setSelectedDate(dateStr)}
-                    className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200'
-                    }`}
-                  >
-                    <Calendar className={`h-3 w-3 ${isActive ? 'text-slate-200' : 'text-slate-400'}`} />
-                    <span>{formatDayLabel(dateStr)}</span>
-                    {matchCount > 0 && (
-                      <span className={`px-1 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'}`}>
-                        {matchCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Right: Step Interval, Search, Zoom Controls, Navigation, Fullscreen */}
-          <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-            {/* Step Interval Switcher */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 p-0.5 rounded-lg text-[11px] font-bold text-slate-700 shrink-0">
-              <span className="px-1.5 text-slate-400 font-semibold flex items-center gap-1">
-                <SlidersHorizontal className="h-3 w-3" />
-                <span className="hidden sm:inline">Khung:</span>
-              </span>
-              {[15, 30, 60].map((step) => (
-                <button
-                  key={step}
-                  type="button"
-                  onClick={() => setStepMinutes(step)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                    stepMinutes === step
-                      ? 'bg-white text-slate-900 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  onClick={() => setSelectedDate(dateStr)}
+                  className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
-                  {step}p
+                  <Calendar className={`h-3 w-3 ${isActive ? 'text-slate-200' : 'text-slate-400'}`} />
+                  <span>{formatDayLabel(dateStr)}</span>
+                  {matchCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'}`}>
+                      {matchCount}
+                    </span>
+                  )}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
 
+          {/* Right: Search, Zoom Controls, Fullscreen */}
+          <div className="flex items-center gap-1.5 flex-wrap ml-auto">
             {/* Quick Search */}
-            <div className="relative w-28 sm:w-36 md:w-44 shrink-0">
+            <div className="relative w-32 sm:w-40 md:w-48 shrink-0">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
@@ -749,30 +693,6 @@ export default function PublicCourtScheduleBoard({
                 <ZoomIn className="h-3.5 w-3.5" />
               </button>
             </div>
-
-            {/* Court Scroll Buttons */}
-            {displayedCourts.length > 2 && (
-              <div className="flex items-center gap-0.5 bg-slate-50 border border-slate-200 rounded-lg p-0.5 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => handleScroll('left')}
-                  className="h-6 px-2 rounded text-[11px] font-semibold text-slate-700 hover:bg-white hover:text-slate-900 flex items-center gap-0.5 transition-all cursor-pointer"
-                  title={translate('timelinePrevCourtTitle')}
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{translate('timelinePrevCourts')}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleScroll('right')}
-                  className="h-6 px-2 rounded text-[11px] font-semibold text-slate-700 hover:bg-white hover:text-slate-900 flex items-center gap-0.5 transition-all cursor-pointer"
-                  title={translate('timelineNextCourtTitle')}
-                >
-                  <span className="hidden sm:inline">{translate('timelineNextCourts')}</span>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            )}
 
             {/* Fullscreen Mode */}
             <button
@@ -834,7 +754,7 @@ export default function PublicCourtScheduleBoard({
           <div
             className="grid w-full min-w-full"
             style={{
-              gridTemplateColumns: `54px repeat(${Math.max(1, displayedCourts.length)}, minmax(240px, 1fr))`,
+              gridTemplateColumns: `54px repeat(${Math.max(1, displayedCourts.length)}, minmax(${displayedCourts.length <= 2 ? '320px' : '250px'}, 1fr))`,
             }}
           >
             {/* Top-Left Corner Sticky Header (Terracotta Orange z-30) */}

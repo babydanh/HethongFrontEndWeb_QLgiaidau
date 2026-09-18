@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -1767,9 +1768,22 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadError, setHasLoadError] = useState(false);
   const [joinedActivityIds, setJoinedActivityIds] = useState<Set<string>>(() => new Set());
+  const [collapsedTimeGroups, setCollapsedTimeGroups] = useState<Set<string>>(() => new Set());
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const dateStripRef = useRef<HTMLDivElement>(null);
+
+  const toggleTimeGroup = useCallback((time: string) => {
+    setCollapsedTimeGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(time)) {
+        next.delete(time);
+      } else {
+        next.add(time);
+      }
+      return next;
+    });
+  }, []);
 
   const dateTabs = useMemo<DateTab[]>(
     () =>
@@ -2060,49 +2074,69 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
         </div>
       ) : timelineGroups.length > 0 ? (
         <div className="space-y-5">
-          {timelineGroups.map((group) => (
-            <div key={group.time} className="relative">
-              <div className="mb-2.5 flex items-center gap-2.5 px-1">
-                <Clock3 className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span className="text-base font-extrabold text-slate-900 dark:text-slate-100 sm:text-lg">{group.time}</span>
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">• {group.items.length} hoạt động</span>
-                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+          {timelineGroups.map((group) => {
+            const isCollapsed = collapsedTimeGroups.has(group.time);
+            return (
+              <div key={group.time} className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleTimeGroup(group.time)}
+                  className="group mb-2.5 flex w-full cursor-pointer items-center gap-2.5 px-1 text-left select-none focus-visible:outline-none"
+                  aria-expanded={!isCollapsed}
+                >
+                  <Clock3 className="h-4 w-4 text-blue-600 shrink-0" aria-hidden="true" />
+                  <span className="text-base font-black sm:text-lg text-slate-900" style={{ color: '#0f172a' }}>
+                    {group.time}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500" style={{ color: '#64748b' }}>
+                    • {group.items.length} hoạt động
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:text-slate-600 ${
+                      isCollapsed ? '-rotate-90' : 'rotate-0'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <div className="h-px flex-1 bg-slate-200" aria-hidden="true" />
+                </button>
+                {!isCollapsed && (
+                  <div className="space-y-3 border-l-2 border-blue-100 pl-3 sm:pl-4">
+                    {group.items.map((item) => {
+                      const isTournament = item.type === 'TOURNAMENT_OPENED';
+                      const isPersonal = item.type === 'PERSONAL_PICKUP';
+                      return isTournament ? (
+                        <TournamentCard
+                          key={item.id}
+                          item={item}
+                          reducedMotion={reducedMotion}
+                          onShare={() => handleShare(item)}
+                        />
+                      ) : isPersonal ? (
+                        <PersonalPickupCard
+                          key={item.id}
+                          item={item}
+                          reducedMotion={reducedMotion}
+                          isJoined={joinedActivityIds.has(item.id)}
+                          onJoin={() => handleJoinSlot(item)}
+                          onLeave={() => handleLeaveSlot(item)}
+                        />
+                      ) : (
+                        <ClubSessionCard
+                          key={item.id}
+                          item={item}
+                          reducedMotion={reducedMotion}
+                          isJoined={joinedActivityIds.has(item.id)}
+                          onJoin={() => handleJoinSlot(item)}
+                          onLeave={() => handleLeaveSlot(item)}
+                          onShare={() => handleShare(item)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <div className="space-y-3 border-l-2 border-blue-100 pl-3 sm:pl-4">
-                {group.items.map((item) => {
-                  const isTournament = item.type === 'TOURNAMENT_OPENED';
-                  const isPersonal = item.type === 'PERSONAL_PICKUP';
-                  return isTournament ? (
-                    <TournamentCard
-                      key={item.id}
-                      item={item}
-                      reducedMotion={reducedMotion}
-                      onShare={() => handleShare(item)}
-                    />
-                  ) : isPersonal ? (
-                    <PersonalPickupCard
-                      key={item.id}
-                      item={item}
-                      reducedMotion={reducedMotion}
-                      isJoined={joinedActivityIds.has(item.id)}
-                      onJoin={() => handleJoinSlot(item)}
-                      onLeave={() => handleLeaveSlot(item)}
-                    />
-                  ) : (
-                    <ClubSessionCard
-                      key={item.id}
-                      item={item}
-                      reducedMotion={reducedMotion}
-                      isJoined={joinedActivityIds.has(item.id)}
-                      onJoin={() => handleJoinSlot(item)}
-                      onLeave={() => handleLeaveSlot(item)}
-                      onShare={() => handleShare(item)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-[0_1px_2px_rgba(15,23,42,0.03)]">

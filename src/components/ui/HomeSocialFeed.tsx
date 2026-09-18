@@ -2062,12 +2062,10 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
         <div className="space-y-5">
           {timelineGroups.map((group) => (
             <div key={group.time} className="relative">
-              <div className="mb-3 flex items-center gap-3 px-1">
-                <div className="inline-flex items-center gap-2 rounded-lg bg-slate-100/80 px-2.5 py-1 text-sm font-bold text-slate-800 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-800/80 dark:text-slate-100 dark:ring-slate-700">
-                  <Clock3 className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                  <span className="text-sm font-extrabold text-slate-900 dark:text-white sm:text-base">{group.time}</span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">• {group.items.length} hoạt động</span>
-                </div>
+              <div className="mb-2.5 flex items-center gap-2.5 px-1">
+                <Clock3 className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                <span className="text-base font-extrabold text-slate-900 dark:text-slate-100 sm:text-lg">{group.time}</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">• {group.items.length} hoạt động</span>
                 <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
               </div>
               <div className="space-y-3 border-l-2 border-blue-100 pl-3 sm:pl-4">

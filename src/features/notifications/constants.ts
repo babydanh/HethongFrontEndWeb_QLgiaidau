@@ -61,6 +61,9 @@ export const NOTIFICATION_TYPE_LABEL_KEYS: Record<string, string> = {
   COMMUNITY_POST_APPROVED: 'notificationType_COMMUNITY_POST_APPROVED',
   COMMUNITY_POST_NEW: 'notificationType_COMMUNITY_POST_NEW',
   COMMUNITY_CHAT_MESSAGE: 'notificationType_COMMUNITY_CHAT_MESSAGE',
+  FRIEND_REQUEST_RECEIVED: 'notificationType_FRIEND_REQUEST_RECEIVED',
+  FRIEND_REQUEST_ACCEPTED: 'notificationType_FRIEND_REQUEST_ACCEPTED',
+  FRIEND_REQUEST_REJECTED: 'notificationType_FRIEND_REQUEST_REJECTED',
 };
 
 export interface NotificationTypeMeta {
@@ -412,6 +415,24 @@ export const NOTIFICATION_TYPE_META: Record<string, NotificationTypeMeta> = {
     cardClassName: 'hover:border-violet-200 hover:bg-violet-50/50',
     unreadCardClassName: 'border-violet-200 bg-violet-50/70 shadow-sm',
     dotClassName: 'bg-violet-500',
+  },
+  FRIEND_REQUEST_RECEIVED: {
+    badgeClassName: 'bg-blue-100 text-blue-800 font-semibold',
+    cardClassName: 'hover:border-blue-200 hover:bg-blue-50/50',
+    unreadCardClassName: 'border-blue-200 bg-blue-50/70 shadow-sm',
+    dotClassName: 'bg-blue-600',
+  },
+  FRIEND_REQUEST_ACCEPTED: {
+    badgeClassName: 'bg-emerald-100 text-emerald-800 font-semibold',
+    cardClassName: 'hover:border-emerald-200 hover:bg-emerald-50/50',
+    unreadCardClassName: 'border-emerald-200 bg-emerald-50/70 shadow-sm',
+    dotClassName: 'bg-emerald-600',
+  },
+  FRIEND_REQUEST_REJECTED: {
+    badgeClassName: 'bg-rose-100 text-rose-800 font-semibold',
+    cardClassName: 'hover:border-rose-200 hover:bg-rose-50/50',
+    unreadCardClassName: 'border-rose-200 bg-rose-50/70 shadow-sm',
+    dotClassName: 'bg-rose-600',
   },
 };
 

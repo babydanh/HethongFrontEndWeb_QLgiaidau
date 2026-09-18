@@ -42,6 +42,7 @@ import { categoriesApi, Category } from '@/features/categories/api';
 import { getCanonicalTierName, isPublicRankingEligible } from '@/features/rankings/elo-display';
 
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import ProfileFriendsTab from '@/components/common/ProfileFriendsTab';
 
 
 interface VerificationTicket {
@@ -54,9 +55,9 @@ interface VerificationTicket {
   createdAt: string;
 }
 
-type ProfileTab = 'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo';
+type ProfileTab = 'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo' | 'friends';
 
-const PROFILE_TABS = ['overview', 'tournaments', 'achievements', 'matches', 'elo'] as const;
+const PROFILE_TABS = ['overview', 'tournaments', 'achievements', 'matches', 'elo', 'friends'] as const;
 
 const isProfileTab = (value: string): value is ProfileTab =>
   (PROFILE_TABS as readonly string[]).includes(value);
@@ -261,7 +262,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(() => !useAuthStore.getState().user?.id);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(() => Boolean(useAuthStore.getState().user?.id));
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tournaments' | 'achievements' | 'matches' | 'elo'>(() => {
+  const [activeTab, setActiveTab] = useState<ProfileTab>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
@@ -1060,20 +1061,21 @@ export default function ProfilePage() {
             <div className="flex-1 min-w-0 w-full space-y-5">
               {/* Navigation Tabs Bar: Underline Style, Chuẩn hoá width đều nhau, Responsive hoàn hảo */}
               <div className="bg-white rounded-xl border border-slate-200 px-2 sm:px-4 shadow-2xs overflow-x-auto no-scrollbar">
-                <div className="flex sm:grid sm:grid-cols-5 min-w-full">
+                <div className="flex sm:grid sm:grid-cols-6 min-w-full">
                   {([
                     { id: 'overview', label: translate("overview") },
                     { id: 'tournaments', label: translate("following") },
                     { id: 'achievements', label: translate("achievements") },
                     { id: 'matches', label: translate("matches") },
-                    { id: 'elo', label: translate("eloStats") }
+                    { id: 'elo', label: translate("eloStats") },
+                    { id: 'friends', label: translate("friends") },
                   ] as const).map(tab => (
                     <button
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
                       className={cn(
-                        "flex-1 sm:w-full py-3.5 px-3 text-center text-xs sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer whitespace-nowrap",
+                        "flex-1 sm:w-full py-3.5 px-2.5 text-center text-xs sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer whitespace-nowrap",
                         activeTab === tab.id
                           ? "border-blue-600 text-blue-600"
                           : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
@@ -1805,6 +1807,9 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
+        )}
+        {activeTab === 'friends' && (
+          <ProfileFriendsTab />
         )}
           </div>
         </div>

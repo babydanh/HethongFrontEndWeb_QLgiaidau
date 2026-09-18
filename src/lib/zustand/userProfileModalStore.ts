@@ -85,7 +85,7 @@ export const useUserProfileModalStore = create<UserProfileModalState>((set, get)
       closeTimeout = null;
     }
   },
-  scheduleClose: (delayMs = 1500) => {
+  scheduleClose: (delayMs = 400) => {
     if (closeTimeout) {
       clearTimeout(closeTimeout);
     }

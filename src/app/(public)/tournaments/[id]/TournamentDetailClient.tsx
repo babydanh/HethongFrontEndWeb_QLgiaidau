@@ -958,14 +958,16 @@ const commonTranslate = useTranslations('Common');
     const handleOrganizerClick = (e: React.MouseEvent<HTMLElement>) => {
       if (!organizerId) return;
       if (organizerHoverTimerRef.current) clearTimeout(organizerHoverTimerRef.current);
-      const rect = e.currentTarget.getBoundingClientRect();
+      const avatarEl = e.currentTarget.querySelector('.organizer-avatar-anchor');
+      const rect = (avatarEl || e.currentTarget).getBoundingClientRect();
       openUserById(organizerId, organizer?.fullName || displayName, organizer?.avatarUrl || null, rect);
     };
 
     const handleOrganizerMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
       if (!organizerId) return;
       keepOpen();
-      const rect = e.currentTarget.getBoundingClientRect();
+      const avatarEl = e.currentTarget.querySelector('.organizer-avatar-anchor');
+      const rect = (avatarEl || e.currentTarget).getBoundingClientRect();
       organizerHoverTimerRef.current = setTimeout(() => {
         openUserById(organizerId, organizer?.fullName || displayName, organizer?.avatarUrl || null, rect);
       }, 250);
@@ -976,7 +978,7 @@ const commonTranslate = useTranslations('Common');
         clearTimeout(organizerHoverTimerRef.current);
         organizerHoverTimerRef.current = null;
       }
-      scheduleClose(1500);
+      scheduleClose(400);
     };
 
     return (
@@ -997,7 +999,7 @@ const commonTranslate = useTranslations('Common');
         }`}
         title={isClickable ? `Xem hồ sơ của ${displayName}` : displayName}
       >
-        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs group-hover:border-blue-400 group-hover:ring-2 group-hover:ring-blue-100 transition-all">
+        <div className="organizer-avatar-anchor w-10 h-10 rounded-full bg-slate-100 border border-slate-200 p-0.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs group-hover:border-blue-400 group-hover:ring-2 group-hover:ring-blue-100 transition-all">
           {displayAvatar ? (
             <img
               src={displayAvatar}

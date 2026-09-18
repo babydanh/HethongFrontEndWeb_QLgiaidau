@@ -383,16 +383,16 @@ export default function UserProfilePopover({
   const spaceBelow = viewportHeight - anchorRect.bottom;
   const spaceAbove = anchorRect.top;
 
-  let top = anchorRect.bottom + 8;
+  let top = anchorRect.bottom + 4;
   // If not enough room below (< popoverHeight + 16), AND there's more room above than below:
   if (spaceBelow < popoverHeight + 16 && spaceAbove > spaceBelow) {
-    top = Math.max(16, anchorRect.top - popoverHeight - 8);
-  } else if (top + popoverHeight > viewportHeight - 16) {
+    top = Math.max(12, anchorRect.top - popoverHeight - 4);
+  } else if (top + popoverHeight > viewportHeight - 12) {
     // If placed below but still hits screen bottom, clamp within viewport
-    top = Math.max(16, viewportHeight - popoverHeight - 16);
+    top = Math.max(12, viewportHeight - popoverHeight - 12);
   }
-  if (top < 16) {
-    top = 16;
+  if (top < 12) {
+    top = 12;
   }
 
   // Permissions to manage tags in this community
@@ -629,7 +629,7 @@ export default function UserProfilePopover({
         className="z-[99999] w-[340px] animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={keepOpen}
-        onMouseLeave={() => scheduleClose(1500)}
+        onMouseLeave={() => scheduleClose(400)}
       >
         {/* Close button stays accessible during loading */}
         <button
@@ -656,7 +656,7 @@ export default function UserProfilePopover({
       className="z-[99999] w-[340px] max-h-[90vh] overflow-hidden overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-slate-800"
       onClick={(e) => e.stopPropagation()}
       onMouseEnter={keepOpen}
-      onMouseLeave={() => scheduleClose(1500)}
+      onMouseLeave={() => scheduleClose(400)}
     >
       {/* Cover Header */}
       <div className="relative h-24 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 overflow-hidden">

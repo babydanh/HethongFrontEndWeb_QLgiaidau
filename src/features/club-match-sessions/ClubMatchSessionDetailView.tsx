@@ -7,14 +7,17 @@ import Link from 'next/link';
 import {
   BarChart3,
   CalendarDays,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Crown,
   Flame,
   Plus,
   Radio,
   Search,
+  Settings,
   Settings2,
   ShieldCheck,
   Swords,
@@ -25,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import type { CommunityMemberRecord } from '@/features/communities/api';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import type {
@@ -100,6 +104,36 @@ function shortDisplayName(name: string | null | undefined) {
   if (!value) return '?';
   const parts = value.split(/\s+/);
   return parts[parts.length - 1] || value;
+}
+
+function ClubLogoWithFallback({
+  url,
+  name,
+  className = 'w-11 h-11',
+}: {
+  url?: string | null;
+  name?: string | null;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (url && !failed) {
+    return (
+      <img
+        src={url}
+        alt={name || 'Club Logo'}
+        className={`${className} rounded-full border border-blue-200 object-cover shadow-xs shrink-0`}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  return (
+    <div
+      className={`${className} rounded-full border border-blue-100 bg-blue-50/80 flex items-center justify-center p-2 shadow-xs shrink-0`}
+      title={name || 'SPORTO'}
+    >
+      <BrandLogo variant="icon" className="w-full h-full object-contain" />
+    </div>
+  );
 }
 
 function Avatar({
@@ -382,6 +416,8 @@ export function ClubMatchSessionDetailView({
   const [activeTab, setActiveTab] = useState<SessionTab>('overview');
   const [pairingOpen, setPairingOpen] = useState(false);
   const [mockFormOpen, setMockFormOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const hostMember = clubMembers.find((m) => m.member.role === 'OWNER') || clubMembers.find((m) => m.member.role === 'MODERATOR');
   const activeParticipants = participants.filter((item) => item.participant.status === 'ACTIVE');
   const activeIds = new Set(activeParticipants.map((item) => item.participant.userId));
   const pairingReady = [1, 2].includes(sideAPlayers.length) && sideAPlayers.length === sideBPlayers.length;
@@ -439,9 +475,9 @@ export function ClubMatchSessionDetailView({
   }
 
   return (
-    <main className="min-h-screen bg-white py-6 sm:py-8 px-4 sm:px-6">
-      {/* ── Card 1: Master Monolith Container ── */}
-      <div className="mx-auto max-w-7xl w-full bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-6 sm:p-8 md:p-10 space-y-6">
+    <main className="min-h-screen bg-slate-50/50 py-6 sm:py-8 px-4 sm:px-6">
+      {/* ── Card 1: Master Container (Clean Modern Rounding) ── */}
+      <div className="mx-auto max-w-7xl w-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-5 sm:p-7 md:p-8 space-y-6">
         {/* Top Bar: Back Link + Organizer Action Buttons */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
           <Link
@@ -454,14 +490,16 @@ export function ClubMatchSessionDetailView({
 
           <div className="flex flex-wrap items-center gap-2">
             {session.capabilities?.canManage && (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 border border-slate-200/80 mr-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>{t('hostAdmin')}</span>
-              </div>
-            )}
-
-            {session.capabilities?.canManage && (
               <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSettingsOpen(true)}
+                  className="px-2.5 py-1 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-xs"
+                >
+                  <Settings className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
+                  Cài đặt
+                </Button>
                 {['OPEN', 'LIVE'].includes(session.status) && (
                   <Button size="sm" disabled={busy} variant="outline" onClick={() => onTransition('CLOSE')} className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-xs">
                     {t('closeRegistration')}
@@ -511,39 +549,43 @@ export function ClubMatchSessionDetailView({
                   <span className="font-semibold text-slate-700">{communityName || t('clubSessionLabel')}</span>
                   <span>•</span>
                   <span>{t('clubContextHint')}</span>
-                  {session.capabilities?.canManage && (
-                    <>
-                      <span>•</span>
-                      <span className="text-blue-600 font-medium">{t('hostAdmin')}</span>
-                    </>
-                  )}
                 </div>
               </div>
 
-              {/* Seamless Schedule/Time info box */}
-              {(session.startAt || session.endAt || session.description) && (
-                <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                  <div className="flex items-start gap-2.5">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl shrink-0 mt-0.5">
-                      <CalendarDays className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-800 text-sm">
-                        {communityName || t('clubSessionLabel')}
+              {/* Host Bar (Reclub Style) & Schedule */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs">
+                {hostMember ? (
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Avatar
+                      name={hostMember.user.fullName}
+                      userId={hostMember.user.id}
+                      avatarUrl={hostMember.user.avatarUrl}
+                      className="w-8 h-8 ring-2 ring-blue-100"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-blue-600">
+                        <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                        <span>Host • Người tổ chức</span>
                       </div>
-                      {session.description && (
-                        <p className="text-slate-600 mt-1 text-xs leading-relaxed">{session.description}</p>
-                      )}
+                      <div className="font-bold text-slate-800 truncate text-xs">
+                        {hostMember.user.fullName}
+                      </div>
                     </div>
                   </div>
-                  {session.startAt && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200/70 shrink-0 self-start sm:self-center text-slate-700 font-medium">
-                      <Clock3 className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>{formatSessionDate(session.startAt, locale, '')}</span>
-                    </div>
-                  )}
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center gap-2 min-w-0 text-slate-600 font-semibold text-xs">
+                    <CalendarDays className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>{communityName || t('clubSessionLabel')}</span>
+                  </div>
+                )}
+
+                {session.startAt && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200/70 shrink-0 self-start sm:self-center text-slate-700 font-medium shadow-xs">
+                    <Clock3 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>{formatSessionDate(session.startAt, locale, '')}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Seamless Tab Navigation */}
@@ -558,19 +600,30 @@ export function ClubMatchSessionDetailView({
             {/* Tab content */}
             <div className="space-y-6 pt-1">
               {activeTab === 'overview' && (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 sm:p-6">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
-                      Mô tả buổi giao lưu
-                    </h3>
-                    <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">
-                      {session.description || 'Chưa có mô tả cho buổi giao lưu này.'}
-                    </p>
-                  </div>
+                <div>
+                  {session.description && session.description.trim() ? (
+                    <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                        Mô tả buổi giao lưu
+                      </h3>
+                      {session.description.includes('<') ? (
+                        <div
+                          className="prose prose-slate max-w-none text-slate-800 text-sm leading-relaxed editorjs-content-view"
+                          dangerouslySetInnerHTML={{ __html: session.description }}
+                        />
+                      ) : (
+                        <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">
+                          {session.description}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-6 text-center text-xs text-slate-400">
+                      Buổi giao lưu chưa có mô tả chi tiết.
+                    </div>
+                  )}
                 </div>
               )}
-
-
 
               {activeTab === 'matches' && (
                 <div className="space-y-4">
@@ -597,7 +650,7 @@ export function ClubMatchSessionDetailView({
                     </div>
                   </div>
                   {matches.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">{t('noMatches')}</div>
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">{t('noMatches')}</div>
                   ) : (
                     <div className="grid gap-4 md:grid-cols-2">{matches.map((match) => <MatchCard key={match.id} match={match} isTennis={isTennis} t={t} />)}</div>
                   )}
@@ -615,20 +668,14 @@ export function ClubMatchSessionDetailView({
 
           {/* ── Right Column: Card con DUY NHẤT (Right Nested Card) ── */}
           <aside className="lg:col-span-5" data-purpose="registration-card">
-            <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div className="bg-slate-50/70 rounded-xl border border-slate-200 p-6 shadow-sm">
               {/* Card Header: Club branding with blue tick */}
               <div className="flex items-center gap-3.5 pb-4 mb-4 border-b border-slate-200/80">
-                {communityLogoUrl ? (
-                  <img
-                    src={communityLogoUrl}
-                    alt={communityName || t('clubSessionLabel')}
-                    className="w-12 h-12 rounded-full border border-blue-200 object-cover shadow-sm shrink-0"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full border border-blue-200 bg-blue-50 flex items-center justify-center text-blue-600 font-extrabold text-xs tracking-wider shadow-sm shrink-0">
-                    SPORTO
-                  </div>
-                )}
+                <ClubLogoWithFallback
+                  url={communityLogoUrl}
+                  name={communityName || t('clubSessionLabel')}
+                  className="w-12 h-12"
+                />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm font-bold text-slate-900 truncate">
@@ -681,6 +728,24 @@ export function ClubMatchSessionDetailView({
             setPairingOpen(false);
             onCreateMatch();
           }}
+        />
+      )}
+
+      {settingsOpen && (
+        <SessionSettingsModal
+          session={session}
+          busy={busy}
+          t={t}
+          preferenceOptions={preferenceOptions}
+          preferredPartners={preferredPartners}
+          setPreferredPartners={setPreferredPartners}
+          preferredOpponents={preferredOpponents}
+          setPreferredOpponents={setPreferredOpponents}
+          avoidedPlayers={avoidedPlayers}
+          setAvoidedPlayers={setAvoidedPlayers}
+          onUpdateMemberScoring={onUpdateMemberScoring}
+          onSavePreferences={onSavePreferences}
+          onClose={() => setSettingsOpen(false)}
         />
       )}
     </main>
@@ -1070,6 +1135,210 @@ function AddSlotParticipantModal({
         {/* Footer */}
         <div className="flex justify-end border-t border-slate-100 bg-slate-50/50 px-5 py-3">
           <Button variant="outline" size="sm" onClick={onClose}>
+            Đóng
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SessionSettingsModal({
+  session,
+  busy,
+  t,
+  preferenceOptions,
+  preferredPartners,
+  setPreferredPartners,
+  preferredOpponents,
+  setPreferredOpponents,
+  avoidedPlayers,
+  setAvoidedPlayers,
+  onUpdateMemberScoring,
+  onSavePreferences,
+  onClose,
+}: {
+  session: ClubMatchSession;
+  busy: boolean;
+  t: (key: string, values?: Record<string, string | number>) => string;
+  preferenceOptions: ClubMatchParticipant[];
+  preferredPartners: string[];
+  setPreferredPartners: Dispatch<SetStateAction<string[]>>;
+  preferredOpponents: string[];
+  setPreferredOpponents: Dispatch<SetStateAction<string[]>>;
+  avoidedPlayers: string[];
+  setAvoidedPlayers: Dispatch<SetStateAction<string[]>>;
+  onUpdateMemberScoring: (enabled: boolean) => void;
+  onSavePreferences: () => void;
+  onClose: () => void;
+}) {
+  const canManage = session.capabilities?.canManage === true;
+  const isParticipant = Boolean(session.viewerParticipant);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
+              <Settings className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Cài đặt buổi giao lưu</h3>
+              <p className="text-xs text-slate-500">Quản lý quyền hạn & tuỳ chọn ghép cặp</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto">
+          {/* Organizer Settings */}
+          {canManage && (
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Quyền quản trị
+              </h4>
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50/60">
+                <div className="pr-4">
+                  <div className="text-sm font-semibold text-slate-800">
+                    Thành viên tự nhập điểm
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Cho phép người chơi trong buổi tự cập nhật tỉ số các trận đấu
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={Boolean(session.memberScoringEnabled)}
+                  disabled={busy}
+                  onClick={() => onUpdateMemberScoring(!session.memberScoringEnabled)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    session.memberScoringEnabled ? 'bg-blue-600' : 'bg-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      session.memberScoringEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Participant Preferences */}
+          {isParticipant && preferenceOptions.length > 0 && (
+            <div className="space-y-3 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Tuỳ chọn ghép cặp cá nhân
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Chọn người muốn chung đội hoặc đối đầu khi xếp cặp tự động
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  onClick={onSavePreferences}
+                  className="rounded-lg text-xs font-semibold"
+                >
+                  Lưu tuỳ chọn
+                </Button>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                    Ưu tiên chung đội (Đồng đội):
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 rounded-lg border border-slate-200 bg-slate-50/50">
+                    {preferenceOptions.map((opt) => {
+                      const selected = preferredPartners.includes(opt.participant.userId);
+                      return (
+                        <button
+                          key={opt.participant.userId}
+                          type="button"
+                          onClick={() => {
+                            setPreferredPartners((prev) =>
+                              selected
+                                ? prev.filter((id) => id !== opt.participant.userId)
+                                : [...prev, opt.participant.userId]
+                            );
+                          }}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition ${
+                            selected
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Avatar
+                            name={opt.fullName}
+                            avatarUrl={opt.avatarUrl}
+                            className="w-4 h-4"
+                          />
+                          <span>{shortDisplayName(opt.fullName)}</span>
+                          {selected && <Check className="w-3 h-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                    Ưu tiên đối đầu (Đối thủ):
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 rounded-lg border border-slate-200 bg-slate-50/50">
+                    {preferenceOptions.map((opt) => {
+                      const selected = preferredOpponents.includes(opt.participant.userId);
+                      return (
+                        <button
+                          key={opt.participant.userId}
+                          type="button"
+                          onClick={() => {
+                            setPreferredOpponents((prev) =>
+                              selected
+                                ? prev.filter((id) => id !== opt.participant.userId)
+                                : [...prev, opt.participant.userId]
+                            );
+                          }}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition ${
+                            selected
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Avatar
+                            name={opt.fullName}
+                            avatarUrl={opt.avatarUrl}
+                            className="w-4 h-4"
+                          />
+                          <span>{shortDisplayName(opt.fullName)}</span>
+                          {selected && <Check className="w-3 h-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end border-t border-slate-100 bg-slate-50/60 px-5 py-3">
+          <Button variant="outline" size="sm" onClick={onClose} className="rounded-lg text-xs font-medium">
             Đóng
           </Button>
         </div>

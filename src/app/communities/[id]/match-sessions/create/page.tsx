@@ -13,10 +13,30 @@ import {
   UsersRound,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/Button';
 import { Input, DatePicker } from '@/components/ui/Input';
 import { clubMatchSessionsApi } from '@/features/club-match-sessions/api';
 import { getErrorMessage } from '@/utils/error';
+
+const RichTextEditor = dynamic(() => import('@/components/ui/RichTextEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-32 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-400">
+      Đang tải trình soạn thảo...
+    </div>
+  ),
+});
+
+const DAYS_OF_WEEK = [
+  { value: 1, label: 'T2', key: 'weekday1' },
+  { value: 2, label: 'T3', key: 'weekday2' },
+  { value: 3, label: 'T4', key: 'weekday3' },
+  { value: 4, label: 'T5', key: 'weekday4' },
+  { value: 5, label: 'T6', key: 'weekday5' },
+  { value: 6, label: 'T7', key: 'weekday6' },
+  { value: 0, label: 'CN', key: 'weekday0' },
+];
 
 type DurationOption = 60 | 90 | 120 | 180 | 'custom';
 type CapacityOption = 8 | 16 | 32 | 64 | 'custom';
@@ -36,28 +56,28 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
   const [memberScoringEnabled, setMemberScoringEnabled] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('18:00');
-  const [durationOption, setDurationOption] = useState<DurationOption>(60);
-  const [customDuration, setCustomDuration] = useState('60');
-  const [capacityOption, setCapacityOption] = useState<CapacityOption>(16);
-  const [customCapacity, setCustomCapacity] = useState('16');
+  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [customDurationInput, setCustomDurationInput] = useState('60');
+  const [capacityCount, setCapacityCount] = useState(16);
+  const [customCapacityInput, setCustomCapacityInput] = useState('16');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringFrequency, setRecurringFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'>('WEEKLY');
-  const [recurringDayOfWeek, setRecurringDayOfWeek] = useState(6);
+  const [recurringDaysOfWeek, setRecurringDaysOfWeek] = useState<number[]>([6]);
   const [recurringTimeOfDay, setRecurringTimeOfDay] = useState('18:00');
   const [recurringAdvanceDays, setRecurringAdvanceDays] = useState(3);
   const creationIdempotencyKey = useRef<string | null>(null);
 
-  const selectedCapacity = capacityOption === 'custom' ? customCapacity : String(capacityOption);
+  const selectedCapacity = String(capacityCount);
   const selectedSchedule = startDate ? `${startDate} ${startTime}` : t('summaryNoSchedule');
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const duration = durationOption === 'custom' ? Number(customDuration) : durationOption;
+    const duration = Number(customDurationInput) || durationMinutes;
     if (!Number.isInteger(duration) || duration < 30 || duration > 720) {
       toast.error(t('invalidDuration'));
       return;
     }
-    const maxParticipants = capacityOption === 'custom' ? Number(customCapacity) : capacityOption;
+    const maxParticipants = Number(customCapacityInput) || capacityCount;
     if (!Number.isInteger(maxParticipants) || maxParticipants < 2 || maxParticipants > 128) {
       toast.error(t('invalidMaxParticipants'));
       return;
@@ -80,6 +100,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
     setSubmitting(true);
     try {
       creationIdempotencyKey.current ??= crypto.randomUUID();
+      const primaryDayOfWeek = recurringDaysOfWeek[0] ?? 6;
       const response = await clubMatchSessionsApi.create({
         communityId: id,
         name: name.trim() || undefined,
@@ -96,8 +117,8 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
         ...(isRecurring
           ? {
               recurringFrequency,
-              recurringDayOfWeek,
-              recurringDaysOfWeek: [recurringDayOfWeek],
+              recurringDayOfWeek: primaryDayOfWeek,
+              recurringDaysOfWeek: recurringDaysOfWeek.length > 0 ? recurringDaysOfWeek : [primaryDayOfWeek],
               recurringTimeOfDay,
               recurringAdvanceDays,
             }
@@ -184,17 +205,15 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                     className="h-9 text-xs"
                   />
 
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <label htmlFor="club-match-session-description" className="text-xs font-medium text-slate-700">
                       {t('description')}
                     </label>
-                    <textarea
-                      id="club-match-session-description"
+                    <RichTextEditor
                       value={description}
-                      onChange={(event) => setDescription(event.target.value)}
+                      onChange={setDescription}
+                      compact={true}
                       placeholder={t('descriptionPlaceholder')}
-                      rows={2}
-                      className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -363,50 +382,46 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                   </div>
                 </div>
 
-                {/* Chọn nhanh thời lượng */}
+                {/* Chọn thời lượng */}
                 <div>
                   <label className="text-xs font-medium text-slate-600 block mb-1.5">
                     {t('durationTitle')}
                   </label>
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     {([60, 90, 120, 180] as const).map((opt) => (
                       <button
                         key={opt}
                         type="button"
-                        onClick={() => setDurationOption(opt)}
+                        onClick={() => {
+                          setDurationMinutes(opt);
+                          setCustomDurationInput(String(opt));
+                        }}
                         className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
-                          durationOption === opt
-                            ? 'border-blue-400/80 bg-blue-50/70 text-blue-700 font-semibold'
+                          durationMinutes === opt && Number(customDurationInput) === opt
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                         }`}
                       >
                         {opt === 60 ? '1h' : opt === 90 ? '1h30' : opt === 120 ? '2h' : '3h'}
                       </button>
                     ))}
-                    <button
-                      type="button"
-                      onClick={() => setDurationOption('custom')}
-                      className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
-                        durationOption === 'custom'
-                          ? 'border-blue-400/80 bg-blue-50/70 text-blue-700 font-semibold'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                      }`}
-                    >
-                      {t('customDuration')}
-                    </button>
-                    {durationOption === 'custom' && (
-                      <div className="flex items-center gap-1 ml-auto">
-                        <span className="text-[11px] text-slate-400">Phút:</span>
-                        <input
-                          type="number"
-                          min={30}
-                          max={720}
-                          value={customDuration}
-                          onChange={(e) => setCustomDuration(e.target.value)}
-                          className="w-14 rounded-md border border-slate-200 px-1.5 py-0.5 text-center text-xs font-semibold text-slate-800 outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      <span className="text-xs text-slate-500 font-medium">Phút:</span>
+                      <input
+                        type="number"
+                        min={30}
+                        max={720}
+                        value={customDurationInput}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomDurationInput(val);
+                          const num = Number(val);
+                          if (num) setDurationMinutes(num);
+                        }}
+                        placeholder="60"
+                        className="w-16 h-8 rounded-lg border border-slate-200 px-2 text-center text-xs font-semibold text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -416,76 +431,77 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                 <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-700">
                   {t('maxParticipants')}
                 </h2>
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
                   {([8, 16, 32, 64] as const).map((opt) => (
                     <button
                       key={opt}
                       type="button"
-                      onClick={() => setCapacityOption(opt)}
+                      onClick={() => {
+                        setCapacityCount(opt);
+                        setCustomCapacityInput(String(opt));
+                      }}
                       className={`rounded-lg border px-3 py-1 text-xs font-medium transition ${
-                        capacityOption === opt
-                          ? 'border-blue-400/80 bg-blue-50/70 text-blue-700 font-semibold'
+                        capacityCount === opt && Number(customCapacityInput) === opt
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
                       {opt} người
                     </button>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => setCapacityOption('custom')}
-                    className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
-                      capacityOption === 'custom'
-                        ? 'border-blue-400/80 bg-blue-50/70 text-blue-700 font-semibold'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    Tùy chọn
-                  </button>
-                  {capacityOption === 'custom' && (
-                    <div className="flex items-center gap-1 ml-auto">
-                      <span className="text-[11px] text-slate-400">Người:</span>
-                      <input
-                        type="number"
-                        min={2}
-                        max={128}
-                        value={customCapacity}
-                        onChange={(e) => setCustomCapacity(e.target.value)}
-                        className="w-14 rounded-md border border-slate-200 px-1.5 py-0.5 text-center text-xs font-semibold text-slate-800 outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <span className="text-xs text-slate-500 font-medium">Người:</span>
+                    <input
+                      type="number"
+                      min={2}
+                      max={128}
+                      value={customCapacityInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomCapacityInput(val);
+                        const num = Number(val);
+                        if (num) setCapacityCount(num);
+                      }}
+                      placeholder="16"
+                      className="w-16 h-8 rounded-lg border border-slate-200 px-2 text-center text-xs font-semibold text-slate-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Card: Lặp lại định kỳ (Chỉ ghép tự do) */}
-              {pairingMode === 'FREE' && (
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <RotateCw className="h-4 w-4 text-slate-500" />
+              {/* Card: Lặp lại định kỳ (Hỗ trợ cấu hình đa ngày) */}
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <RotateCw className="h-4 w-4 text-slate-500" />
+                    <div>
                       <span className="text-xs font-bold text-slate-800">{t('recurringTitle')}</span>
+                      <p className="text-[11px] text-slate-400">
+                        {pairingMode === 'BRACKET' ? 'Tự động mở giải đấu theo bảng định kỳ' : 'Tự động tạo buổi giao lưu định kỳ'}
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isRecurring}
-                      aria-label={t('recurringTitle')}
-                      onClick={() => setIsRecurring((val) => !val)}
-                      className={`relative inline-flex h-5 w-10 shrink-0 items-center rounded-full transition-colors ${
-                        isRecurring ? 'bg-blue-600' : 'bg-slate-300'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 rounded-full bg-white shadow-xs transition-transform ${
-                          isRecurring ? 'translate-x-5' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </button>
                   </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isRecurring}
+                    aria-label={t('recurringTitle')}
+                    onClick={() => setIsRecurring((val) => !val)}
+                    className={`relative inline-flex h-5 w-10 shrink-0 items-center rounded-full transition-colors ${
+                      isRecurring ? 'bg-blue-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow-xs transition-transform ${
+                        isRecurring ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
 
-                  {isRecurring && (
-                    <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
+                {isRecurring && (
+                  <div className="pt-2 border-t border-slate-100 space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
                         <span className="text-[11px] font-medium text-slate-500 block mb-1">{t('recurringFrequency')}</span>
                         <select
@@ -500,23 +516,6 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                         </select>
                       </div>
 
-                      {(recurringFrequency === 'WEEKLY' || recurringFrequency === 'BIWEEKLY') && (
-                        <div>
-                          <span className="text-[11px] font-medium text-slate-500 block mb-1">{t('recurringWeekday')}</span>
-                          <select
-                            value={recurringDayOfWeek}
-                            onChange={(e) => setRecurringDayOfWeek(Number(e.target.value))}
-                            className="w-full h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-800 outline-none focus:border-blue-500"
-                          >
-                            {[1, 2, 3, 4, 5, 6, 0].map((d) => (
-                              <option key={d} value={d}>
-                                {t(`weekday${d}`)}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
                       <div>
                         <span className="text-[11px] font-medium text-slate-500 block mb-1">{t('recurringTime')}</span>
                         <input
@@ -524,27 +523,68 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
                           value={recurringTimeOfDay}
                           onChange={(e) => setRecurringTimeOfDay(e.target.value)}
                           className="w-full h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-800 outline-none focus:border-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <span className="text-[11px] font-medium text-slate-500 block mb-1">{t('recurringAdvanceDays')}</span>
-                        <select
-                          value={recurringAdvanceDays}
-                          onChange={(e) => setRecurringAdvanceDays(Number(e.target.value))}
-                          className="w-full h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-800 outline-none focus:border-blue-500"
                         >
-                          {Array.from({ length: 8 }, (_, d) => (
-                            <option key={d} value={d}>
-                              {d === 0 ? t('recurringSameDay') : t('recurringBeforeDays', { count: d })}
-                            </option>
-                          ))}
-                        </select>
+                        </input>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {(recurringFrequency === 'WEEKLY' || recurringFrequency === 'BIWEEKLY') && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[11px] font-medium text-slate-600">
+                            Các thứ trong tuần ({recurringDaysOfWeek.length} ngày đã chọn):
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {DAYS_OF_WEEK.map((day) => {
+                            const isSelected = recurringDaysOfWeek.includes(day.value);
+                            return (
+                              <button
+                                key={day.value}
+                                type="button"
+                                onClick={() => {
+                                  setRecurringDaysOfWeek((prev) => {
+                                    if (prev.includes(day.value)) {
+                                      if (prev.length === 1) return prev;
+                                      return prev.filter((d) => d !== day.value);
+                                    } else {
+                                      return [...prev, day.value].sort(
+                                        (a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b)
+                                      );
+                                    }
+                                  });
+                                }}
+                                className={`h-7 px-2.5 rounded-lg text-xs font-semibold transition border ${
+                                  isSelected
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                }`}
+                              >
+                                {day.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <span className="text-[11px] font-medium text-slate-500 block mb-1">{t('recurringAdvanceDays')}</span>
+                      <select
+                        value={recurringAdvanceDays}
+                        onChange={(e) => setRecurringAdvanceDays(Number(e.target.value))}
+                        className="w-full h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-800 outline-none focus:border-blue-500"
+                      >
+                        {Array.from({ length: 8 }, (_, d) => (
+                          <option key={d} value={d}>
+                            {d === 0 ? t('recurringSameDay') : t('recurringBeforeDays', { count: d })}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </form>

@@ -570,41 +570,6 @@ function SessionDetailModal({
             {/* Left column: Session details + Note */}
             <div className="p-6 space-y-4 flex flex-col justify-between">
               <div className="space-y-3.5">
-                {/* Badges: Gọn gàng, tinh tế, không chói nhiều màu sắc */}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {slots && (
-                    <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
-                      isFull
-                        ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200/60'
-                    }`}>
-                      <Flame className="h-3 w-3" />
-                      {getMissingLabel(slots.current, slots.max)}
-                    </span>
-                  )}
-                  <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
-                    Buổi giao lưu
-                  </span>
-                  {item.sport && (
-                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
-                      {item.sport}
-                    </span>
-                  )}
-                  {item.playDate && (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
-                      <CalendarDays className="h-3 w-3 text-slate-500" />
-                      {(() => {
-                        const [y, m, d] = item.playDate.split('-');
-                        return `${d}/${m}/${y}`;
-                      })()}
-                    </span>
-                  )}
-                  <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
-                    <Clock3 className="h-3 w-3 text-slate-500" />
-                    {item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}
-                  </span>
-                </div>
-
                 {/* Title */}
                 <h2 className="text-xl font-bold text-slate-900 leading-snug">{item.title}</h2>
 
@@ -667,7 +632,42 @@ function SessionDetailModal({
             {slots && (
               <div className="p-6 bg-white flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  {/* Badges gọn gàng trên danh sách tham gia */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                    {slots && (
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
+                        isFull
+                          ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                      }`}>
+                        <Flame className="h-3 w-3" />
+                        {getMissingLabel(slots.current, slots.max)}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
+                      Buổi giao lưu
+                    </span>
+                    {item.sport && (
+                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
+                        {item.sport}
+                      </span>
+                    )}
+                    {item.playDate && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
+                        <CalendarDays className="h-3 w-3 text-slate-500" />
+                        {(() => {
+                          const [y, m, d] = item.playDate.split('-');
+                          return `${d}/${m}/${y}`;
+                        })()}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
+                      <Clock3 className="h-3 w-3 text-slate-500" />
+                      {item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-900">Danh sách tham gia</h3>
                     <span className="text-xs font-bold text-slate-500">{slots.current}/{slots.max}</span>
                   </div>

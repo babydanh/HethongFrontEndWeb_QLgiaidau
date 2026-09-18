@@ -511,7 +511,13 @@ export function ClubMatchSessionDetailView({
                   </Button>
                 )}
                 {!['ENDED', 'CANCELLED'].includes(session.status) && (
-                  <Button size="sm" disabled={busy} variant="destructive" onClick={() => onTransition('CANCEL')} className="px-2.5 py-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition border border-transparent hover:border-slate-200">
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    variant="outline"
+                    onClick={() => onTransition('CANCEL')}
+                    className="px-2.5 py-1 text-xs font-medium text-rose-600 hover:text-rose-700 bg-white border border-rose-200 hover:border-rose-300 hover:bg-rose-50 rounded-lg transition shadow-xs"
+                  >
                     {t('cancelSession')}
                   </Button>
                 )}
@@ -540,20 +546,15 @@ export function ClubMatchSessionDetailView({
                 </span>
               </div>
 
-              {/* Title & Community subtext */}
-              <div className="space-y-1.5">
+              {/* Title */}
+              <div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                   {session.resolvedName}
                 </h1>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-semibold text-slate-700">{communityName || t('clubSessionLabel')}</span>
-                  <span>•</span>
-                  <span>{t('clubContextHint')}</span>
-                </div>
               </div>
 
               {/* Host Bar (Reclub Style) & Schedule */}
-              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 py-1 text-xs">
                 {hostMember ? (
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Avatar
@@ -681,9 +682,6 @@ export function ClubMatchSessionDetailView({
                     <span className="text-sm font-bold text-slate-900 truncate">
                       {communityName || t('clubSessionLabel')}
                     </span>
-                    <svg className="w-4 h-4 text-blue-600 fill-current shrink-0" viewBox="0 0 20 20">
-                      <path clipRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fillRule="evenodd" />
-                    </svg>
                   </div>
                   <p className="text-xs text-slate-500 truncate">{t('clubContextHint')}</p>
                 </div>

@@ -1815,8 +1815,8 @@ const commonTranslate = useTranslations('Common');
                             ? 'border-amber-500 text-amber-600 font-bold'
                             : 'border-transparent text-amber-700/80 font-medium hover:text-amber-800'
                           : isActive
-                            ? 'border-sky-500 text-sky-600 font-bold'
-                            : 'border-transparent text-slate-600 font-medium hover:text-slate-900'
+                            ? 'border-blue-600 text-blue-600 font-bold'
+                            : 'border-transparent text-slate-600 font-medium hover:text-blue-600'
                     }`}
                   >
                     {tab.isLive && (
@@ -1893,7 +1893,7 @@ const commonTranslate = useTranslations('Common');
                                   <span className="min-w-0 flex-1">
                                     <span className={`inline-block truncate text-sm sm:text-base transition-colors ${
                                       isActive
-                                        ? 'font-bold text-slate-900'
+                                        ? 'font-bold text-blue-600'
                                         : 'font-semibold text-slate-700 group-hover:text-blue-600'
                                     }`}>
                                       {displayName}

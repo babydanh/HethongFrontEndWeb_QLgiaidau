@@ -8,6 +8,8 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   Flame,
   MapPin,
@@ -477,6 +479,8 @@ function SessionDetailModal({
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<Array<{ name: string; note?: string }>>([]);
+  const [slotPage, setSlotPage] = useState(1);
+  const SLOTS_PER_PAGE = 16;
   const openUserById = useUserProfileModalStore((state) => state.openUserById);
 
   const handleOpenHostProfile = (e: React.MouseEvent) => {
@@ -489,20 +493,17 @@ function SessionDetailModal({
     if (isFull || isJoined || isPending || isActionLoading) return;
     setIsActionLoading(true);
 
-    // Thử gửi yêu cầu tham gia kèm lời nhắn
     const userNote = note.trim() || undefined;
-    const didJoin = await onJoin();
-    setIsActionLoading(false);
-
-    if (didJoin) {
-      // Thiết lập trạng thái chờ xét duyệt
+    // Chế độ xét duyệt: Không add vào joinedPlayers ngay, chỉ đưa vào danh sách Chờ duyệt!
+    setTimeout(() => {
+      setIsActionLoading(false);
       setIsPending(true);
       setPendingRequests((prev) => [
-        ...prev,
+        ...prev.filter((p) => p.name !== 'Bạn'),
         { name: 'Bạn', note: userNote },
       ]);
-      toast.success('Đã gửi yêu cầu xin tham gia! Vui lòng chờ host xét duyệt.');
-    }
+      toast.success('Đã gửi yêu cầu xin tham gia! Vui lòng chờ host duyệt.');
+    }, 300);
   };
 
   const handleCancelRequest = () => {
@@ -511,13 +512,19 @@ function SessionDetailModal({
     toast.success('Đã hủy yêu cầu xin tham gia');
   };
 
-  const handleApproveRequest = (req: { name: string; note?: string }) => {
+  const handleApproveRequest = async (req: { name: string; note?: string }) => {
     setPendingRequests((prev) => prev.filter((p) => p !== req));
-    if (slots && slots.joinedPlayers) {
-      slots.joinedPlayers.push({ name: req.name, initialsBg: '#10b981' });
-      slots.current = Math.min(slots.current + 1, slots.max);
+    if (req.name === 'Bạn') {
+      setIsPending(false);
+      // Khi Host đồng ý chính thức add người vào buổi chơi
+      await onJoin();
+    } else {
+      if (slots && slots.joinedPlayers) {
+        slots.joinedPlayers.push({ name: req.name, initialsBg: '#10b981' });
+        slots.current = Math.min(slots.current + 1, slots.max);
+      }
     }
-    toast.success(`Đã đồng ý cho ${req.name} vào buổi giao lưu!`);
+    toast.success(`Đã duyệt yêu cầu của ${req.name}!`);
   };
 
   const handleRejectRequest = (req: { name: string; note?: string }) => {
@@ -705,109 +712,127 @@ function SessionDetailModal({
                     <span className="text-xs font-bold text-slate-500">{slots.current}/{slots.max}</span>
                   </div>
 
-                  {/* 4-column Slot Grid: gọn gàng, giới hạn chiều cao tối đa, có thanh cuộn riêng nếu nhiều slot */}
-                  <div className="mt-4 max-h-[290px] overflow-y-auto pr-1">
-                    <div className="grid grid-cols-4 gap-x-2 gap-y-3.5">
-                      {/* Joined Players */}
-                      {slots.joinedPlayers.map((p, i) => {
-                        const isMe = p.name === 'Bạn';
-                        return (
-                          <div key={i} className="flex flex-col items-center gap-1 min-w-0">
-                            <div
-                              className={`relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs ${isMe && isJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
-                              style={{
-                                backgroundColor: p.initialsBg || '#3b82f6',
-                                ...(p.avatarUrl
-                                  ? {
-                                      backgroundImage: `url(${p.avatarUrl})`,
-                                      backgroundPosition: 'center',
-                                      backgroundSize: 'cover',
-                                    }
-                                  : {}),
-                              }}
-                              title={p.name}
-                            >
-                              {!p.avatarUrl && getInitials(p.name)}
-                              {isMe && isJoined && (
-                                <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">✓</span>
-                              )}
-                            </div>
-                            <span className="text-[11px] font-semibold text-slate-700 text-center truncate w-full">
-                              {isMe ? 'Bạn' : p.name.split(' ').pop()}
-                            </span>
-                          </div>
-                        );
-                      })}
+                  {/* 4-column Slot Grid: hiển thị đúng 16 slot/trang, có phân trang rõ ràng nếu > 16 slot */}
+                  {(() => {
+                    const totalPages = Math.ceil(slots.max / SLOTS_PER_PAGE);
+                    const currentPage = Math.min(Math.max(slotPage, 1), totalPages);
+                    const startIndex = (currentPage - 1) * SLOTS_PER_PAGE;
+                    const endIndex = Math.min(startIndex + SLOTS_PER_PAGE, slots.max);
+                    const slotsOnCurrentPage = Array.from({ length: endIndex - startIndex }, (_, idx) => startIndex + idx + 1);
 
-                      {/* Pending Players (nếu có yêu cầu đang chờ duyệt) */}
-                      {pendingRequests.map((req, i) => {
-                        const isMyPending = req.name === 'Bạn';
-                        return (
-                          <div key={`pending-${i}`} className="flex flex-col items-center gap-1 min-w-0 opacity-85">
-                            <div
-                              className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-amber-400 bg-amber-50 text-xs font-bold text-amber-700 shadow-xs"
-                              title={`Chờ duyệt: ${req.name}${req.note ? ` (${req.note})` : ''}`}
-                            >
-                              {getInitials(req.name)}
-                              <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[8px] text-white">⏳</span>
-                            </div>
-                            <span className="text-[10px] font-medium text-amber-700 text-center truncate w-full">
-                              {isMyPending ? 'Bạn (Chờ)' : req.name.split(' ').pop()}
-                            </span>
-                          </div>
-                        );
-                      })}
-
-                      {/* Empty Clickable Slots: hiển thị tối đa 7 ô trống tiếp theo + ô tóm tắt nếu tổng số còn lại nhiều */}
-                      {(() => {
-                        const emptyCount = Math.max(slots.max - slots.current - pendingRequests.length, 0);
-                        const maxEmptyToShow = emptyCount > 8 ? 7 : emptyCount;
-                        const remainingHidden = emptyCount - maxEmptyToShow;
-
-                        return (
-                          <>
-                            {Array.from({ length: maxEmptyToShow }).map((_, i) => {
-                              const slotNumber = slots.current + pendingRequests.length + i + 1;
-                              const isFirstEmpty = i === 0;
-                              const canJoin = isFirstEmpty && !isJoined && !isPending && !isFull;
+                    return (
+                      <div className="mt-3.5 space-y-3">
+                        <div className="grid grid-cols-4 gap-x-2 gap-y-3.5">
+                          {slotsOnCurrentPage.map((slotNum) => {
+                            // 1. Kiểm tra người đã tham gia chính thức
+                            const joinedPlayer = slots.joinedPlayers[slotNum - 1];
+                            if (joinedPlayer) {
+                              const isMe = joinedPlayer.name === 'Bạn';
                               return (
-                                <div key={`empty-slot-${i}`} className="flex flex-col items-center gap-1 min-w-0">
-                                  <button
-                                    type="button"
-                                    disabled={!canJoin || isActionLoading}
-                                    onClick={canJoin ? handleJoin : undefined}
-                                    title={canJoin ? 'Bấm để gửi yêu cầu xin tham gia slot này' : undefined}
-                                    className={`flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed text-base font-light transition-all ${
-                                      canJoin
-                                        ? 'border-blue-300 bg-blue-50 text-blue-500 hover:border-blue-500 hover:bg-blue-100 hover:text-blue-700 cursor-pointer'
-                                        : 'border-slate-200 bg-white text-slate-300 cursor-default'
-                                    }`}
+                                <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
+                                  <div
+                                    className={`relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs ${isMe && isJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+                                    style={{
+                                      backgroundColor: joinedPlayer.initialsBg || '#3b82f6',
+                                      ...(joinedPlayer.avatarUrl
+                                        ? {
+                                            backgroundImage: `url(${joinedPlayer.avatarUrl})`,
+                                            backgroundPosition: 'center',
+                                            backgroundSize: 'cover',
+                                          }
+                                        : {}),
+                                    }}
+                                    title={`Slot #${slotNum}: ${joinedPlayer.name}`}
                                   >
-                                    +
-                                  </button>
-                                  <span className="text-[10px] text-slate-400 text-center truncate w-full">
-                                    Slot #{slotNumber}
+                                    {!joinedPlayer.avatarUrl && getInitials(joinedPlayer.name)}
+                                    {isMe && isJoined && (
+                                      <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">✓</span>
+                                    )}
+                                  </div>
+                                  <span className="text-[11px] font-semibold text-slate-700 text-center truncate w-full">
+                                    {isMe ? 'Bạn' : joinedPlayer.name.split(' ').pop()}
                                   </span>
                                 </div>
                               );
-                            })}
+                            }
 
-                            {/* Ô tóm tắt số slot còn lại nếu quá nhiều (VD 32 slot) */}
-                            {remainingHidden > 0 && (
-                              <div className="flex flex-col items-center gap-1 min-w-0">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 text-xs font-bold border border-slate-200">
-                                  +{remainingHidden}
+                            // 2. Kiểm tra người đang chờ duyệt (nằm ở các slot kế tiếp)
+                            const pendingIndex = slotNum - 1 - slots.joinedPlayers.length;
+                            const pendingPlayer = pendingRequests[pendingIndex];
+                            if (pendingPlayer) {
+                              const isMyPending = pendingPlayer.name === 'Bạn';
+                              return (
+                                <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
+                                  <div
+                                    className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-amber-400 bg-amber-50 text-xs font-bold text-amber-700 shadow-xs"
+                                    title={`Slot #${slotNum} - Chờ duyệt: ${pendingPlayer.name}${pendingPlayer.note ? ` (${pendingPlayer.note})` : ''}`}
+                                  >
+                                    {getInitials(pendingPlayer.name)}
+                                    <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[8px] text-white">⏳</span>
+                                  </div>
+                                  <span className="text-[10px] font-medium text-amber-700 text-center truncate w-full">
+                                    {isMyPending ? 'Bạn (Chờ)' : pendingPlayer.name.split(' ').pop()}
+                                  </span>
                                 </div>
+                              );
+                            }
+
+                            // 3. Slot trống
+                            const isNextOpenSlot = slotNum === slots.joinedPlayers.length + pendingRequests.length + 1;
+                            const canJoin = isNextOpenSlot && !isJoined && !isPending && !isFull;
+
+                            return (
+                              <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
+                                <button
+                                  type="button"
+                                  disabled={!canJoin || isActionLoading}
+                                  onClick={canJoin ? handleJoin : undefined}
+                                  title={canJoin ? 'Bấm để xin tham gia slot này' : `Slot #${slotNum} trống`}
+                                  className={`flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed text-base font-light transition-all ${
+                                    canJoin
+                                      ? 'border-blue-300 bg-blue-50 text-blue-500 hover:border-blue-500 hover:bg-blue-100 hover:text-blue-700 cursor-pointer'
+                                      : 'border-slate-200 bg-white text-slate-300 cursor-default'
+                                  }`}
+                                >
+                                  +
+                                </button>
                                 <span className="text-[10px] text-slate-400 text-center truncate w-full">
-                                  Chỗ trống
+                                  Slot #{slotNum}
                                 </span>
                               </div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Pagination khi tổng số slot > 16 */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
+                            <span>Trang {currentPage} / {totalPages} (Slot {startIndex + 1}–{endIndex})</span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                disabled={currentPage <= 1}
+                                onClick={() => setSlotPage((p) => Math.max(p - 1, 1))}
+                                className="p-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 cursor-pointer"
+                                title="Trang trước"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={currentPage >= totalPages}
+                                onClick={() => setSlotPage((p) => Math.min(p + 1, totalPages))}
+                                className="p-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 cursor-pointer"
+                                title="Trang sau"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Danh sách yêu cầu chờ duyệt dành cho Host */}
                   {pendingRequests.length > 0 && (

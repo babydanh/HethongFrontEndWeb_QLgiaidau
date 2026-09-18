@@ -32,6 +32,7 @@ import { removeVietnameseTones, useAutoAddressParser } from '@/utils/vietnamAddr
 import type { Region } from '@/types/region';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
+import { useAuthStore } from '@/lib/zustand/authStore';
 
 export type ActivityEventType =
   | 'CLUB_RECRUITING'
@@ -472,25 +473,43 @@ function SessionDetailModal({
   onJoin: () => Promise<boolean>;
   onLeave: () => Promise<boolean>;
 }) {
+  const currentUser = useAuthStore((state) => state.user);
   const slots = item.slots;
   const isFull = slots ? slots.current >= slots.max : false;
   const isPersonal = item.type === 'PERSONAL_PICKUP';
   const identity = item.club ?? item.personalHost;
+
+  // Xác định xem người dùng hiện tại có phải là Host của buổi chơi không
+  const isHost = Boolean(
+    currentUser?.id && (
+      (isPersonal && item.personalHost?.id === currentUser.id) ||
+      (!isPersonal && item.club?.id === currentUser.id) ||
+      item.personalHost?.name === currentUser.fullName
+    )
+  );
+
   const [note, setNote] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
-  // Nếu đã tham gia (isJoined) hoặc đã có tên 'Bạn' trong joinedPlayers thì không được ở trạng thái chờ duyệt
-  const alreadyJoined = isJoined || Boolean(slots?.joinedPlayers?.some((p) => p.name === 'Bạn'));
+  
+  // Kiểm tra đã tham gia: Nếu là Host thì mặc định đã là chủ trì (ở Slot 1), hoặc đã có tên trong joinedPlayers
+  const alreadyJoined = isHost || isJoined || Boolean(
+    slots?.joinedPlayers?.some(
+      (p) => p.name === 'Bạn' || (currentUser && (p.userId === currentUser.id || p.name === currentUser.fullName))
+    )
+  );
+
   const [isPending, setIsPending] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<Array<{ userId?: string; name: string; avatarUrl?: string | null; note?: string }>>([]);
   const [slotPage, setSlotPage] = useState(1);
   const SLOTS_PER_PAGE = 16;
   const openUserById = useUserProfileModalStore((state) => state.openUserById);
 
-  // Lọc bỏ bất kỳ request nào có tên trùng với người đã vào joinedPlayers
+  // Lọc bỏ bất kỳ request nào có tên/id trùng với người đã vào joinedPlayers hoặc trùng với Host
   const activePendingRequests = useMemo(() => {
     const joinedNames = new Set((slots?.joinedPlayers ?? []).map((p) => p.name));
+    if (item.personalHost?.name) joinedNames.add(item.personalHost.name);
     return pendingRequests.filter((req) => !joinedNames.has(req.name));
-  }, [pendingRequests, slots?.joinedPlayers]);
+  }, [pendingRequests, slots?.joinedPlayers, item.personalHost?.name]);
 
   const handleOpenHostProfile = (e: React.MouseEvent) => {
     if (!identity?.id) return;
@@ -499,17 +518,21 @@ function SessionDetailModal({
   };
 
   const handleJoin = async () => {
-    if (isFull || alreadyJoined || isPending || isActionLoading) return;
+    if (isHost || isFull || alreadyJoined || isPending || isActionLoading) return;
     setIsActionLoading(true);
 
     const userNote = note.trim() || undefined;
-    // Chế độ xét duyệt: Không add vào joinedPlayers ngay, chỉ đưa vào danh sách Chờ duyệt!
+    const requesterName = currentUser?.fullName || 'Bạn';
+    const requesterAvatar = currentUser?.avatarUrl || null;
+    const requesterId = currentUser?.id || 'sample-user';
+
+    // Chế độ xét duyệt: Không add vào joinedPlayers ngay, chỉ đưa vào danh sách Chờ duyệt gửi tới Host!
     setTimeout(() => {
       setIsActionLoading(false);
       setIsPending(true);
       setPendingRequests((prev) => [
-        ...prev.filter((p) => p.name !== 'Bạn'),
-        { name: 'Bạn', note: userNote },
+        ...prev.filter((p) => p.name !== requesterName && p.name !== 'Bạn'),
+        { userId: requesterId, name: requesterName, avatarUrl: requesterAvatar, note: userNote },
       ]);
       toast.success('Đã gửi yêu cầu xin tham gia! Vui lòng chờ host duyệt.');
     }, 300);
@@ -517,34 +540,43 @@ function SessionDetailModal({
 
   const handleCancelRequest = () => {
     setIsPending(false);
-    setPendingRequests((prev) => prev.filter((p) => p.name !== 'Bạn'));
+    const requesterName = currentUser?.fullName || 'Bạn';
+    setPendingRequests((prev) => prev.filter((p) => p.name !== requesterName && p.name !== 'Bạn'));
     toast.success('Đã hủy yêu cầu xin tham gia');
   };
 
   const handleApproveRequest = async (req: { userId?: string; name: string; avatarUrl?: string | null; note?: string }) => {
+    if (!isHost) {
+      toast.error('Chỉ host mới có quyền xét duyệt yêu cầu!');
+      return;
+    }
     setPendingRequests((prev) => prev.filter((p) => p !== req));
-    if (req.name === 'Bạn') {
-      setIsPending(false);
-      // Khi Host đồng ý chính thức add người vào buổi chơi
-      await onJoin();
-    } else {
-      if (slots && slots.joinedPlayers) {
-        slots.joinedPlayers.push({ userId: req.userId, name: req.name, avatarUrl: req.avatarUrl, initialsBg: '#10b981' });
-        slots.current = Math.min(slots.current + 1, slots.max);
-      }
+    if (slots && slots.joinedPlayers) {
+      slots.joinedPlayers.push({
+        userId: req.userId,
+        name: req.name,
+        avatarUrl: req.avatarUrl,
+        initialsBg: '#10b981',
+      });
+      slots.current = Math.min(slots.current + 1, slots.max);
     }
     toast.success(`Đã duyệt yêu cầu của ${req.name}!`);
   };
 
   const handleRejectRequest = (req: { userId?: string; name: string; avatarUrl?: string | null; note?: string }) => {
-    setPendingRequests((prev) => prev.filter((p) => p !== req));
-    if (req.name === 'Bạn') {
-      setIsPending(false);
+    if (!isHost) {
+      toast.error('Chỉ host mới có quyền từ chối yêu cầu!');
+      return;
     }
+    setPendingRequests((prev) => prev.filter((p) => p !== req));
     toast.success(`Đã từ chối yêu cầu của ${req.name}`);
   };
 
   const handleLeave = async () => {
+    if (isHost) {
+      toast.error('Bạn là host của buổi chơi này, không thể rút khỏi');
+      return;
+    }
     if (!alreadyJoined || isActionLoading) return;
     setIsActionLoading(true);
     await onLeave();
@@ -594,7 +626,7 @@ function SessionDetailModal({
           </div>
 
           <div className="flex items-center gap-2">
-            {identity?.id && (
+            {!isHost && identity?.id && (
               <button
                 type="button"
                 onClick={handleOpenHostProfile}
@@ -736,16 +768,17 @@ function SessionDetailModal({
                             // 1. Kiểm tra người đã tham gia chính thức
                             const joinedPlayer = slots.joinedPlayers[slotNum - 1];
                             if (joinedPlayer) {
-                              const isMe = joinedPlayer.name === 'Bạn';
+                              const isThisHost = slotNum === 1;
+                              const isMe = (isThisHost && isHost) || joinedPlayer.name === 'Bạn' || (currentUser && (joinedPlayer.userId === currentUser.id || joinedPlayer.name === currentUser.fullName));
                               return (
                                 <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                      openUserById(joinedPlayer.userId || 'sample-user', joinedPlayer.name, joinedPlayer.avatarUrl || null, rect);
+                                      openUserById(joinedPlayer.userId || (isThisHost ? identity?.id : undefined) || 'sample-user', joinedPlayer.name, joinedPlayer.avatarUrl || null, rect);
                                     }}
-                                    className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all ${isMe && alreadyJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+                                    className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all ${isMe ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
                                     style={{
                                       backgroundColor: joinedPlayer.initialsBg || '#3b82f6',
                                       ...(joinedPlayer.avatarUrl
@@ -756,15 +789,17 @@ function SessionDetailModal({
                                           }
                                         : {}),
                                     }}
-                                    title={`Bấm để xem trang cá nhân của ${joinedPlayer.name}`}
+                                    title={`Bấm để xem trang cá nhân của ${joinedPlayer.name}${isThisHost ? ' (Host)' : ''}`}
                                   >
                                     {!joinedPlayer.avatarUrl && getInitials(joinedPlayer.name)}
-                                    {isMe && alreadyJoined && (
+                                    {isThisHost ? (
+                                      <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[8px] text-white shadow-2xs" title="Host buổi chơi">👑</span>
+                                    ) : isMe ? (
                                       <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">✓</span>
-                                    )}
+                                    ) : null}
                                   </button>
                                   <span className="text-[11px] font-semibold text-slate-700 text-center truncate w-full">
-                                    {isMe ? 'Bạn' : joinedPlayer.name.split(' ').pop()}
+                                    {isThisHost && isHost ? 'Bạn (Host)' : isMe ? 'Bạn' : joinedPlayer.name.split(' ').pop()}
                                   </span>
                                 </div>
                               );
@@ -774,7 +809,7 @@ function SessionDetailModal({
                             const pendingIndex = slotNum - 1 - slots.joinedPlayers.length;
                             const pendingPlayer = activePendingRequests[pendingIndex];
                             if (pendingPlayer) {
-                              const isMyPending = pendingPlayer.name === 'Bạn';
+                              const isMyPending = pendingPlayer.name === 'Bạn' || (currentUser && (pendingPlayer.userId === currentUser.id || pendingPlayer.name === currentUser.fullName));
                               return (
                                 <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
                                   <button
@@ -853,11 +888,11 @@ function SessionDetailModal({
                     );
                   })()}
 
-                  {/* Danh sách yêu cầu chờ duyệt dành cho Host */}
-                  {activePendingRequests.length > 0 && (
+                  {/* Danh sách yêu cầu chờ duyệt: CHỈ HOST MỚI THẤY VÀ CÓ QUYỀN XÉT DUYỆT */}
+                  {isHost && activePendingRequests.length > 0 && (
                     <div className="mt-4 p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/60 space-y-2">
                       <div className="flex items-center justify-between text-xs font-bold text-amber-800">
-                        <span>Yêu cầu xin tham gia ({activePendingRequests.length})</span>
+                        <span>Yêu cầu xin tham gia chờ bạn duyệt ({activePendingRequests.length})</span>
                       </div>
                       <div className="space-y-1.5 max-h-32 overflow-y-auto">
                         {activePendingRequests.map((req, idx) => (
@@ -932,37 +967,47 @@ function SessionDetailModal({
             >
               Đóng
             </button>
-            {alreadyJoined && (
-              <button
-                type="button"
-                onClick={handleLeave}
-                disabled={isActionLoading}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
-              >
-                <X className="h-4 w-4" />
-                {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi'}
-              </button>
-            )}
-            {!alreadyJoined && isPending && (
-              <button
-                type="button"
-                onClick={handleCancelRequest}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-5 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors"
-                title="Bấm để hủy yêu cầu xin tham gia"
-              >
-                <span>⏳ Chờ duyệt (Hủy)</span>
-              </button>
-            )}
-            {!alreadyJoined && !isPending && !isFull && (
-              <button
-                type="button"
-                onClick={handleJoin}
-                disabled={isActionLoading}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-50"
-              >
-                <UserPlus className="h-4 w-4" />
-                {isActionLoading ? 'Đang xử lý...' : 'Xin tham gia'}
-              </button>
+
+            {/* Nếu là Host: Không hiện nút rút khỏi hay xin tham gia */}
+            {isHost ? (
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 border border-slate-200">
+                <span>👑 Bạn là Host của buổi chơi</span>
+              </span>
+            ) : (
+              <>
+                {alreadyJoined && (
+                  <button
+                    type="button"
+                    onClick={handleLeave}
+                    disabled={isActionLoading}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
+                  >
+                    <X className="h-4 w-4" />
+                    {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi'}
+                  </button>
+                )}
+                {!alreadyJoined && isPending && (
+                  <button
+                    type="button"
+                    onClick={handleCancelRequest}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-5 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors"
+                    title="Bấm để hủy yêu cầu xin tham gia"
+                  >
+                    <span>⏳ Chờ duyệt (Hủy)</span>
+                  </button>
+                )}
+                {!alreadyJoined && !isPending && !isFull && (
+                  <button
+                    type="button"
+                    onClick={handleJoin}
+                    disabled={isActionLoading}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {isActionLoading ? 'Đang xử lý...' : 'Xin tham gia'}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1079,10 +1124,12 @@ function ClubSessionCard({
 
 function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin, onLeave }: { item: ActivityFeedItem; reducedMotion: boolean; isJoined: boolean; onJoin: () => Promise<boolean>; onLeave: () => Promise<boolean> }) {
   const [showModal, setShowModal] = useState(false);
+  const currentUser = useAuthStore((state) => state.user);
   if (!item.slots || !item.personalHost) return null;
   const { current, max, feePerSlot, joinedPlayers } = item.slots;
   const isFull = current >= max;
   const identity = item.personalHost;
+  const isHost = Boolean(currentUser?.id && (item.personalHost?.id === currentUser.id || item.personalHost?.name === currentUser.fullName));
 
   return (
     <>
@@ -1092,13 +1139,38 @@ function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin, onLeave }: 
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600" style={identity.avatarUrl ? { backgroundImage: `url(${identity.avatarUrl})`, backgroundPosition: 'center', backgroundSize: 'cover' } : undefined} role="img" aria-label={`Ảnh đại diện ${identity.name}`}>{!identity.avatarUrl && identity.initials}</div>
-              <div className="min-w-0"><div className="flex items-center gap-1.5"><span className="truncate text-sm font-bold text-slate-900">{identity.name}</span><span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">Cá nhân</span></div><div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500"><span>{item.sport}</span><span aria-hidden="true">•</span><span className="truncate font-medium text-slate-600">{item.sportTier}</span></div></div>
+              <div className="min-w-0"><div className="flex items-center gap-1.5"><span className="truncate text-sm font-bold text-slate-900">{identity.name}</span><span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">{isHost ? 'Bạn (Host)' : 'Cá nhân'}</span></div><div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500"><span>{item.sport}</span><span aria-hidden="true">•</span><span className="truncate font-medium text-slate-600">{item.sportTier}</span></div></div>
             </div>
             <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold ${isFull ? 'border-slate-200 bg-slate-100 text-slate-600' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{getMissingLabel(current, max)}</span>
           </div>
           <div className="space-y-1.5"><h3 className="text-sm font-bold leading-snug text-slate-950 sm:text-base">{item.title}</h3><div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600"><span className="inline-flex items-center gap-1.5 font-semibold text-slate-800"><Clock3 className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />{item.startTime} - {item.endTime}</span><span className="text-slate-300" aria-hidden="true">•</span><span className="inline-flex min-w-0 items-center gap-1.5"><MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" /><span className="truncate">{item.location}</span></span><span className="text-slate-300" aria-hidden="true">•</span><span className="font-bold text-slate-800">{feePerSlot}/người</span></div></div>
           <p className="line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{item.description || 'Đang tìm người chơi phù hợp cho buổi giao lưu này.'}</p>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3"><div className="flex items-center gap-2.5" aria-label={`${current} trên ${max} người đã vào slot`}><div className="flex -space-x-2">{joinedPlayers.slice(0, max).map((player, index) => <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />)}</div><span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600"><UsersRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />{current}/{max} đã vào</span></div><button type="button" onClick={() => setShowModal(true)} disabled={isFull && !isJoined} className={`ml-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold ${isJoined ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : isFull ? 'cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'}`}>{isJoined ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />}{isJoined ? 'Đã vào slot' : isFull ? 'Đã đủ' : 'Vào slot'}</button></div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3"><div className="flex items-center gap-2.5" aria-label={`${current} trên ${max} người đã vào slot`}><div className="flex -space-x-2">{joinedPlayers.slice(0, max).map((player, index) => <PlayerAvatar key={`${player.name}-${index}`} player={player} index={index} />)}</div><span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600"><UsersRound className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />{current}/{max} đã vào</span></div>
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              disabled={!isHost && isFull && !isJoined}
+              className={`ml-auto inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold ${
+                isHost
+                  ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  : isJoined
+                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : isFull
+                  ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                  : 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
+              }`}
+            >
+              {isHost ? (
+                <>👑 Quản lý slot</>
+              ) : isJoined ? (
+                <><Check className="h-3.5 w-3.5" aria-hidden="true" /> Đã vào slot</>
+              ) : isFull ? (
+                'Đã đủ'
+              ) : (
+                <><UserPlus className="h-3.5 w-3.5" aria-hidden="true" /> Vào slot</>
+              )}
+            </button>
+          </div>
         </div>
       </EventShell>
     </>

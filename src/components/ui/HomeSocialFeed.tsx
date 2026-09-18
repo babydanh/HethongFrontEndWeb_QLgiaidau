@@ -573,13 +573,36 @@ function SessionDetailModal({
                 {/* Title */}
                 <h2 className="text-xl font-bold text-slate-900 leading-snug">{item.title}</h2>
 
-                {/* Location (Clean, pure white, no grey card frame) */}
-                {item.location && (
-                  <div className="flex items-start gap-1.5 text-xs text-slate-600">
-                    <MapPin className="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
-                    <span className="font-medium leading-relaxed">{item.location}</span>
-                  </div>
-                )}
+                {/* Location & Schedule Info (Clean typography, no icons, no grey box) */}
+                <div className="space-y-1.5 text-xs text-slate-600">
+                  {item.location && (
+                    <div className="font-medium text-slate-700 leading-relaxed">
+                      {item.location}
+                    </div>
+                  )}
+
+                  {/* Sport · Date · Time line */}
+                  {(item.sport || item.playDate || item.startTime) && (
+                    <div className="flex flex-wrap items-center gap-x-2 text-slate-500 text-xs">
+                      {item.sport && <span>{item.sport}</span>}
+                      {item.sport && (item.playDate || item.startTime) && <span>·</span>}
+                      {item.playDate && (
+                        <span>
+                          {(() => {
+                            const [y, m, d] = item.playDate.split('-');
+                            return `${d}/${m}/${y}`;
+                          })()}
+                        </span>
+                      )}
+                      {item.playDate && item.startTime && <span>·</span>}
+                      {item.startTime && (
+                        <span>
+                          {item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Description (Rich Text support) */}
                 {item.rawDescription ? (
@@ -632,40 +655,17 @@ function SessionDetailModal({
             {slots && (
               <div className="p-6 bg-white flex flex-col justify-between">
                 <div>
-                  {/* Badges gọn gàng trên danh sách tham gia (Đã bỏ badge "Buổi giao lưu") */}
-                  <div className="flex flex-wrap items-center gap-1.5 mb-4">
-                    {slots && (
-                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900">Danh sách tham gia</h3>
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                         isFull
-                          ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                          ? 'bg-slate-100 text-slate-600'
+                          : 'bg-amber-50 text-amber-700'
                       }`}>
-                        <Flame className="h-3 w-3" />
                         {getMissingLabel(slots.current, slots.max)}
                       </span>
-                    )}
-                    {item.sport && (
-                      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
-                        {item.sport}
-                      </span>
-                    )}
-                    {item.playDate && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
-                        <CalendarDays className="h-3 w-3 text-slate-500" />
-                        {(() => {
-                          const [y, m, d] = item.playDate.split('-');
-                          return `${d}/${m}/${y}`;
-                        })()}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200/60">
-                      <Clock3 className="h-3 w-3 text-slate-500" />
-                      {item.startTime}{item.endTime ? ` – ${item.endTime}` : ''}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-900">Danh sách tham gia</h3>
+                    </div>
                     <span className="text-xs font-bold text-slate-500">{slots.current}/{slots.max}</span>
                   </div>
 

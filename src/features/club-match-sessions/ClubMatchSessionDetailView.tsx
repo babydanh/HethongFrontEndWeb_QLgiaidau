@@ -439,7 +439,7 @@ export function ClubMatchSessionDetailView({
   if (session.pairingMode === 'BRACKET') {
     const bracketHref = session.bracketTournamentId
       ? session.capabilities?.canManage
-        ? `/organizer/tournaments/${session.bracketTournamentId}/manage?tab=bracket`
+        ? `/lite/tournaments/${session.bracketTournamentId}/manage?tab=bracket`
         : `/tournaments/${session.bracketTournamentId}?tab=bracket`
       : null;
     return (

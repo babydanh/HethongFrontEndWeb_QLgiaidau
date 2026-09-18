@@ -153,13 +153,13 @@ const commonTranslate = useTranslations('Common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>(
-    () => searchParams?.get('divisionId') || initialDivisions[0]?.id || ''
+    () => searchParams?.get('divisionId') || ''
   );
   const [openDivisionId, setOpenDivisionId] = useState<string>(
-    () => searchParams?.get('divisionId') || initialDivisions[0]?.id || ''
+    () => searchParams?.get('divisionId') || ''
   );
   const [divisionsList, setDivisionsList] = useState<Division[]>(initialDivisions);
-  const [initialDivisionId] = useState(() => searchParams?.get('divisionId') || initialDivisions[0]?.id || '');
+  const [initialDivisionId] = useState(() => searchParams?.get('divisionId') || '');
   const visibleDivisionId = openDivisionId || selectedDivisionId;
   const selectedDivision: Tournament | null = (() => {
     if (!tournament || !visibleDivisionId) {
@@ -722,15 +722,15 @@ const commonTranslate = useTranslations('Common');
         const preferredDivision = initialDivisionId
           ? divisionsWithCount.find((division) => division.id === initialDivisionId)
           : null;
-        const nextDivisionId = preferredDivision?.id ?? divisionsWithCount[0]?.id ?? '';
-        Promise.resolve().then(() => {
-          setSelectedDivisionId((currentDivisionId) =>
-            currentDivisionId === nextDivisionId ? currentDivisionId : nextDivisionId,
-          );
-          if (nextDivisionId) {
+        const nextDivisionId = preferredDivision?.id ?? '';
+        if (nextDivisionId) {
+          Promise.resolve().then(() => {
+            setSelectedDivisionId((currentDivisionId) =>
+              currentDivisionId === nextDivisionId ? currentDivisionId : nextDivisionId,
+            );
             setOpenDivisionId(nextDivisionId);
-          }
-        });
+          });
+        }
       } catch (err: unknown) {
         console.error('Failed to load parent/divisions context:', err);
       }
@@ -988,7 +988,7 @@ const commonTranslate = useTranslations('Common');
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
+          <p className="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
             {translate('organizerLabel') || 'Người sáng lập giải đấu'}
           </p>
           <div className="flex items-center gap-1">
@@ -1067,7 +1067,7 @@ const commonTranslate = useTranslations('Common');
         {/* Dates */}
         <div className="flex items-start gap-2.5">
           <Calendar className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-          <p className="text-slate-700 leading-snug">
+          <p className="text-slate-800 font-medium leading-snug">
             {activeTournament.startDate ? (
               <>
                 {formatDate(activeTournament.startDate)}
@@ -1083,7 +1083,7 @@ const commonTranslate = useTranslations('Common');
         <div className="flex items-start gap-2.5">
           <MapPin className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1">
-            <p className="text-slate-700 leading-snug break-words" title={getTournamentLocationLabel(activeTournament)}>
+            <p className="text-slate-800 font-medium leading-snug break-words" title={getTournamentLocationLabel(activeTournament)}>
               {getTournamentLocationLabel(activeTournament) || (
                 <span className="text-slate-400">{translate('venueNotUpdated')}</span>
               )}
@@ -1099,7 +1099,7 @@ const commonTranslate = useTranslations('Common');
         {/* Divisions Count */}
         <div className="flex items-center gap-2.5">
           <Trophy className="w-4 h-4 text-slate-500 shrink-0" />
-          <p className="text-slate-700">
+          <p className="text-slate-800 font-medium">
             {divisionsList.length || 1}{' '}
             <span>{translate('competitionContentTitle') || 'Nội dung thi đấu'}</span>
           </p>
@@ -1108,7 +1108,7 @@ const commonTranslate = useTranslations('Common');
         {/* Participants / Teams Count */}
         <div className="flex items-center gap-2.5">
           <Users className="w-4 h-4 text-slate-500 shrink-0" />
-          <p className="text-slate-700">
+          <p className="text-slate-800 font-medium">
             {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}{' '}
             <span>{translate('participantsCount') || 'Số lượng hồ sơ'}</span>
           </p>
@@ -1387,17 +1387,17 @@ const commonTranslate = useTranslations('Common');
       <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 flex flex-col gap-3 shadow-xs">
         {hasContact && (
           <div className="space-y-2.5">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{translate('contactInfo') || 'THÔNG TIN LIÊN HỆ'}</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-0.5">{translate('contactInfo') || 'THÔNG TIN LIÊN HỆ'}</span>
             {activeTournament.contactInfo?.phone && (
               <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="text-xs font-semibold text-slate-700">{activeTournament.contactInfo.phone}</span>
+                <Phone className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="text-xs font-medium text-slate-800">{activeTournament.contactInfo.phone}</span>
               </div>
             )}
             {activeTournament.contactInfo?.email && (
               <div className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="text-xs font-semibold text-slate-700 truncate">{activeTournament.contactInfo.email}</span>
+                <Mail className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="text-xs font-medium text-slate-800 truncate">{activeTournament.contactInfo.email}</span>
               </div>
             )}
             {Object.entries(activeTournament.contactInfo || {})
@@ -1408,7 +1408,7 @@ const commonTranslate = useTranslations('Common');
                 const isUrl = typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://'));
 
                 let IconComponent: React.ComponentType<React.SVGProps<SVGSVGElement>> = Globe;
-                let iconColor = 'text-slate-400';
+                let iconColor = 'text-slate-500';
 
                 if (lowercaseKey.includes('instagram')) {
                   IconComponent = InstagramIcon;
@@ -1421,13 +1421,13 @@ const commonTranslate = useTranslations('Common');
                 return (
                   <div key={key} className="flex items-center gap-2.5">
                     <IconComponent className={`w-4 h-4 shrink-0 ${iconColor}`} />
-                    <span className="text-xs font-bold text-slate-500">{key}:</span>
+                    <span className="text-xs font-bold text-slate-600">{key}:</span>
                     {isUrl ? (
                       <a href={val as string} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-600 hover:underline truncate">
                         {val}
                       </a>
                     ) : (
-                      <span className="text-xs font-semibold text-slate-700 truncate">{val}</span>
+                      <span className="text-xs font-medium text-slate-800 truncate">{val}</span>
                     )}
                   </div>
                 );
@@ -1805,18 +1805,18 @@ const commonTranslate = useTranslations('Common');
                   <button
                     key={tab.id}
                     onClick={() => handleTabSelect(tab.id)}
-                    className={`px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
+                    className={`px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm whitespace-nowrap transition-colors flex items-center gap-1.5 sm:gap-2 cursor-pointer border-b-2 -mb-[2px] ${
                       tab.isLive
                         ? isActive
                           ? 'border-rose-600 text-rose-600 font-bold'
-                          : 'border-transparent text-rose-600/80 font-medium hover:text-rose-700 hover:border-rose-200'
+                          : 'border-transparent text-rose-600/80 font-medium hover:text-rose-700'
                         : tab.isGolden
                           ? isActive
                             ? 'border-amber-500 text-amber-600 font-bold'
-                            : 'border-transparent text-amber-700/80 font-medium hover:text-amber-800 hover:border-amber-200'
+                            : 'border-transparent text-amber-700/80 font-medium hover:text-amber-800'
                           : isActive
                             ? 'border-sky-500 text-sky-600 font-bold'
-                            : 'border-transparent text-slate-600 font-medium hover:text-slate-900 hover:border-slate-300'
+                            : 'border-transparent text-slate-600 font-medium hover:text-slate-900'
                     }`}
                   >
                     {tab.isLive && (
@@ -1870,8 +1870,8 @@ const commonTranslate = useTranslations('Common');
                                 aria-current={isActive ? 'true' : undefined}
                                 aria-expanded={isActive}
                                 onClick={() => handleDivisionSelect(division.id)}
-                                className={`group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2.5 text-left transition-all sm:px-4 ${
-                                  isActive ? 'bg-slate-50/90' : 'hover:bg-slate-50/70'
+                                className={`group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors sm:px-4 ${
+                                  isActive ? 'bg-slate-50/90' : 'bg-transparent'
                                 }`}
                               >
                               {/* Title */}
@@ -1891,10 +1891,10 @@ const commonTranslate = useTranslations('Common');
                                 }
                                 return (
                                   <span className="min-w-0 flex-1">
-                                    <span className={`inline-block truncate text-sm sm:text-base ${
+                                    <span className={`inline-block truncate text-sm sm:text-base transition-colors ${
                                       isActive
                                         ? 'font-bold text-slate-900'
-                                        : 'font-semibold text-slate-700 group-hover:text-slate-900'
+                                        : 'font-semibold text-slate-700 group-hover:text-blue-600'
                                     }`}>
                                       {displayName}
                                     </span>

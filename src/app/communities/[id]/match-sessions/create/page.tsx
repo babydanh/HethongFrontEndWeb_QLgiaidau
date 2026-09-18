@@ -126,7 +126,7 @@ export default function CreateClubMatchSessionPage({ params }: { params: Promise
       }, creationIdempotencyKey.current);
       toast.success(t('created'));
       router.replace(pairingMode === 'BRACKET' && response.bracketTournamentId
-        ? `/organizer/tournaments/${response.bracketTournamentId}/manage?tab=bracket`
+        ? `/lite/tournaments/${response.bracketTournamentId}/manage?tab=bracket`
         : `/communities/${id}/match-sessions/${response.id}`);
     } catch (error) {
       toast.error(getErrorMessage(error));

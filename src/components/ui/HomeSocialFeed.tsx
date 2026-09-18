@@ -1343,6 +1343,14 @@ function CreatePersonalPickupModal({ categories, initialDate, onClose, onCreated
                   placeholder="Nói thêm về trình độ, luật chơi hoặc cách chia sân..."
                   compact
                 />
+                {(() => {
+                  const len = description.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length;
+                  return (
+                    <p className={`mt-1 text-right text-xs ${len > 2000 ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
+                      {len}/2000
+                    </p>
+                  );
+                })()}
               </div>
             </div>
           </div>

@@ -478,11 +478,19 @@ function SessionDetailModal({
   const identity = item.club ?? item.personalHost;
   const [note, setNote] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
+  // Nếu đã tham gia (isJoined) hoặc đã có tên 'Bạn' trong joinedPlayers thì không được ở trạng thái chờ duyệt
+  const alreadyJoined = isJoined || Boolean(slots?.joinedPlayers?.some((p) => p.name === 'Bạn'));
   const [isPending, setIsPending] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<Array<{ userId?: string; name: string; avatarUrl?: string | null; note?: string }>>([]);
   const [slotPage, setSlotPage] = useState(1);
   const SLOTS_PER_PAGE = 16;
   const openUserById = useUserProfileModalStore((state) => state.openUserById);
+
+  // Lọc bỏ bất kỳ request nào có tên trùng với người đã vào joinedPlayers
+  const activePendingRequests = useMemo(() => {
+    const joinedNames = new Set((slots?.joinedPlayers ?? []).map((p) => p.name));
+    return pendingRequests.filter((req) => !joinedNames.has(req.name));
+  }, [pendingRequests, slots?.joinedPlayers]);
 
   const handleOpenHostProfile = (e: React.MouseEvent) => {
     if (!identity?.id) return;
@@ -491,7 +499,7 @@ function SessionDetailModal({
   };
 
   const handleJoin = async () => {
-    if (isFull || isJoined || isPending || isActionLoading) return;
+    if (isFull || alreadyJoined || isPending || isActionLoading) return;
     setIsActionLoading(true);
 
     const userNote = note.trim() || undefined;
@@ -537,7 +545,7 @@ function SessionDetailModal({
   };
 
   const handleLeave = async () => {
-    if (!isJoined || isActionLoading) return;
+    if (!alreadyJoined || isActionLoading) return;
     setIsActionLoading(true);
     await onLeave();
     setIsActionLoading(false);
@@ -679,7 +687,7 @@ function SessionDetailModal({
               </div>
 
               {/* Note input when not yet joined - sạch sẽ, không đóng khung card viền thô */}
-              {!isJoined && !isPending && !isFull && (
+              {!alreadyJoined && !isPending && !isFull && (
                 <div className="pt-2">
                   <label className="text-xs font-semibold text-slate-600 mb-1.5 block">
                     Ghi chú gửi kèm <span className="font-normal text-slate-400">(không bắt buộc)</span>
@@ -737,7 +745,7 @@ function SessionDetailModal({
                                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                                       openUserById(joinedPlayer.userId || 'sample-user', joinedPlayer.name, joinedPlayer.avatarUrl || null, rect);
                                     }}
-                                    className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all ${isMe && isJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+                                    className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all ${isMe && alreadyJoined ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
                                     style={{
                                       backgroundColor: joinedPlayer.initialsBg || '#3b82f6',
                                       ...(joinedPlayer.avatarUrl
@@ -751,7 +759,7 @@ function SessionDetailModal({
                                     title={`Bấm để xem trang cá nhân của ${joinedPlayer.name}`}
                                   >
                                     {!joinedPlayer.avatarUrl && getInitials(joinedPlayer.name)}
-                                    {isMe && isJoined && (
+                                    {isMe && alreadyJoined && (
                                       <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">✓</span>
                                     )}
                                   </button>
@@ -764,7 +772,7 @@ function SessionDetailModal({
 
                             // 2. Kiểm tra người đang chờ duyệt (nằm ở các slot kế tiếp)
                             const pendingIndex = slotNum - 1 - slots.joinedPlayers.length;
-                            const pendingPlayer = pendingRequests[pendingIndex];
+                            const pendingPlayer = activePendingRequests[pendingIndex];
                             if (pendingPlayer) {
                               const isMyPending = pendingPlayer.name === 'Bạn';
                               return (
@@ -789,8 +797,8 @@ function SessionDetailModal({
                             }
 
                             // 3. Slot trống
-                            const isNextOpenSlot = slotNum === slots.joinedPlayers.length + pendingRequests.length + 1;
-                            const canJoin = isNextOpenSlot && !isJoined && !isPending && !isFull;
+                            const isNextOpenSlot = slotNum === slots.joinedPlayers.length + activePendingRequests.length + 1;
+                            const canJoin = isNextOpenSlot && !alreadyJoined && !isPending && !isFull;
 
                             return (
                               <div key={`slot-${slotNum}`} className="flex flex-col items-center gap-1 min-w-0">
@@ -846,13 +854,13 @@ function SessionDetailModal({
                   })()}
 
                   {/* Danh sách yêu cầu chờ duyệt dành cho Host */}
-                  {pendingRequests.length > 0 && (
+                  {activePendingRequests.length > 0 && (
                     <div className="mt-4 p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/60 space-y-2">
                       <div className="flex items-center justify-between text-xs font-bold text-amber-800">
-                        <span>Yêu cầu xin tham gia ({pendingRequests.length})</span>
+                        <span>Yêu cầu xin tham gia ({activePendingRequests.length})</span>
                       </div>
                       <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                        {pendingRequests.map((req, idx) => (
+                        {activePendingRequests.map((req, idx) => (
                           <div key={idx} className="flex items-center justify-between gap-2 bg-white px-2.5 py-2 rounded-lg border border-amber-100 shadow-2xs text-xs">
                             <button
                               type="button"
@@ -900,7 +908,7 @@ function SessionDetailModal({
                   <p className="text-xs text-slate-400 text-center">
                     {isFull
                       ? 'Buổi giao lưu đã đủ người tham gia'
-                      : `Còn trống ${Math.max(slots.max - slots.current - pendingRequests.length, 0)} slot`}
+                      : `Còn trống ${Math.max(slots.max - slots.current - activePendingRequests.length, 0)} slot`}
                   </p>
                 </div>
               </div>
@@ -924,7 +932,7 @@ function SessionDetailModal({
             >
               Đóng
             </button>
-            {isJoined && (
+            {alreadyJoined && (
               <button
                 type="button"
                 onClick={handleLeave}
@@ -935,7 +943,7 @@ function SessionDetailModal({
                 {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi'}
               </button>
             )}
-            {isPending && (
+            {!alreadyJoined && isPending && (
               <button
                 type="button"
                 onClick={handleCancelRequest}
@@ -945,7 +953,7 @@ function SessionDetailModal({
                 <span>⏳ Chờ duyệt (Hủy)</span>
               </button>
             )}
-            {!isJoined && !isPending && !isFull && (
+            {!alreadyJoined && !isPending && !isFull && (
               <button
                 type="button"
                 onClick={handleJoin}

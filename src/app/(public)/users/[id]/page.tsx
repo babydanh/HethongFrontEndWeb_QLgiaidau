@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { api } from '@/lib/axios';
 import { ApiResponse } from '@/types/api';
-import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight } from 'lucide-react';
+import { Trophy, Award, Calendar, ArrowLeft, Loader2, Sparkles, Star, Zap, User, Camera, ShieldCheck, MapPin, Activity, ChevronRight, Share2, CheckCircle2, Users, Clock } from 'lucide-react';
 import { PublicProfileSkeleton } from '@/components/skeletons/PublicProfileSkeleton';
 import Link from 'next/link';
 import { buildMatchScoreSummary } from '@/features/matches/score-display';
@@ -21,6 +21,8 @@ import { ReportViolationButton } from '@/features/reports/components/ReportViola
 import { useAuthStore } from '@/lib/zustand/authStore';
 import { BRAND } from '@/constants/brand';
 import { isPublicRankingEligible } from '@/features/rankings/elo-display';
+import { cn } from '@/utils/cn';
+import ShareModal from '@/components/common/ShareModal';
 
 interface UserRank {
   categoryId: string;
@@ -137,6 +139,7 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTab, setIsLoadingTab] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const hideEloSection = profile?.isMock === true;
   const tabs = hideEloSection
     ? [
@@ -277,8 +280,37 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
     return null;
   };
 
+  // Lấy danh sách thứ hạng theo từng bộ môn duy nhất để hiển thị
+  const distinctSportRanks = (() => {
+    const seen = new Set<string>();
+    const results: UserRank[] = [];
+    displayedRanks.forEach((r) => {
+      const cat = (r.categoryName || r.categoryId || '').toLowerCase();
+      if (!seen.has(cat)) {
+        seen.add(cat);
+        results.push(r);
+      }
+    });
+    return results;
+  })();
+
+  const featuredRank = displayedRanks
+    .filter(isPublicRankingEligible)
+    .sort((a, b) => b.eloPoints - a.eloPoints)[0];
+
+  // Role cao nhất của người dùng
+  const highestRole = (() => {
+    const allRoles = Array.from(new Set(profile.roles || (profile.role ? [profile.role] : ['PLAYER'])));
+    if (allRoles.includes('ADMIN')) return 'ADMIN';
+    if (allRoles.includes('ORGANIZER')) return 'ORGANIZER';
+    if (allRoles.includes('PLAYER')) return 'PLAYER';
+    return allRoles[0] || 'PLAYER';
+  })();
+
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : `${BRAND.domain}/users/${profile.id}`;
+
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+    <div className="max-w-6xl mx-auto px-3 sm:px-5 md:px-8 py-6 flex flex-col gap-6">
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <button
@@ -295,60 +327,65 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
         />
       </div>
 
-      {/* Profile Header */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-        {/* Cover Photo Banner */}
-        <div className="h-48 sm:h-64 md:h-72 lg:h-80 bg-slate-950 relative group overflow-hidden select-none">
-          {profile.coverUrl ? (
-            <img
-              src={profile.coverUrl}
-              alt="Cover"
-              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0a192f] to-[#0f2d59] overflow-hidden">
-              {/* Dynamic Glow Orbs */}
-              <div className="absolute -top-24 -left-20 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute top-1/2 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-16 left-1/3 w-72 h-72 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
+      {/* ─── Cover Banner (Độc lập ở trên cùng) ─── */}
+      <div className="relative h-60 sm:h-72 md:h-80 bg-slate-950 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-800 shadow-md select-none">
+        {/* Background cover image or gradient */}
+        {profile.coverUrl ? (
+          <img
+            src={profile.coverUrl}
+            alt="Cover"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#0a192f] to-[#0f2d59] overflow-hidden">
+            <div className="absolute -top-24 -left-20 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 right-0 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 left-1/3 w-72 h-72 bg-sky-400/15 rounded-full blur-2xl pointer-events-none" />
+            <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+              <defs>
+                <pattern id="sporto-public-court-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                  <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1" />
+                  <circle cx="30" cy="30" r="1.5" fill="rgba(56, 189, 248, 0.6)" />
+                </pattern>
+                <linearGradient id="sporto-public-court-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#sporto-public-court-grid)" />
+              <circle cx="85%" cy="30%" r="140" fill="none" stroke="url(#sporto-public-court-grad)" strokeWidth="2" strokeDasharray="6 6" />
+              <circle cx="85%" cy="30%" r="200" fill="none" stroke="url(#sporto-public-court-grad)" strokeWidth="1.5" opacity="0.6" />
+              <path d="M -50 280 L 400 -100" stroke="url(#sporto-public-court-grad)" strokeWidth="1.5" strokeDasharray="8 8" />
+            </svg>
+          </div>
+        )}
 
-              {/* Sports Grid & Court Lines Pattern */}
-              <svg
-                className="absolute inset-0 w-full h-full opacity-20"
-                xmlns="http://www.w3.org/2000/svg"
-                width="100%"
-                height="100%"
-              >
-                <defs>
-                  <pattern id="sporto-public-court-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-                    <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="1" />
-                    <circle cx="30" cy="30" r="1.5" fill="rgba(56, 189, 248, 0.6)" />
-                  </pattern>
-                  <linearGradient id="sporto-public-court-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
-                  </linearGradient>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#sporto-public-court-grid)" />
-                <circle cx="85%" cy="30%" r="140" fill="none" stroke="url(#sporto-public-court-grad)" strokeWidth="2" strokeDasharray="6 6" />
-                <circle cx="85%" cy="30%" r="200" fill="none" stroke="url(#sporto-public-court-grad)" strokeWidth="1.5" opacity="0.6" />
-                <path d="M -50 280 L 400 -100" stroke="url(#sporto-public-court-grad)" strokeWidth="1.5" strokeDasharray="8 8" />
-              </svg>
-            </div>
-          )}
-          {/* Multi-layer Vignette & Bottom Blend */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none" />
+
+        {/* Action Button: Nút chia sẻ góc trên phải */}
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30">
+          <button
+            type="button"
+            onClick={() => setIsShareModalOpen(true)}
+            aria-label={translate('back')}
+            title="Chia sẻ hồ sơ"
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all shadow-md active:scale-95 border border-white/20 cursor-pointer"
+          >
+            <Share2 className="w-4 h-4 text-white" />
+          </button>
         </div>
+      </div>
 
-        <div className="px-6 md:px-10 pb-8 relative">
-          {/* Avatar & Info */}
-          <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 -mt-16 mb-5 relative z-10">
-            {(() => {
-              const featuredRank = displayedRanks
-                .filter(isPublicRankingEligible)
-                .sort((a, b) => b.eloPoints - a.eloPoints)[0];
-              return (
+      {/* Main 2-Column Bento Grid - Layout chuẩn Figma với Left Card thụt vô trong so với mép banner */}
+      <div className="min-h-[400px] relative z-20 px-2 sm:px-6 md:px-8">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* LEFT COLUMN: Identity Profile Card & Personal Attributes */}
+          <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-5 -mt-24 sm:-mt-28 md:-mt-32">
+            {/* Primary Athlete Card */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center relative overflow-hidden">
+              {/* Avatar with Ring */}
+              <div className="relative mt-2 mb-3">
                 <RankAvatar
                   src={profile.avatarUrl}
                   name={profile.fullName}
@@ -357,128 +394,93 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
                   categoryName={featuredRank?.categoryName}
                   matchesPlayed={featuredRank?.matchesPlayed || 0}
                   size="lg"
-                  ringClassName="ring-4 shadow-xl transition-transform duration-300 hover:scale-[1.03]"
+                  className="!h-24 !w-24 border-4 border-white shadow-md transition-transform duration-300 hover:scale-[1.02]"
+                  ringClassName="ring-2 ring-slate-100"
                 />
-              );
-            })()}
-          </div>
+              </div>
 
-          {/* Info */}
-          <div className="space-y-3">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 flex flex-wrap items-center gap-2.5 tracking-tight">
+              {/* Athlete Name & Verified */}
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center justify-center gap-1.5 tracking-tight mt-1">
                 {profile.fullName}
                 {profile.isVerified && (
-                  <span title={translate('verifiedMember')} className="bg-blue-50 p-1 rounded-full border border-blue-200 inline-flex items-center">
-                    <ShieldCheck className="w-5 h-5 text-blue-600" />
+                  <span title={translate('verifiedMember')} className="inline-flex items-center text-blue-500 shrink-0">
+                    <CheckCircle2 className="w-4 h-4 fill-blue-500 text-white" />
                   </span>
                 )}
-                {(() => {
-                  const eligible = displayedRanks
-                    .filter(isPublicRankingEligible)
-                    .sort((a, b) => b.eloPoints - a.eloPoints);
-                  const listToRender = eligible.length > 0
-                    ? eligible
-                    : displayedRanks.filter((r) => (r.eloPoints || 0) > 0);
-
-                  const seenCategories = new Set<string>();
-                  const distinctRanks = listToRender.filter((r) => {
-                    const cat = (r.categoryName || r.categoryId || '').toLowerCase();
-                    if (seenCategories.has(cat)) return false;
-                    seenCategories.add(cat);
-                    return true;
-                  });
-
-                  if (distinctRanks.length > 0) {
-                    return distinctRanks.map((rank, idx) => (
-                      <EloTierBadge
-                        key={`${rank.categoryId || rank.categoryName}-${rank.matchType || idx}`}
-                        elo={rank.eloPoints}
-                        tierName={rank.tierName || undefined}
-                        categoryName={rank.categoryName}
-                        size="md"
-                      />
-                    ));
-                  }
-                  return null;
-                })()}
               </h1>
-            </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-              {Array.from(new Set(profile.roles || (profile.role ? [profile.role] : ['PLAYER']))).map((role: string) => {
+              {/* Role Tag duy nhất cao nhất với chữ màu trắng */}
+              {highestRole && (() => {
                 let roleLabel = translate('player');
-                let roleColor = 'bg-blue-600 text-white shadow-2xs';
-                if (role === 'ORGANIZER') {
+                let roleColor = 'bg-blue-600 text-white border-blue-700 shadow-2xs';
+                if (highestRole === 'ORGANIZER') {
                   roleLabel = translate('organizer');
-                  roleColor = 'bg-indigo-600 text-white shadow-2xs';
-                } else if (role === 'ADMIN') {
+                  roleColor = 'bg-indigo-600 text-white border-indigo-700 shadow-2xs';
+                } else if (highestRole === 'ADMIN') {
                   roleLabel = translate('admin');
-                  roleColor = 'bg-purple-600 text-white shadow-2xs';
+                  roleColor = 'bg-purple-600 text-white border-purple-700 shadow-2xs';
                 }
                 return (
-                  <span key={role} className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider ${roleColor}`}>
-                    {roleLabel}
-                  </span>
+                  <div className="flex items-center justify-center mt-2.5">
+                    <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded border uppercase tracking-wider text-white ${roleColor}`}>
+                      {roleLabel}
+                    </span>
+                  </div>
                 );
-              })}
-              {profile.isVerified && (
-                <span className="px-3 py-1 text-xs font-bold rounded-md bg-emerald-600 text-white uppercase tracking-wider shadow-2xs">
-                  {translate('verified')}
-                </span>
+              })()}
+
+              {/* Tag / Badge các môn thể thao có hạng */}
+              {distinctSportRanks.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5 w-full">
+                  {distinctSportRanks.map((rank, idx) => (
+                    <EloTierBadge
+                      key={`${rank.categoryId || rank.categoryName}-${rank.matchType || idx}`}
+                      elo={rank.eloPoints}
+                      tierName={rank.tierName || undefined}
+                      categoryName={rank.categoryName}
+                      size="sm"
+                    />
+                  ))}
+                </div>
               )}
-              {profile.achievements?.length ? (
-                <span className="bg-slate-900 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
-                  <Trophy className="w-3.5 h-3.5 text-amber-400" /> {profile.achievements.length} {translate('achievementsLabel')}
-                </span>
-              ) : null}
+
+              {/* Action Buttons in Left Profile Card: Chia sẻ hồ sơ */}
+              <div className="w-full flex flex-col gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="w-full h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                  Chia sẻ hồ sơ
+                </button>
+              </div>
+
+              {/* Ngày tham gia */}
               {profile.createdAt && (
-                <span className="bg-slate-800 text-white px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 shadow-2xs">
-                  <Calendar className="w-3.5 h-3.5 text-white/80" /> {translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}
-                </span>
+                <div className="w-full mt-2.5 pt-1 text-[10px] text-slate-400 flex items-center justify-start gap-1">
+                  <Calendar className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                  <span>{translate('memberSince')} {formatDate(profile.createdAt, 'MM/yyyy')}</span>
+                </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-1 no-scrollbar">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-3 font-bold text-sm whitespace-nowrap transition-all border-b-2 cursor-pointer -mb-[2px] ${
-              activeTab === tab.id
-                ? 'text-blue-600 border-blue-600'
-                : 'text-slate-550 border-transparent hover:text-slate-900'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div className="w-full min-w-0 min-h-[400px]">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          <div className="md:col-span-1 flex flex-col gap-6">
-            {/* {translate('about')} */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('about')}</h3>
+            {/* Giới thiệu bản thân (Bio) */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2.5">{translate('about')}</h3>
               {profile.bio ? (
-                <p className="text-slate-650 text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
                   {profile.bio}
                 </p>
               ) : (
-                <p className="text-slate-400 text-sm italic font-medium">
+                <p className="text-slate-400 text-xs italic">
                   {translate('bioEmpty')}
                 </p>
               )}
             </div>
 
-            {/* {translate('detailsHeading')} */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+            {/* Thông tin chi tiết */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">{translate('detailsHeading')}</h3>
               <div className="flex flex-col gap-4 text-sm">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
@@ -497,12 +499,38 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          <div className="md:col-span-2 w-full min-w-0 space-y-6">
+          {/* RIGHT COLUMN: Tabs & Tab Content */}
+          <div className="flex-1 min-w-0 w-full space-y-5">
+            {/* Navigation Tabs Bar: Underline Style, Chuẩn hoá width đều nhau, Responsive */}
+            <div className="bg-white rounded-xl border border-slate-200 px-2 sm:px-4 shadow-2xs overflow-x-auto no-scrollbar">
+              <div className={`flex min-w-full ${tabs.length === 3 ? 'sm:grid sm:grid-cols-3' : 'sm:grid sm:grid-cols-4'}`}>
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      'flex-1 sm:w-full py-3.5 px-3 text-center text-xs sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer whitespace-nowrap',
+                      activeTab === tab.id
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300',
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tab Contents */}
             {activeTab === 'overview' && (
-              <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
-                <Activity className="w-12 h-12 text-slate-350 mx-auto mb-3" />
-                <p className="text-slate-550 font-semibold text-lg">{translate('noActivity')}</p>
-                <p className="text-slate-450 text-xs font-medium mt-1">{translate('activityEmptyHint')}</p>
+              <div className="space-y-5">
+                {/* Tổng quan hoạt động */}
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 text-center py-12 border-dashed">
+                  <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-600 font-semibold text-base">{translate('noActivity')}</p>
+                  <p className="text-slate-400 text-xs font-medium mt-1">{translate('activityEmptyHint')}</p>
+                </div>
               </div>
             )}
 
@@ -892,6 +920,14 @@ export default function PublicUserProfilePage({ params }: { params: Promise<{ id
       </div>
     </div>
   </div>
+
+  <ShareModal
+    isOpen={isShareModalOpen}
+    onClose={() => setIsShareModalOpen(false)}
+    shareUrl={shareUrl}
+    title={profile.fullName}
+    shareText={`Hồ sơ thể thao của ${profile.fullName} trên SportO`}
+  />
 </div>
   );
 }

@@ -1067,14 +1067,14 @@ const commonTranslate = useTranslations('Common');
         {/* Dates */}
         <div className="flex items-start gap-2.5">
           <Calendar className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-          <p className="font-semibold text-slate-800 leading-snug">
+          <p className="text-slate-700 leading-snug">
             {activeTournament.startDate ? (
               <>
                 {formatDate(activeTournament.startDate)}
                 {activeTournament.endDate && ` - ${formatDate(activeTournament.endDate)}`}
               </>
             ) : (
-              <span className="text-slate-400 font-normal">{translate('dateNotSet')}</span>
+              <span className="text-slate-400">{translate('dateNotSet')}</span>
             )}
           </p>
         </div>
@@ -1083,9 +1083,9 @@ const commonTranslate = useTranslations('Common');
         <div className="flex items-start gap-2.5">
           <MapPin className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-slate-800 leading-snug break-words" title={getTournamentLocationLabel(activeTournament)}>
+            <p className="text-slate-700 leading-snug break-words" title={getTournamentLocationLabel(activeTournament)}>
               {getTournamentLocationLabel(activeTournament) || (
-                <span className="text-slate-400 font-normal">{translate('venueNotUpdated')}</span>
+                <span className="text-slate-400">{translate('venueNotUpdated')}</span>
               )}
             </p>
             {activeTournament.courtsCount ? (
@@ -1093,25 +1093,14 @@ const commonTranslate = useTranslations('Common');
                 {activeTournament.courtsCount} {translate('courtsCountSuffix') || 'sân thi đấu'}
               </p>
             ) : null}
-            {getTournamentLocationLabel(activeTournament) && (
-              <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(getTournamentLocationLabel(activeTournament))}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline mt-1"
-              >
-                <span>Xem bản đồ</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </a>
-            )}
           </div>
         </div>
 
         {/* Divisions Count */}
         <div className="flex items-center gap-2.5">
           <Trophy className="w-4 h-4 text-slate-500 shrink-0" />
-          <p className="font-normal text-slate-700">
-            <span className="font-bold text-slate-900">{divisionsList.length || 1}</span>{' '}
+          <p className="text-slate-700">
+            {divisionsList.length || 1}{' '}
             <span>{translate('competitionContentTitle') || 'Nội dung thi đấu'}</span>
           </p>
         </div>
@@ -1119,10 +1108,8 @@ const commonTranslate = useTranslations('Common');
         {/* Participants / Teams Count */}
         <div className="flex items-center gap-2.5">
           <Users className="w-4 h-4 text-slate-500 shrink-0" />
-          <p className="font-normal text-slate-700">
-            <span className="font-bold text-slate-900">
-              {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}
-            </span>{' '}
+          <p className="text-slate-700">
+            {divisionsList.reduce((acc, d) => acc + (d._count?.participants ?? 0), 0) || activeTournament._count?.participants || 0}{' '}
             <span>{translate('participantsCount') || 'Số lượng hồ sơ'}</span>
           </p>
         </div>

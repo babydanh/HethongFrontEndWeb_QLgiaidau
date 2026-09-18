@@ -96,10 +96,14 @@ export default function ClubMatchSessionPage({ params }: { params: Promise<{ id:
     }
   };
 
-  const forceSelected = () => run(
-    () => clubMatchSessionsApi.forceParticipants(sessionId, selectedMembers, crypto.randomUUID()),
-    'participantsAssigned',
-  );
+  const forceSelected = (userIds?: string[]) => {
+    const ids = userIds ?? selectedMembers;
+    if (ids.length === 0) return Promise.resolve();
+    return run(
+      () => clubMatchSessionsApi.forceParticipants(sessionId, ids, crypto.randomUUID()),
+      'participantsAssigned',
+    );
+  };
 
   const createMockParticipant = async () => {
     const name = mockName.trim();

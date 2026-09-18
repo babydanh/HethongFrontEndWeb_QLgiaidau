@@ -69,7 +69,7 @@ type Props = {
   onWithdraw: () => void;
   onTransition: (action: SessionAction) => void;
   onUpdateMemberScoring: (enabled: boolean) => void;
-  onForceSelected: () => void;
+  onForceSelected: (userIds?: string[]) => void;
   onCreateMock: () => void;
   onSavePreferences: () => void;
   onCreateMatch: (onCreated?: (match: ClubSessionMatch) => void) => void;
@@ -396,7 +396,6 @@ export function ClubMatchSessionDetailView({
   const isTennis = categoryText.includes('tennis') || categoryText.includes('quan vot');
   const tabs: Array<{ id: SessionTab; label: string; icon: ReactNode; count?: number }> = [
     { id: 'overview', label: t('overviewTab'), icon: <Trophy className="h-4 w-4" /> },
-    { id: 'participants', label: t('participantsTab'), icon: <Users className="h-4 w-4" />, count: activeParticipants.length },
     { id: 'matches', label: t('matchesTab'), icon: <Swords className="h-4 w-4" />, count: matches.length },
     { id: 'statistics', label: t('statisticsTab'), icon: <BarChart3 className="h-4 w-4" /> },
   ];
@@ -440,9 +439,9 @@ export function ClubMatchSessionDetailView({
   }
 
   return (
-    <main className="min-h-screen bg-slate-100/70 py-6 sm:py-8 px-4 sm:px-6">
+    <main className="min-h-screen bg-white py-6 sm:py-8 px-4 sm:px-6">
       {/* ── Card 1: Master Monolith Container ── */}
-      <div className="mx-auto max-w-6xl w-full bg-white rounded-3xl border border-slate-200/80 shadow-xl overflow-hidden p-6 sm:p-8 md:p-10 space-y-6">
+      <div className="mx-auto max-w-7xl w-full bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-6 sm:p-8 md:p-10 space-y-6">
         {/* Top Bar: Back Link + Organizer Action Buttons */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
           <Link
@@ -483,9 +482,9 @@ export function ClubMatchSessionDetailView({
           </div>
         </div>
 
-        {/* ── Main Layout Grid: Split Left (Seamless) and Right (The Only Nested Card) ── */}
+        {/* ── Main Layout Grid: Split Left (Seamless) and Right ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-          {/* ── Left Column: Seamless Column (Hoàn toàn phẳng, không lồng card con) ── */}
+          {/* ── Left Column ── */}
           <section className="lg:col-span-7 space-y-6">
             <div className="space-y-4">
               {/* Badges row */}
@@ -523,9 +522,9 @@ export function ClubMatchSessionDetailView({
 
               {/* Seamless Schedule/Time info box */}
               {(session.startAt || session.endAt || session.description) && (
-                <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                   <div className="flex items-start gap-2.5">
-                    <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg shrink-0 mt-0.5">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl shrink-0 mt-0.5">
                       <CalendarDays className="w-4 h-4" />
                     </div>
                     <div>
@@ -533,7 +532,7 @@ export function ClubMatchSessionDetailView({
                         {communityName || t('clubSessionLabel')}
                       </div>
                       {session.description && (
-                        <p className="text-slate-500 mt-0.5 line-clamp-2">{session.description}</p>
+                        <p className="text-slate-600 mt-1 text-xs leading-relaxed">{session.description}</p>
                       )}
                     </div>
                   </div>
@@ -556,177 +555,22 @@ export function ClubMatchSessionDetailView({
               ))}
             </nav>
 
-            {/* Tab content - rendered seamless without nested outer card */}
+            {/* Tab content */}
             <div className="space-y-6 pt-1">
               {activeTab === 'overview' && (
-                <div className="space-y-6">
-                  {/* Metric Overview */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-blue-600" />
-                        {t('overviewTitle')}
-                      </h3>
-                      <span className="text-xs font-medium text-slate-500">
-                        {t('counts', { participants: activeParticipants.length, matches: matches.length })}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                      <SummaryMetric icon={<Users className="h-4 w-4" />} value={`${activeParticipants.length}/${session.maxParticipants}`} label={t('participants')} />
-                      <SummaryMetric icon={<Swords className="h-4 w-4" />} value={String(matches.length)} label={t('matches')} />
-                      <SummaryMetric icon={<Radio className="h-4 w-4" />} value={String(liveMatches.length)} label={t('liveMatches')} />
-                      <SummaryMetric icon={<CheckCircle2 className="h-4 w-4" />} value={String(completedMatches.length)} label={t('completedMatches')} />
-                    </div>
-                  </div>
-
-                  {/* Rules & Session Details */}
-                  <div className="space-y-3 pt-2">
-                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                      <ShieldCheck className="w-5 h-5 text-blue-600" />
-                      {t('basicInfoTitle')}
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 sm:p-6">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
+                      Mô tả buổi giao lưu
                     </h3>
-                    <div className="space-y-2 text-sm text-slate-600">
-                      {session.startAt && (
-                        <div className="flex items-start gap-2">
-                          <span className="text-blue-600 font-bold">•</span>
-                          <span><strong>{t('startAt')}:</strong> {formatSessionDate(session.startAt, locale, '')}</span>
-                        </div>
-                      )}
-                      {session.endAt && (
-                        <div className="flex items-start gap-2">
-                          <span className="text-blue-600 font-bold">•</span>
-                          <span><strong>{t('endAt')}:</strong> {formatSessionDate(session.endAt, locale, '')}</span>
-                        </div>
-                      )}
-                      <div className="flex items-start gap-2">
-                        <span className="text-blue-600 font-bold">•</span>
-                        <span><strong>{t('ranked')}:</strong> {session.isRanked ? t('rankedHint') : t('unrankedHint')}</span>
-                      </div>
-                    </div>
-
-                    {session.capabilities?.canManage && (
-                      <div className="pt-2">
-                        <label className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/50 p-3 hover:bg-slate-50 transition">
-                          <span>
-                            <span className="block text-xs font-semibold text-slate-800">Cho phép thành viên nhập điểm</span>
-                            <span className="mt-0.5 block text-[11px] leading-4 text-slate-500">Áp dụng cho toàn bộ buổi giao lưu.</span>
-                          </span>
-                          <input
-                            type="checkbox"
-                            checked={session.memberScoringEnabled !== false}
-                            onChange={(event) => onUpdateMemberScoring(event.target.checked)}
-                            disabled={busy}
-                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                          />
-                        </label>
-                      </div>
-                    )}
+                    <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">
+                      {session.description || 'Chưa có mô tả cho buổi giao lưu này.'}
+                    </p>
                   </div>
                 </div>
               )}
 
-              {activeTab === 'participants' && (
-                <div className="space-y-6">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-blue-600" />
-                        {t('participants')}
-                      </h3>
-                      <p className="mt-1 text-xs text-slate-500">{t('participantsOnlyHint')}</p>
-                    </div>
-                    <span className="text-xs font-bold text-slate-500">{activeParticipants.length}/{session.maxParticipants}</span>
-                  </div>
 
-                  <div className="space-y-2">
-                    {activeParticipants.map((item) => (
-                      <div key={item.participant.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <Avatar name={item.fullName} userId={item.participant.userId} avatarUrl={item.avatarUrl} mock={item.isMock} className="h-9 w-9" />
-                          <div className="min-w-0">
-                            <p title={item.fullName || undefined} className="truncate text-sm font-semibold text-slate-900">{shortDisplayName(item.fullName)}</p>
-                            <p className="text-[11px] text-slate-500">{t(`participantSource.${item.participant.source}`)} · {t(`participantStatus.${item.participant.status}`)}</p>
-                          </div>
-                          {item.isMock && <Badge className="border border-amber-200 bg-amber-50 text-[10px] font-medium text-amber-700">{t('mockPlayer')}</Badge>}
-                        </div>
-                        <span className="text-xs font-medium text-slate-400">{t('joinedLabel')}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {participantCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreParticipants}>{t('loadMore')}</Button>}
-
-                  {session.capabilities?.canManage && (
-                    <div className="mt-5 border-t border-slate-100 pt-5">
-                      <div className="mb-3 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <UserPlus className="h-4 w-4 text-blue-600" />
-                          <h4 className="font-semibold text-slate-900 text-sm">{t('assignSelected')}</h4>
-                        </div>
-                        {session.status === 'OPEN' && (
-                          <Button type="button" size="sm" variant="outline" aria-expanded={mockFormOpen} aria-label={t('createMockParticipant')} title={t('createMockParticipant')} onClick={() => setMockFormOpen((value) => !value)}>
-                            <Plus className="h-4 w-4" />
-                            <span className="sr-only">{t('createMockParticipant')}</span>
-                          </Button>
-                        )}
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {clubMembers.map((record) => {
-                          const userId = record.member.userId;
-                          const checked = selectedMembers.includes(userId);
-                          return (
-                            <label key={userId} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200/80 p-3 transition hover:border-blue-300">
-                              <input type="checkbox" checked={checked} onChange={() => setSelectedMembers((value) => checked ? value.filter((id) => id !== userId) : [...value, userId])} />
-                              <Avatar name={record.user.fullName} userId={userId} avatarUrl={record.user.avatarUrl} className="h-8 w-8" />
-                              <span title={record.user.fullName || undefined} className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{shortDisplayName(record.user.fullName)}</span>
-                              {activeIds.has(userId) && <Badge className="border border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700">{t('active')}</Badge>}
-                            </label>
-                          );
-                        })}
-                      </div>
-                      {memberCursor && <Button className="mt-3" variant="outline" disabled={loadingMore} onClick={onLoadMoreMembers}>{t('loadMoreMembers')}</Button>}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button variant="outline" disabled={busy || selectedMembers.length === 0} onClick={onForceSelected}>{t('assignSelected')}</Button>
-                      </div>
-                      {session.status === 'OPEN' && mockFormOpen && (
-                        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
-                          <input value={mockName} onChange={(event) => setMockName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') onCreateMock(); }} placeholder={t('mockNamePlaceholder')} maxLength={255} className="min-w-52 flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400" />
-                          <Button disabled={busy || creatingMock || !mockName.trim()} variant="outline" onClick={onCreateMock}>{creatingMock ? t('creatingMock') : t('createMockParticipant')}</Button>
-                          <span className="w-full text-xs text-amber-800">{t('mockNoElo')}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {session.viewerParticipant?.status === 'ACTIVE' && (
-                    <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-                      <div className="flex items-start gap-3">
-                        <div className="rounded-xl bg-blue-50 p-2 text-blue-600"><Settings2 className="h-5 w-5" /></div>
-                        <div><h4 className="text-base font-bold text-slate-900">{t('preferences')}</h4><p className="mt-1 text-xs text-slate-500">{t('preferencesHint')}</p></div>
-                      </div>
-                      <div className="mt-4 grid gap-3 md:grid-cols-3">
-                        {[
-                          { value: preferredPartners, setValue: setPreferredPartners, label: t('preferredPartner') },
-                          { value: preferredOpponents, setValue: setPreferredOpponents, label: t('preferredOpponent') },
-                          { value: avoidedPlayers, setValue: setAvoidedPlayers, label: t('avoidPlayer') },
-                        ].map((field) => (
-                          <label key={field.label} className="space-y-2">
-                            <span className="text-xs font-semibold text-slate-800">{field.label}</span>
-                            <select multiple className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" value={field.value} onChange={(event) => field.setValue(Array.from(event.currentTarget.selectedOptions, (option) => option.value))}>
-                              {preferenceOptions.map((item) => (
-                                <option disabled={selectedPreferenceIds.has(item.participant.userId) && !field.value.includes(item.participant.userId)} key={item.participant.userId} value={item.participant.userId}>
-                                  {shortDisplayName(item.fullName)}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        ))}
-                      </div>
-                      <Button className="mt-4" variant="outline" disabled={busy} onClick={onSavePreferences}>{t('savePreferences')}</Button>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {activeTab === 'matches' && (
                 <div className="space-y-4">
@@ -806,9 +650,17 @@ export function ClubMatchSessionDetailView({
                 t={t}
                 canJoin={session.capabilities?.canJoin === true}
                 canWithdraw={session.capabilities?.canWithdraw === true}
+                canManage={session.capabilities?.canManage === true}
                 busy={busy}
                 onJoin={onJoin}
                 onWithdraw={onWithdraw}
+                clubMembers={clubMembers}
+                activeUserIds={activeIds}
+                onAddMember={(userId) => onForceSelected([userId])}
+                onAddMock={onCreateMock}
+                mockName={mockName}
+                setMockName={setMockName}
+                creatingMock={creatingMock}
               />
             </div>
           </aside>
@@ -847,22 +699,59 @@ function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value
   return <div className="flex items-start gap-3"><span className="mt-0.5 text-blue-600">{icon}</span><div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-1 font-medium text-slate-700">{value}</p></div></div>;
 }
 
-function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, canWithdraw, busy, onJoin, onWithdraw }: {
+function RegistrationRoster({
+  slots,
+  activeCount,
+  maxParticipants,
+  t,
+  canJoin,
+  canWithdraw,
+  canManage,
+  busy,
+  onJoin,
+  onWithdraw,
+  clubMembers,
+  activeUserIds,
+  onAddMember,
+  onAddMock,
+  mockName,
+  setMockName,
+  creatingMock,
+}: {
   slots: Array<ClubMatchParticipant | null>;
   activeCount: number;
   maxParticipants: number;
   t: (key: string, values?: Record<string, string | number>) => string;
   canJoin: boolean;
   canWithdraw: boolean;
+  canManage: boolean;
   busy: boolean;
   onJoin: () => void;
   onWithdraw: () => void;
+  clubMembers: CommunityMemberRecord[];
+  activeUserIds: Set<string>;
+  onAddMember: (userId: string) => void;
+  onAddMock: () => void;
+  mockName: string;
+  setMockName: (val: string) => void;
+  creatingMock: boolean;
 }) {
   const pageSize = 16;
   const [page, setPage] = useState(0);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
   const pageCount = Math.max(1, Math.ceil(slots.length / pageSize));
   const currentPage = Math.min(page, pageCount - 1);
   const visibleSlots = slots.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  const handleEmptySlotClick = (slotNumber: number) => {
+    if (canManage) {
+      setSelectedSlotIndex(slotNumber);
+      setAddModalOpen(true);
+    } else if (canJoin) {
+      onJoin();
+    }
+  };
 
   return (
     <div>
@@ -883,28 +772,25 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
         {visibleSlots.map((item, index) => {
           const slotNumber = currentPage * pageSize + index + 1;
           if (!item) {
-            const emptySlot = (
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full border-[1.5px] border-dashed border-slate-300 bg-white flex items-center justify-center text-slate-400 transition group-hover:border-blue-500 group-hover:text-blue-600 group-hover:bg-blue-50/50">
-                  <span className="text-lg font-light leading-none">+</span>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1.5 font-medium">Slot #{slotNumber}</span>
-              </div>
-            );
-            return canJoin ? (
+            const isClickable = canManage || canJoin;
+            return (
               <button
                 key={`slot-${slotNumber}`}
                 type="button"
-                disabled={busy}
-                onClick={onJoin}
-                className="group flex flex-col items-center cursor-pointer transition disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={busy || !isClickable}
+                onClick={() => handleEmptySlotClick(slotNumber)}
+                className={`group flex flex-col items-center transition ${
+                  isClickable ? 'cursor-pointer' : 'cursor-default opacity-70'
+                }`}
+                title={canManage ? `Thêm người vào slot #${slotNumber}` : canJoin ? t('join') : `Slot #${slotNumber}`}
               >
-                {emptySlot}
+                <div className="w-12 h-12 rounded-full border-[1.5px] border-dashed border-slate-300 bg-white flex items-center justify-center text-slate-400 transition group-hover:border-blue-500 group-hover:text-blue-600 group-hover:bg-blue-50/50">
+                  <span className="text-lg font-light leading-none">+</span>
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1.5 font-medium group-hover:text-blue-600">
+                  Slot #{slotNumber}
+                </span>
               </button>
-            ) : (
-              <div key={`slot-${slotNumber}`} className="flex flex-col items-center">
-                {emptySlot}
-              </div>
             );
           }
           return (
@@ -977,6 +863,217 @@ function RegistrationRoster({ slots, activeCount, maxParticipants, t, canJoin, c
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </button>
       ) : null}
+
+      {/* Modal Thêm người vào slot (khi ấn dấu +) */}
+      {addModalOpen && (
+        <AddSlotParticipantModal
+          slotNumber={selectedSlotIndex}
+          clubMembers={clubMembers}
+          activeUserIds={activeUserIds}
+          busy={busy}
+          mockName={mockName}
+          setMockName={setMockName}
+          creatingMock={creatingMock}
+          onAddMember={(userId) => {
+            onAddMember(userId);
+            setAddModalOpen(false);
+          }}
+          onAddMock={() => {
+            onAddMock();
+            setAddModalOpen(false);
+          }}
+          onClose={() => setAddModalOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddSlotParticipantModal({
+  slotNumber,
+  clubMembers,
+  activeUserIds,
+  busy,
+  mockName,
+  setMockName,
+  creatingMock,
+  onAddMember,
+  onAddMock,
+  onClose,
+}: {
+  slotNumber: number | null;
+  clubMembers: CommunityMemberRecord[];
+  activeUserIds: Set<string>;
+  busy: boolean;
+  mockName: string;
+  setMockName: (val: string) => void;
+  creatingMock: boolean;
+  onAddMember: (userId: string) => void;
+  onAddMock: () => void;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState('');
+  const [tab, setTab] = useState<'members' | 'mock'>('members');
+
+  const normalized = search.trim().toLowerCase();
+  const availableMembers = clubMembers.filter((record) => {
+    if (activeUserIds.has(record.member.userId)) return false;
+    if (!normalized) return true;
+    return (
+      (record.user.fullName || '').toLowerCase().includes(normalized) ||
+      (record.user.email || '').toLowerCase().includes(normalized)
+    );
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">
+              Thêm người chơi {slotNumber ? `vào Slot #${slotNumber}` : ''}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">Chọn thành viên câu lạc bộ hoặc tạo khách mời</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Sub-tabs */}
+        <div className="flex border-b border-slate-200/80 bg-slate-50/50 px-5 pt-2">
+          <button
+            type="button"
+            onClick={() => setTab('members')}
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition ${
+              tab === 'members'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Thành viên CLB ({clubMembers.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('mock')}
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition ${
+              tab === 'mock'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            Khách mời ngoài
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-5 overflow-y-auto flex-1 space-y-4">
+          {tab === 'members' ? (
+            <>
+              {/* Search input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Tìm thành viên theo tên..."
+                  className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Members List */}
+              <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto pr-1">
+                {availableMembers.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    {normalized ? 'Không tìm thấy thành viên phù hợp' : 'Tất cả thành viên đã tham gia slot'}
+                  </div>
+                ) : (
+                  availableMembers.map((record) => (
+                    <div
+                      key={record.member.userId}
+                      className="flex items-center justify-between py-2.5 px-2 hover:bg-slate-50 rounded-xl transition"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar
+                          name={record.user.fullName}
+                          userId={record.member.userId}
+                          avatarUrl={record.user.avatarUrl}
+                          className="h-10 w-10"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-900 truncate">
+                            {record.user.fullName || 'Thành viên'}
+                          </p>
+                          <p className="text-[11px] text-slate-400 truncate">
+                            {record.member.role === 'OWNER'
+                              ? '👑 Trưởng CLB'
+                              : record.member.role === 'MODERATOR'
+                              ? '🛡️ Ban quản trị'
+                              : 'Thành viên'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => onAddMember(record.member.userId)}
+                        className="text-xs px-3 py-1 font-semibold rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 transition"
+                      >
+                        Thêm vào slot
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4 py-2">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Tạo một hồ sơ người chơi tạm thời (khách mời không thuộc hệ thống hoặc chưa có tài khoản).
+              </p>
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-700">Tên khách mời</label>
+                <input
+                  type="text"
+                  value={mockName}
+                  onChange={(e) => setMockName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && mockName.trim()) onAddMock();
+                  }}
+                  placeholder="Nhập tên người chơi khách..."
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <Button
+                disabled={busy || creatingMock || !mockName.trim()}
+                onClick={onAddMock}
+                className="w-full rounded-xl py-2.5 font-semibold"
+              >
+                {creatingMock ? 'Đang tạo...' : 'Xác nhận thêm khách mời'}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Đóng
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

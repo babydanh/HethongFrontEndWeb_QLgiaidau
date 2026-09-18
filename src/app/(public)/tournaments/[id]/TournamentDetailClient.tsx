@@ -1850,7 +1850,7 @@ const commonTranslate = useTranslations('Common');
                 <div className="mb-4" aria-label={translate('competitionContentTitle')}>
                   {divisionsList.length > 0 && (
                     <div>
-                      <div className="flex flex-col overflow-hidden divide-y divide-slate-100 rounded-lg bg-white border border-slate-200/80">
+                      <div className="flex flex-col divide-y divide-slate-200">
                         {divisionsList.map((division) => {
                           const isActive = division.id === openDivisionId;
                           const divisionTournament = tournament ? createDivisionTournament(tournament, division) : null;
@@ -1870,8 +1870,8 @@ const commonTranslate = useTranslations('Common');
                                 aria-current={isActive ? 'true' : undefined}
                                 aria-expanded={isActive}
                                 onClick={() => handleDivisionSelect(division.id)}
-                                className={`group flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors sm:px-4 ${
-                                  isActive ? 'bg-slate-50/90' : 'bg-transparent'
+                                className={`group flex min-h-[44px] w-full items-center gap-2.5 px-1 py-3 text-left transition-colors sm:px-2 rounded-lg ${
+                                  isActive ? 'bg-slate-50/90' : 'bg-transparent hover:bg-slate-50/50'
                                 }`}
                               >
                               {/* Title */}

@@ -11,11 +11,11 @@ import { api, getBaseUrl } from '@/lib/axios';
 import { useAuthStore } from '@/lib/zustand/authStore';
 import type { User } from '@/lib/zustand/authStore';
 import { Input } from '@/components/ui/Input';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ApiResponse } from '@/types/api';
-import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { BRAND } from '@/constants/brand';
 import { getErrorMessage } from '@/utils/error';
@@ -42,9 +42,12 @@ const STATS = [
   { value: '120+', label: 'provinces' },
 ];
 
-export default function LoginPage() {
+function LoginFormContent() {
   const t = useTranslations('Auth');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const errorQuery = searchParams.get('error');
+  const [authError, setAuthError] = useState<string | null>(errorQuery ? decodeURIComponent(errorQuery) : null);
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const [isLoading, setIsLoading] = useState(false);
@@ -198,6 +201,17 @@ export default function LoginPage() {
               {t('loginSubtitle')}
             </p>
 
+            {/* Error banner from OAuth or redirects */}
+            {authError && (
+              <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-red-900">Đăng nhập không thành công</p>
+                  <p className="leading-relaxed">{authError}</p>
+                </div>
+              </div>
+            )}
+
             {/* Social Logins Stack */}
             <div className="space-y-2.5">
               {/* Google */}
@@ -274,6 +288,14 @@ export default function LoginPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense fallback={<div className="flex h-screen w-screen items-center justify-center bg-white" />}>
+      <LoginFormContent />
+    </React.Suspense>
   );
 }
 

@@ -322,7 +322,7 @@ export default function UserProfilePopover({
     };
   }, [isOpen, user?.id, user?.bio, user?.avatarUrl, user?.fullName, user?.coverUrl, user?.isVerified, user?.allowStrangerMessages, user?.highlightRank, user?.joinedAt, communityId, currentUser?.id]);
 
-  // Click outside and Esc key handlers
+  // Click outside, Esc key, and scroll handlers
   useEffect(() => {
     if (!isOpen) return;
 
@@ -338,12 +338,21 @@ export default function UserProfilePopover({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    const handleScroll = (event: Event) => {
+      // If user scrolls the outer page/window, immediately dismiss the hover popover
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside, true);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", handleScroll, true);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside, true);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", handleScroll, true);
     };
   }, [isOpen, onClose]);
 
@@ -358,7 +367,9 @@ export default function UserProfilePopover({
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 
-  // Horizontal clamping
+  // Horizontal placement:
+  // If the trigger card is very wide (e.g. w-full sidebar card), anchor popover near the avatar (left edge of anchorRect + 12)
+  // or center it relative to trigger if small.
   let left = anchorRect.left;
   if (left + popoverWidth > viewportWidth - 16) {
     left = viewportWidth - popoverWidth - 16;
@@ -367,11 +378,17 @@ export default function UserProfilePopover({
     left = 16;
   }
 
-  // Vertical placement: Prefer below anchorRect, flip above if overflowing bottom, clamp to viewport
+  // Vertical placement:
+  // Calculate available spaces below and above
+  const spaceBelow = viewportHeight - anchorRect.bottom;
+  const spaceAbove = anchorRect.top;
+
   let top = anchorRect.bottom + 8;
-  if (anchorRect.bottom + popoverHeight > viewportHeight - 16 && anchorRect.top > popoverHeight + 16) {
-    top = anchorRect.top - popoverHeight - 8;
+  // If not enough room below (< popoverHeight + 16), AND there's more room above than below:
+  if (spaceBelow < popoverHeight + 16 && spaceAbove > spaceBelow) {
+    top = Math.max(16, anchorRect.top - popoverHeight - 8);
   } else if (top + popoverHeight > viewportHeight - 16) {
+    // If placed below but still hits screen bottom, clamp within viewport
     top = Math.max(16, viewportHeight - popoverHeight - 16);
   }
   if (top < 16) {

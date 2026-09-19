@@ -47,7 +47,11 @@ function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const errorQuery = searchParams.get('error');
-  const [authError, setAuthError] = useState<string | null>(errorQuery ? decodeURIComponent(errorQuery) : null);
+  const decodedError = errorQuery ? decodeURIComponent(errorQuery) : null;
+  const friendlyError = decodedError === 'oauth_failed'
+    ? 'Đăng nhập bằng Google không thành công. Vui lòng thử lại hoặc đăng nhập bằng Email/Mật khẩu.'
+    : decodedError;
+  const [authError, setAuthError] = useState<string | null>(friendlyError);
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const [isLoading, setIsLoading] = useState(false);

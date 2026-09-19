@@ -1,4 +1,4 @@
-import { PickleballLoading } from '@/components/ui/PickleballLoading';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getTranslations } from 'next-intl/server';
 
 export default async function Loading() {
@@ -6,7 +6,10 @@ export default async function Loading() {
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center py-20">
-      <PickleballLoading size="lg" text={translate('loading')} />
+      <LoadingSpinner className="w-16 h-16" />
+      <p className="mt-4 text-xs font-semibold text-slate-400 tracking-wider uppercase animate-pulse">
+        {translate('loading')}
+      </p>
     </div>
   );
 }

@@ -33,7 +33,6 @@ import type { Region } from '@/types/region';
 import { SearchableRegionSelect } from '@/components/shared/SearchableRegionSelect';
 import { useUserProfileModalStore } from '@/lib/zustand/userProfileModalStore';
 import { useAuthStore } from '@/lib/zustand/authStore';
-import { PickleballLoading } from '@/components/ui/PickleballLoading';
 
 export type ActivityEventType =
   | 'CLUB_RECRUITING'
@@ -2314,8 +2313,8 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
       </div>
 
       {isLoading ? (
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-xs px-6 py-12 flex flex-col items-center justify-center shadow-xs">
-          <PickleballLoading size="lg" text="Đang đồng bộ hoạt động thể thao..." />
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+          Đang tải hoạt động CLB...
         </div>
       ) : hasLoadError ? (
         <div className="rounded-2xl border border-dashed border-rose-200 bg-rose-50 px-6 py-12 text-center">

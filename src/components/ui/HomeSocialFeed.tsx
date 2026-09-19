@@ -499,11 +499,11 @@ function SessionDetailModal({
   useEffect(() => {
     if (!isHost || !isPersonal) return;
     let mounted = true;
-    api.get<{ data: PickupPendingRequest[] }>(`/social/pickups/${item.id}/requests`)
+    api.get<{ data: PickupPendingRequest[] } | PickupPendingRequest[]>(`/social/pickups/${item.id}/requests`)
       .then((res) => {
-        if (mounted && Array.isArray(res.data?.data)) {
-          setPendingRequests(res.data.data);
-        }
+        if (!mounted) return;
+        const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        setPendingRequests(list);
       })
       .catch((err) => {
         console.error('Failed to load pending requests', err);
@@ -515,14 +515,14 @@ function SessionDetailModal({
   useEffect(() => {
     if (isHost || !isPersonal || !currentUser?.id) return;
     let mounted = true;
-    api.get<{ data: { isJoined: boolean; isHost: boolean; myStatus?: string } }>(`/social/pickups/${item.id}/participants/me`)
+    api.get<{ data?: { isJoined: boolean; isHost: boolean; myStatus?: string }; isJoined?: boolean; isHost?: boolean; myStatus?: string }>(`/social/pickups/${item.id}/participants/me`)
       .then((res) => {
-        if (mounted && res.data?.data) {
-          if (res.data.data.myStatus === 'PENDING') {
-            setIsPending(true);
-          } else if (res.data.data.myStatus === 'JOINED') {
-            setIsPending(false);
-          }
+        if (!mounted || !res) return;
+        const status = res.myStatus ?? res.data?.myStatus;
+        if (status === 'PENDING') {
+          setIsPending(true);
+        } else if (status === 'JOINED') {
+          setIsPending(false);
         }
       })
       .catch(() => undefined);

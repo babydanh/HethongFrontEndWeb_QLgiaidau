@@ -12,13 +12,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Flame,
   MapPin,
   MessageSquare,
   Share2,
   ShieldCheck,
   Sparkles,
-  UserCheck,
+  Trash2,
   UserPlus,
   UsersRound,
   X,
@@ -150,10 +149,6 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
-function getMissingLabel(current: number, max: number) {
-  const missing = Math.max(max - current, 0);
-  return missing === 0 ? 'Đã đủ người' : `Thiếu ${missing} người`;
-}
 
 type ApiActivityFeedItem = {
   id: string;
@@ -375,31 +370,6 @@ function ClubAvatar({ club, size = 'default' }: { club: ClubIdentity; size?: 'de
   );
 }
 
-function ClubIdentityRow({ item }: { item: ActivityFeedItem }) {
-  if (!item.club) return null;
-
-  return (
-    <div className="flex min-w-0 items-center gap-2.5">
-      <ClubAvatar club={item.club} />
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate text-sm font-bold text-slate-900">{item.club.name}</span>
-          {item.club.verified && (
-            <ShieldCheck
-              className="h-4 w-4 shrink-0 text-blue-600"
-              aria-label="CLB đã xác minh"
-            />
-          )}
-        </div>
-        <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
-          <span>{item.sport}</span>
-          <span aria-hidden="true">•</span>
-          <span className="truncate font-medium text-slate-600">{item.sportTier}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function PlayerAvatar({ player, index }: { player: JoinedPlayer; index: number }) {
   const backgroundColor = player.initialsBg || AVATAR_COLORS[index % AVATAR_COLORS.length];
@@ -460,6 +430,15 @@ function ShareButton({ onShare }: { onShare: () => void }) {
   );
 }
 
+interface PickupPendingRequest {
+  id: string;
+  userId: string;
+  name: string;
+  avatarUrl?: string | null;
+  note?: string | null;
+  createdAt?: string | Date;
+}
+
 // ── Session Detail Popup Modal ──────────────────────────────────────────────
 function SessionDetailModal({
   item,
@@ -467,16 +446,24 @@ function SessionDetailModal({
   onClose,
   onJoin,
   onLeave,
+  onDeleteSession,
 }: {
   item: ActivityFeedItem;
   isJoined: boolean;
   onClose: () => void;
   onJoin: () => Promise<boolean>;
   onLeave: () => Promise<boolean>;
+  onDeleteSession?: () => Promise<void> | void;
 }) {
   const currentUser = useAuthStore((state) => state.user);
   const slots = item.slots;
-  const isFull = slots ? slots.current >= slots.max : false;
+  const [approvedNewPlayers, setApprovedNewPlayers] = useState<JoinedPlayer[]>([]);
+  const joinedPlayers = useMemo(() => {
+    return [...(slots?.joinedPlayers ?? []), ...approvedNewPlayers];
+  }, [slots?.joinedPlayers, approvedNewPlayers]);
+  const currentSlotsCount = joinedPlayers.length;
+
+  const isFull = slots ? currentSlotsCount >= slots.max : false;
   const isPersonal = item.type === 'PERSONAL_PICKUP';
   const identity = item.club ?? item.personalHost;
 
@@ -491,27 +478,67 @@ function SessionDetailModal({
 
   const [note, setNote] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [showConfirmCancelSession, setShowConfirmCancelSession] = useState(false);
+  const [isDeletingSession, setIsDeletingSession] = useState(false);
   
   // Kiểm tra đã tham gia: Nếu là Host thì mặc định đã là chủ trì (ở Slot 1), hoặc đã có tên trong joinedPlayers
   const alreadyJoined = isHost || isJoined || Boolean(
-    slots?.joinedPlayers?.some(
+    joinedPlayers.some(
       (p) => p.name === 'Bạn' || (currentUser && (p.userId === currentUser.id || p.name === currentUser.fullName))
     )
   );
 
   const [isPending, setIsPending] = useState(false);
-  const [pendingRequests, setPendingRequests] = useState<Array<{ userId?: string; name: string; avatarUrl?: string | null; note?: string }>>([]);
+  const [pendingRequests, setPendingRequests] = useState<PickupPendingRequest[]>([]);
   const [slotPage, setSlotPage] = useState(1);
   const SLOTS_PER_PAGE = 16;
   const { openUserById, keepOpen, scheduleClose } = useUserProfileModalStore();
   const hoverOpenTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Tải danh sách yêu cầu chờ duyệt từ backend nếu là Host của Personal Pickup
+  useEffect(() => {
+    if (!isHost || !isPersonal) return;
+    let mounted = true;
+    api.get<{ data: PickupPendingRequest[] }>(`/social/pickups/${item.id}/requests`)
+      .then((res) => {
+        if (mounted && Array.isArray(res.data?.data)) {
+          setPendingRequests(res.data.data);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load pending requests', err);
+      });
+    return () => { mounted = false; };
+  }, [item.id, isHost, isPersonal]);
+
+  // Kiểm tra trạng thái yêu cầu của người chơi hiện tại nếu không phải Host
+  useEffect(() => {
+    if (isHost || !isPersonal || !currentUser?.id) return;
+    let mounted = true;
+    api.get<{ data: { isJoined: boolean; isHost: boolean; myStatus?: string } }>(`/social/pickups/${item.id}/participants/me`)
+      .then((res) => {
+        if (mounted && res.data?.data) {
+          if (res.data.data.myStatus === 'PENDING') {
+            setIsPending(true);
+          } else if (res.data.data.myStatus === 'JOINED') {
+            setIsPending(false);
+          }
+        }
+      })
+      .catch(() => undefined);
+    return () => { mounted = false; };
+  }, [item.id, isHost, isPersonal, currentUser?.id]);
+
   // Lọc bỏ bất kỳ request nào có tên/id trùng với người đã vào joinedPlayers hoặc trùng với Host
   const activePendingRequests = useMemo(() => {
-    const joinedNames = new Set((slots?.joinedPlayers ?? []).map((p) => p.name));
+    const joinedNames = new Set(joinedPlayers.map((p) => p.name));
+    const joinedUserIds = new Set(joinedPlayers.map((p) => p.userId).filter(Boolean));
     if (item.personalHost?.name) joinedNames.add(item.personalHost.name);
-    return pendingRequests.filter((req) => !joinedNames.has(req.name));
-  }, [pendingRequests, slots?.joinedPlayers, item.personalHost?.name]);
+    if (item.personalHost?.id) joinedUserIds.add(item.personalHost.id);
+    return pendingRequests.filter(
+      (req) => !joinedNames.has(req.name) && (!req.userId || !joinedUserIds.has(req.userId)),
+    );
+  }, [pendingRequests, joinedPlayers, item.personalHost]);
 
   const handleOpenHostProfile = (e: React.MouseEvent) => {
     if (!identity?.id) return;
@@ -562,50 +589,96 @@ function SessionDetailModal({
     const requesterAvatar = currentUser?.avatarUrl || null;
     const requesterId = currentUser?.id || 'sample-user';
 
-    // Chế độ xét duyệt: Không add vào joinedPlayers ngay, chỉ đưa vào danh sách Chờ duyệt gửi tới Host!
-    setTimeout(() => {
+    try {
+      if (isPersonal) {
+        await api.post(`/social/pickups/${item.id}/requests`, { note: userNote });
+        setIsPending(true);
+        setPendingRequests((prev) => [
+          ...prev.filter((p) => p.name !== requesterName && p.name !== 'Bạn'),
+          { id: `req-${Date.now()}`, userId: requesterId, name: requesterName, avatarUrl: requesterAvatar, note: userNote },
+        ]);
+        toast.success('Đã gửi yêu cầu xin tham gia kèm ghi chú! Vui lòng chờ host duyệt.');
+      } else {
+        const ok = await onJoin();
+        if (ok) toast.success('Đã vào slot thành công');
+      }
+    } catch (err: unknown) {
+      const responseData = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const msg = responseData?.message || 'Không thể gửi yêu cầu tham gia';
+      toast.error(msg);
+    } finally {
       setIsActionLoading(false);
-      setIsPending(true);
-      setPendingRequests((prev) => [
-        ...prev.filter((p) => p.name !== requesterName && p.name !== 'Bạn'),
-        { userId: requesterId, name: requesterName, avatarUrl: requesterAvatar, note: userNote },
-      ]);
-      toast.success('Đã gửi yêu cầu xin tham gia! Vui lòng chờ host duyệt.');
-    }, 300);
+    }
   };
 
-  const handleCancelRequest = () => {
-    setIsPending(false);
+  const handleCancelRequest = async () => {
+    if (isActionLoading) return;
+    setIsActionLoading(true);
     const requesterName = currentUser?.fullName || 'Bạn';
-    setPendingRequests((prev) => prev.filter((p) => p.name !== requesterName && p.name !== 'Bạn'));
-    toast.success('Đã hủy yêu cầu xin tham gia');
+
+    try {
+      if (isPersonal) {
+        await api.delete(`/social/pickups/${item.id}/requests/self`);
+        setIsPending(false);
+        setPendingRequests((prev) => prev.filter((p) => p.name !== requesterName && p.name !== 'Bạn'));
+        toast.success('Đã hủy yêu cầu xin tham gia');
+      }
+    } catch {
+      toast.error('Không thể hủy yêu cầu');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
-  const handleApproveRequest = async (req: { userId?: string; name: string; avatarUrl?: string | null; note?: string }) => {
+  const handleApproveRequest = async (req: PickupPendingRequest) => {
     if (!isHost) {
       toast.error('Chỉ host mới có quyền xét duyệt yêu cầu!');
       return;
     }
-    setPendingRequests((prev) => prev.filter((p) => p !== req));
-    if (slots && slots.joinedPlayers) {
-      slots.joinedPlayers.push({
-        userId: req.userId,
-        name: req.name,
-        avatarUrl: req.avatarUrl,
-        initialsBg: '#10b981',
-      });
-      slots.current = Math.min(slots.current + 1, slots.max);
+    setIsActionLoading(true);
+    try {
+      if (isPersonal && req.id && !req.id.startsWith('req-')) {
+        await api.post(`/social/pickups/${item.id}/requests/${req.id}/approve`);
+      }
+      setPendingRequests((prev) => prev.filter((p) => p.id !== req.id && p.name !== req.name));
+      setApprovedNewPlayers((prev) => [
+        ...prev,
+        {
+          userId: req.userId,
+          name: req.name,
+          avatarUrl: req.avatarUrl,
+          initialsBg: '#10b981',
+        },
+      ]);
+      toast.success(`Đã duyệt yêu cầu của ${req.name}!`);
+    } catch (err: unknown) {
+      const responseData = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const msg = responseData?.message || 'Không thể duyệt yêu cầu';
+      toast.error(msg);
+    } finally {
+      setIsActionLoading(false);
     }
-    toast.success(`Đã duyệt yêu cầu của ${req.name}!`);
   };
 
-  const handleRejectRequest = (req: { userId?: string; name: string; avatarUrl?: string | null; note?: string }) => {
+  const handleRejectRequest = async (req: PickupPendingRequest) => {
     if (!isHost) {
       toast.error('Chỉ host mới có quyền từ chối yêu cầu!');
       return;
     }
-    setPendingRequests((prev) => prev.filter((p) => p !== req));
-    toast.success(`Đã từ chối yêu cầu của ${req.name}`);
+    setIsActionLoading(true);
+    try {
+      if (isPersonal && req.id && !req.id.startsWith('req-')) {
+        await api.post(`/social/pickups/${item.id}/requests/${req.id}/reject`);
+      }
+      setPendingRequests((prev) => prev.filter((p) => p.id !== req.id && p.name !== req.name));
+      toast.success(`Đã từ chối yêu cầu của ${req.name}`);
+    } catch (err: unknown) {
+      const responseData = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const msg = responseData?.message || 'Không thể từ chối yêu cầu';
+      toast.error(msg);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleLeave = async () => {
@@ -617,6 +690,28 @@ function SessionDetailModal({
     setIsActionLoading(true);
     await onLeave();
     setIsActionLoading(false);
+  };
+
+  const handleConfirmCancelSession = async () => {
+    if (isDeletingSession) return;
+    setIsDeletingSession(true);
+    try {
+      if (isPersonal) {
+        await api.post(`/social/pickups/${item.id}/cancel`);
+        toast.success('Đã hủy buổi giao lưu phong trào');
+      }
+      setShowConfirmCancelSession(false);
+      onClose();
+      if (onDeleteSession) {
+        await onDeleteSession();
+      }
+    } catch (err: unknown) {
+      const responseData = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const msg = responseData?.message || 'Không thể hủy buổi chơi';
+      toast.error(msg);
+    } finally {
+      setIsDeletingSession(false);
+    }
   };
 
   const hasHtmlDescription = Boolean(item.rawDescription && /<[a-z][\s\S]*>/i.test(item.rawDescription));
@@ -779,7 +874,7 @@ function SessionDetailModal({
                 <div>
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-900">Danh sách tham gia</h3>
-                    <span className="text-xs font-bold text-slate-500">{slots.current}/{slots.max}</span>
+                    <span className="text-xs font-bold text-slate-500">{currentSlotsCount}/{slots.max}</span>
                   </div>
 
                   {/* 4-column Slot Grid: hiển thị đúng 16 slot/trang, có phân trang rõ ràng nếu > 16 slot */}
@@ -795,7 +890,7 @@ function SessionDetailModal({
                         <div className="grid grid-cols-4 gap-x-2 gap-y-3.5">
                           {slotsOnCurrentPage.map((slotNum) => {
                             // 1. Kiểm tra người đã tham gia chính thức
-                            const joinedPlayer = slots.joinedPlayers[slotNum - 1];
+                            const joinedPlayer = joinedPlayers[slotNum - 1];
                             if (joinedPlayer) {
                               const isThisHost = slotNum === 1;
                               const isMe = (isThisHost && isHost) || joinedPlayer.name === 'Bạn' || (currentUser && (joinedPlayer.userId === currentUser.id || joinedPlayer.name === currentUser.fullName));
@@ -842,7 +937,7 @@ function SessionDetailModal({
                             }
 
                             // 2. Kiểm tra người đang chờ duyệt (nằm ở các slot kế tiếp)
-                            const pendingIndex = slotNum - 1 - slots.joinedPlayers.length;
+                            const pendingIndex = slotNum - 1 - joinedPlayers.length;
                             const pendingPlayer = activePendingRequests[pendingIndex];
                             if (pendingPlayer) {
                               const isMyPending = pendingPlayer.name === 'Bạn' || (currentUser && (pendingPlayer.userId === currentUser.id || pendingPlayer.name === currentUser.fullName));
@@ -875,7 +970,7 @@ function SessionDetailModal({
                             }
 
                             // 3. Slot trống
-                            const isNextOpenSlot = slotNum === slots.joinedPlayers.length + activePendingRequests.length + 1;
+                            const isNextOpenSlot = slotNum === joinedPlayers.length + activePendingRequests.length + 1;
                             const canJoin = isNextOpenSlot && !alreadyJoined && !isPending && !isFull;
 
                             return (
@@ -933,13 +1028,13 @@ function SessionDetailModal({
 
                   {/* Danh sách yêu cầu chờ duyệt: CHỈ HOST MỚI THẤY VÀ CÓ QUYỀN XÉT DUYỆT */}
                   {isHost && activePendingRequests.length > 0 && (
-                    <div className="mt-4 p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/60 space-y-2">
-                      <div className="flex items-center justify-between text-xs font-bold text-amber-800">
+                    <div className="mt-4 p-3 rounded-xl bg-amber-50/80 border border-amber-200/70 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-bold text-amber-900">
                         <span>Yêu cầu xin tham gia chờ bạn duyệt ({activePendingRequests.length})</span>
                       </div>
-                      <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-0.5">
                         {activePendingRequests.map((req, idx) => (
-                          <div key={idx} className="flex items-center justify-between gap-2 bg-white px-2.5 py-2 rounded-lg border border-amber-100 shadow-2xs text-xs">
+                          <div key={req.id || idx} className="flex items-center justify-between gap-2.5 bg-white p-2.5 rounded-lg border border-amber-200/60 shadow-2xs text-xs">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -952,31 +1047,43 @@ function SessionDetailModal({
                                 triggerUserHoverOpen(req.userId || 'sample-user', req.name, req.avatarUrl || null, rect);
                               }}
                               onMouseLeave={cancelUserHoverOpen}
-                              className="group flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer hover:opacity-80 transition-opacity"
+                              className="group flex items-start gap-2.5 min-w-0 flex-1 text-left cursor-pointer hover:opacity-90 transition-opacity"
                               title={`Xem hồ sơ của ${req.name}`}
                             >
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200 group-hover:border-blue-400 transition-colors">
-                                {getInitials(req.name)}
+                              <div
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-200 group-hover:border-blue-400 transition-colors mt-0.5"
+                                style={req.avatarUrl ? { backgroundImage: `url(${req.avatarUrl})`, backgroundPosition: 'center', backgroundSize: 'cover' } : {}}
+                              >
+                                {!req.avatarUrl && getInitials(req.name)}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate block">
                                   {req.name}
                                 </span>
-                                {req.note && <p className="text-[11px] text-slate-500 truncate">{req.note}</p>}
+                                {req.note ? (
+                                  <p className="text-[11px] text-slate-600 bg-amber-50/60 rounded px-2 py-1 mt-1 border border-amber-100 leading-relaxed break-words">
+                                    <span className="font-medium text-amber-800">Lời nhắn: </span>
+                                    &ldquo;{req.note}&rdquo;
+                                  </p>
+                                ) : (
+                                  <p className="text-[10px] text-slate-400 mt-0.5 italic">Không có lời nhắn kèm</p>
+                                )}
                               </div>
                             </button>
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex items-center gap-1.5 shrink-0 self-center">
                               <button
                                 type="button"
+                                disabled={isActionLoading}
                                 onClick={() => handleApproveRequest(req)}
-                                className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-2xs"
+                                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
                               >
                                 Đồng ý
                               </button>
                               <button
                                 type="button"
+                                disabled={isActionLoading}
                                 onClick={() => handleRejectRequest(req)}
-                                className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] transition-colors cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition-colors cursor-pointer disabled:opacity-50"
                               >
                                 Từ chối
                               </button>
@@ -992,7 +1099,7 @@ function SessionDetailModal({
                   <p className="text-xs text-slate-400 text-center">
                     {isFull
                       ? 'Buổi giao lưu đã đủ người tham gia'
-                      : `Còn trống ${Math.max(slots.max - slots.current - activePendingRequests.length, 0)} slot`}
+                      : `Còn trống ${Math.max(slots.max - currentSlotsCount - activePendingRequests.length, 0)} slot`}
                   </p>
                 </div>
               </div>
@@ -1017,11 +1124,25 @@ function SessionDetailModal({
               Đóng
             </button>
 
-            {/* Nếu là Host: Không hiện nút rút khỏi hay xin tham gia */}
+            {/* Nếu là Host: Cho phép quản lý và có nút Hủy buổi giao lưu */}
             {isHost ? (
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 border border-slate-200">
-                <span>👑 Bạn là Host của buổi chơi</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-700 border border-slate-200">
+                  <span>👑 Bạn là Host</span>
+                </span>
+                {isPersonal && (
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmCancelSession(true)}
+                    disabled={isActionLoading || isDeletingSession}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50 cursor-pointer"
+                    title="Hủy buổi giao lưu phong trào này"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Hủy buổi chơi
+                  </button>
+                )}
+              </div>
             ) : (
               <>
                 {alreadyJoined && (
@@ -1029,7 +1150,7 @@ function SessionDetailModal({
                     type="button"
                     onClick={handleLeave}
                     disabled={isActionLoading}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <X className="h-4 w-4" />
                     {isActionLoading ? 'Đang xử lý...' : 'Rút khỏi'}
@@ -1039,7 +1160,8 @@ function SessionDetailModal({
                   <button
                     type="button"
                     onClick={handleCancelRequest}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-5 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors"
+                    disabled={isActionLoading}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-5 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors cursor-pointer"
                     title="Bấm để hủy yêu cầu xin tham gia"
                   >
                     <span>⏳ Chờ duyệt (Hủy)</span>
@@ -1050,7 +1172,7 @@ function SessionDetailModal({
                     type="button"
                     onClick={handleJoin}
                     disabled={isActionLoading}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                   >
                     <UserPlus className="h-4 w-4" />
                     {isActionLoading ? 'Đang xử lý...' : 'Xin tham gia'}
@@ -1060,6 +1182,51 @@ function SessionDetailModal({
             )}
           </div>
         </div>
+
+        {/* Modal xác nhận hủy buổi giao lưu của Host */}
+        {showConfirmCancelSession && (
+          <div
+            className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs"
+            onClick={(e) => { if (e.target === e.currentTarget && !isDeletingSession) setShowConfirmCancelSession(false); }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-cancel-session-title"
+          >
+            <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 id="confirm-cancel-session-title" className="text-sm font-bold text-slate-900">
+                    Hủy buổi giao lưu này?
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Buổi chơi <strong className="text-slate-700">&ldquo;{item.title}&rdquo;</strong> sẽ bị hủy và gỡ bỏ khỏi bảng tin phong trào.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  disabled={isDeletingSession}
+                  onClick={() => setShowConfirmCancelSession(false)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Quay lại
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingSession}
+                  onClick={handleConfirmCancelSession}
+                  className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {isDeletingSession ? 'Đang hủy...' : 'Xác nhận hủy'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1223,7 +1390,21 @@ function ClubSessionCard({
   );
 }
 
-function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin, onLeave }: { item: ActivityFeedItem; reducedMotion: boolean; isJoined: boolean; onJoin: () => Promise<boolean>; onLeave: () => Promise<boolean> }) {
+function PersonalPickupCard({
+  item,
+  reducedMotion,
+  isJoined,
+  onJoin,
+  onLeave,
+  onDeleteSession,
+}: {
+  item: ActivityFeedItem;
+  reducedMotion: boolean;
+  isJoined: boolean;
+  onJoin: () => Promise<boolean>;
+  onLeave: () => Promise<boolean>;
+  onDeleteSession?: () => Promise<void> | void;
+}) {
   const [showModal, setShowModal] = useState(false);
   const currentUser = useAuthStore((state) => state.user);
   if (!item.slots || !item.personalHost) return null;
@@ -1235,7 +1416,16 @@ function PersonalPickupCard({ item, reducedMotion, isJoined, onJoin, onLeave }: 
 
   return (
     <>
-      {showModal && <SessionDetailModal item={item} isJoined={isJoined} onClose={() => setShowModal(false)} onJoin={onJoin} onLeave={onLeave} />}
+      {showModal && (
+        <SessionDetailModal
+          item={item}
+          isJoined={isJoined}
+          onClose={() => setShowModal(false)}
+          onJoin={onJoin}
+          onLeave={onLeave}
+          onDeleteSession={onDeleteSession}
+        />
+      )}
       <EventShell reducedMotion={reducedMotion}>
         <div
           onClick={() => setShowModal(true)}
@@ -2176,6 +2366,9 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
                           isJoined={joinedActivityIds.has(item.id)}
                           onJoin={() => handleJoinSlot(item)}
                           onLeave={() => handleLeaveSlot(item)}
+                          onDeleteSession={() => {
+                            setActivities((prev) => prev.filter((act) => act.id !== item.id));
+                          }}
                         />
                       ) : (
                         <ClubSessionCard

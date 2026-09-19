@@ -822,7 +822,11 @@ export default function QuickTournamentCreate() {
 
       const response = await tournamentsApi.createLiteTournament(createPayload);
 
-      router.push(`/organizer/tournaments/${response.id}/manage`);
+      router.push(
+        communityId
+          ? `/lite/tournaments/${response.id}/manage`
+          : `/organizer/tournaments/${response.id}/manage`,
+      );
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, translate('createFailed')));
     } finally {

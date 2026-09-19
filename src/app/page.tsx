@@ -3,6 +3,7 @@
 // Reading this as: Sports platform homepage with live matches feed, featured tournaments, and community bento grid.
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { buildMatchScoreSummary, getMatchScorePresentation, resolveMatchSportRules, extractMatchScores } from '@/features/matches/score-display';
 import Image from 'next/image';
@@ -46,7 +47,7 @@ import { RankAvatar, getRankRingClass } from '@/components/ui/RankAvatar';
 import ParticipantIdentity, { formatShortPersonName } from '@/components/ui/ParticipantIdentity';
 import AdBannerCard from '@/components/ui/AdBannerCard';
 import TournamentBannerCover from '@/components/ui/TournamentBannerCover';
-import LeftActionDock, { type MainViewMode } from '@/components/layout/LeftActionDock';
+import type { MainViewMode } from '@/components/layout/LeftActionDock';
 import HomeSocialFeed from '@/components/ui/HomeSocialFeed';
 import {
   AthleteProfileCard,
@@ -455,13 +456,14 @@ export default function HomePage() {
     }
     return category.name || slug;
   };
+  const searchParams = useSearchParams();
   const [isClient, setIsClient] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [myClubs, setMyClubs] = useState<MyClubItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(() => searchParams.get('sport') || '');
   const [isLoading, setIsLoading] = useState(true);
 
   // Live Matches Feed
@@ -473,7 +475,21 @@ export default function HomePage() {
   const feedRequestInFlightRef = useRef(false);
   const feedRefreshQueuedRef = useRef(false);
   const [feedRefreshTick, setFeedRefreshTick] = useState(0);
-  const [mainView, setMainView] = useState<MainViewMode>('EXPLORE');
+  const [mainView, setMainView] = useState<MainViewMode>(() => (searchParams.get('view') === 'feed' ? 'FEED' : 'EXPLORE'));
+
+  // Sync state if search params change externally
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam === 'feed') {
+      setMainView('FEED');
+    } else if (viewParam === 'explore' || (!viewParam && mainView !== 'EXPLORE')) {
+      // Keep or reset
+    }
+    const sportParam = searchParams.get('sport');
+    if (sportParam !== null) {
+      setSelectedCategoryId(sportParam);
+    }
+  }, [searchParams]);
   const [matchStatusTab, setMatchStatusTab] = useState<'UPCOMING' | 'LIVE' | 'COMPLETED'>('UPCOMING');
   const pickupsSectionRef = useRef<HTMLDivElement>(null);
 
@@ -1812,17 +1828,6 @@ export default function HomePage() {
 
   return (
     <div className="bg-slate-50/50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
-
-      {/* Floating 3-Action Dock (Sát mép trái màn hình) */}
-      <LeftActionDock
-        categories={categories.filter(cat => cat.isActive !== false && !isHiddenPublicSport(cat))}
-        selectedCategoryId={selectedCategoryId}
-        onSelectCategory={setSelectedCategoryId}
-        getCategoryLabel={getCategoryLabel}
-        activeView={mainView}
-        onSelectView={setMainView}
-      />
-
       {/* Main Content: 2 Columns - Main Feed on the Left, Sidebar (Profile & Clubs) on the Right */}
       <main className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 py-3.5 flex flex-col lg:flex-row items-start gap-4">
         <h1 className="sr-only">{translate('seoH1')}</h1>

@@ -10,6 +10,7 @@ import { isHttpStatusError, isNetworkError } from '@/utils/error';
 import { cn } from '@/utils/cn';
 import UnifiedChatWidget from '@/components/shared/UnifiedChatWidget';
 import GlobalUserProfileModal from '@/components/common/GlobalUserProfileModal';
+import LeftActionDock from '@/components/layout/LeftActionDock';
 
 export default function RootLayoutClient({
   children,
@@ -92,6 +93,7 @@ export default function RootLayoutClient({
       </main>
       {!hideFooter && <Footer />}
       {!hideHeaderFooter && !isGuestRoute && <UnifiedChatWidget />}
+      {!hideHeaderFooter && !isGuestRoute && <LeftActionDock />}
       <GlobalUserProfileModal />
     </>
   );

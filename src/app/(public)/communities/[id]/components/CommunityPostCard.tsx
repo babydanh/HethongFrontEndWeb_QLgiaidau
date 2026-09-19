@@ -25,6 +25,7 @@ import UserProfilePopover, {
 } from "@/components/common/UserProfilePopover";
 import { useAuthStore } from "@/lib/zustand/authStore";
 import { getCommunityTagDisplayName, isSameCommunityTag } from './tag-display';
+import ConfirmDeletePostModal from './ConfirmDeletePostModal';
 
 interface CommunityPostCardProps {
   post: CommunityPost;
@@ -54,6 +55,7 @@ export default function CommunityPostCard({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const [commentReactionGroups, setCommentReactionGroups] = useState<Record<string, ReactionGroup[]>>({});
   const [commentReactionOverrides, setCommentReactionOverrides] = useState<Record<string, CommunityReactionType | null>>({});
@@ -396,11 +398,10 @@ export default function CommunityPostCard({
     }
   };
 
-  const handleDeletePost = async () => {
-    if (!window.confirm(translate('deletePostConfirm'))) return;
+  const handleExecuteDeletePost = async (reason?: string) => {
     setIsDeleting(true);
     try {
-      await communitiesApi.deletePost(post.communityId, post.id);
+      await communitiesApi.deletePost(post.communityId, post.id, { reason });
       toast.success(translate('postDeleted'));
       onDelete?.(post.id);
     } catch (error: unknown) {
@@ -408,6 +409,10 @@ export default function CommunityPostCard({
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleClickDeletePost = () => {
+    setShowDeleteModal(true);
   };
 
   return (
@@ -494,7 +499,7 @@ export default function CommunityPostCard({
               <button
                 type="button"
                 disabled={isDeleting}
-                onClick={handleDeletePost}
+                onClick={handleClickDeletePost}
                 aria-label={translate("deletePostAction")}
                 className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition disabled:opacity-50 cursor-pointer"
                 title={isAuthor ? translate("deleteOwnPostAction") : translate("deletePostAction")}
@@ -1006,6 +1011,13 @@ export default function CommunityPostCard({
           </div>
         </div>
       )}
+
+      <ConfirmDeletePostModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleExecuteDeletePost}
+        isAuthor={isAuthor}
+      />
     </>
   );
 }

@@ -210,8 +210,8 @@ export const communitiesApi = {
       data: mapPost(response.data),
     })),
 
-  deletePost: (communityId: string, postId: string) =>
-    api.delete<ApiResponse<{ id: string }>>(`/communities/${communityId}/posts/${postId}`),
+  deletePost: (communityId: string, postId: string, data?: { reason?: string }) =>
+    api.delete<ApiResponse<{ id: string }>>(`/communities/${communityId}/posts/${postId}`, { data }),
 
   getComments: (communityId: string, postId: string, params?: { cursor?: string; limit?: number }) =>
     api.get<ApiResponse<CommunityComment[]>>(`/communities/${communityId}/posts/${postId}/comments`, { params }),

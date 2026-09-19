@@ -103,13 +103,17 @@ export default function LeftActionDock({
   const isHomePage = pathname === '/';
   const isProfilePage = pathname.startsWith('/profile');
 
+  const urlView = searchParams.get('view');
+  const currentView: MainViewMode = activeView || (urlView === 'feed' ? 'FEED' : 'EXPLORE');
+
   // Route-aware click handlers
   const handleSelectCategory = (catId: string) => {
     if (onSelectCategory) {
       onSelectCategory(catId);
     }
-    if (!isHomePage) {
-      router.push(catId ? `/?sport=${encodeURIComponent(catId)}` : '/');
+    const targetUrl = catId ? `/?sport=${encodeURIComponent(catId)}` : '/';
+    if (!isHomePage || urlView === 'feed') {
+      router.push(targetUrl);
     }
   };
 
@@ -117,18 +121,18 @@ export default function LeftActionDock({
     if (onSelectView) {
       onSelectView('EXPLORE');
     }
-    if (!isHomePage) {
-      router.push('/');
-    }
+    const currentSport = searchParams.get('sport');
+    const targetUrl = currentSport ? `/?sport=${encodeURIComponent(currentSport)}` : '/';
+    router.push(targetUrl);
   };
 
   const handleSelectFeed = () => {
     if (onSelectView) {
       onSelectView('FEED');
     }
-    if (!isHomePage) {
-      router.push('/?view=feed');
-    }
+    const currentSport = searchParams.get('sport');
+    const targetUrl = currentSport ? `/?view=feed&sport=${encodeURIComponent(currentSport)}` : '/?view=feed';
+    router.push(targetUrl);
   };
 
   const handleSelectProfile = () => {
@@ -147,8 +151,8 @@ export default function LeftActionDock({
     return cat.name;
   };
 
-  const isExploreActive = isHomePage && (!activeView || activeView === 'EXPLORE');
-  const isFeedActive = isHomePage && activeView === 'FEED';
+  const isExploreActive = isHomePage && currentView === 'EXPLORE';
+  const isFeedActive = isHomePage && currentView === 'FEED';
 
   return (
     <AnimatePresence>
@@ -228,33 +232,33 @@ export default function LeftActionDock({
               >
                 <button
                   type="button"
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer relative group ${
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer relative group hover:scale-105 active:scale-95 ${
                     selectedCategoryId
-                      ? 'bg-blue-50/50 text-blue-600 border border-blue-500 shadow-xs'
-                      : 'bg-transparent hover:bg-slate-50 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
+                      ? 'bg-blue-50 text-blue-600 border border-blue-500/80 shadow-xs hover:bg-blue-100/80'
+                      : 'bg-transparent hover:bg-slate-100/80 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
                   }`}
                   title={activeCategory ? resolveCategoryLabel(activeCategory) : 'Khám phá theo môn thể thao'}
                   aria-label="Khám phá theo môn thể thao"
                 >
                   {activeSportLogo ? (
-                    <span className="w-5 h-5 relative flex items-center justify-center">
+                    <span className="w-5 h-5 relative flex items-center justify-center pointer-events-none">
                       <Image
                         src={activeSportLogo}
                         alt={activeCategory ? resolveCategoryLabel(activeCategory) : 'Môn thể thao'}
                         width={20}
                         height={20}
-                        className={`w-5 h-5 object-contain transition-transform group-hover:scale-105 ${
+                        className={`w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-110 ${
                           selectedCategoryId ? '' : 'grayscale opacity-75 group-hover:grayscale-0 group-hover:opacity-100'
                         }`}
                       />
                     </span>
                   ) : (
-                    <Trophy className={`w-4.5 h-4.5 transition-transform group-hover:scale-105 ${selectedCategoryId ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
+                    <Trophy className={`w-4.5 h-4.5 transition-transform duration-200 group-hover:scale-110 ${selectedCategoryId ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
                   )}
 
                   {/* Active subtle dot indicator */}
                   {selectedCategoryId && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-600 rounded-full ring-2 ring-white" />
                   )}
                 </button>
 
@@ -297,13 +301,13 @@ export default function LeftActionDock({
                           }}
                           className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
                             selectedCategoryId === ''
-                              ? 'border-blue-500 text-blue-600 bg-blue-50/30 font-bold shadow-2xs'
-                              : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-200 bg-transparent'
+                              ? 'border-blue-500 text-blue-600 bg-blue-50/50 font-bold shadow-2xs'
+                              : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-200 bg-transparent'
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${
-                              selectedCategoryId === '' ? 'border-blue-200 text-blue-600' : 'border-slate-200 text-slate-500 bg-slate-50'
+                              selectedCategoryId === '' ? 'border-blue-200 text-blue-600 bg-white' : 'border-slate-200 text-slate-500 bg-slate-50'
                             }`}>
                               <Trophy className="w-3 h-3" />
                             </div>
@@ -325,13 +329,13 @@ export default function LeftActionDock({
                               }}
                               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
                                 isSelected
-                                  ? 'border-blue-500 text-blue-600 bg-blue-50/30 font-bold shadow-2xs'
-                                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-200 bg-transparent'
+                                  ? 'border-blue-500 text-blue-600 bg-blue-50/50 font-bold shadow-2xs'
+                                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-200 bg-transparent'
                               }`}
                             >
                               <div className="flex items-center gap-2">
                                 <div className={`w-5 h-5 rounded-md flex items-center justify-center border ${
-                                  isSelected ? 'border-blue-200 bg-blue-50/40' : 'border-slate-200 bg-slate-50'
+                                  isSelected ? 'border-blue-200 bg-white' : 'border-slate-200 bg-slate-50'
                                 }`}>
                                   {logo ? (
                                     <Image
@@ -362,15 +366,15 @@ export default function LeftActionDock({
             <button
               type="button"
               onClick={handleSelectExplore}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer group relative ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer group relative hover:scale-105 active:scale-95 ${
                 isExploreActive
-                  ? 'bg-blue-50/50 text-blue-600 border border-blue-500 shadow-xs'
-                  : 'bg-transparent hover:bg-slate-50 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
+                  ? 'bg-blue-50 text-blue-600 border border-blue-500/80 shadow-xs hover:bg-blue-100/80'
+                  : 'bg-transparent hover:bg-slate-100/80 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
               }`}
               title="Khám phá giải đấu & trận đấu"
               aria-label="Khám phá"
             >
-              <Compass className={`w-4.5 h-4.5 transition-transform group-hover:scale-105 ${isExploreActive ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
+              <Compass className={`w-4.5 h-4.5 transition-transform duration-200 group-hover:scale-110 ${isExploreActive ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
               <span className="pointer-events-none absolute left-full ml-2.5 px-2.5 py-1 rounded-md bg-slate-900 text-white text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-50">
                 Khám phá
               </span>
@@ -380,15 +384,15 @@ export default function LeftActionDock({
             <button
               type="button"
               onClick={handleSelectFeed}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer group relative ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer group relative hover:scale-105 active:scale-95 ${
                 isFeedActive
-                  ? 'bg-blue-50/50 text-blue-600 border border-blue-500 shadow-xs'
-                  : 'bg-transparent hover:bg-slate-50 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
+                  ? 'bg-blue-50 text-blue-600 border border-blue-500/80 shadow-xs hover:bg-blue-100/80'
+                  : 'bg-transparent hover:bg-slate-100/80 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
               }`}
               title="Bảng tin & Hoạt động người chơi"
               aria-label="Bảng tin & Hoạt động"
             >
-              <Newspaper className={`w-4.5 h-4.5 transition-transform group-hover:scale-105 ${isFeedActive ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
+              <Newspaper className={`w-4.5 h-4.5 transition-transform duration-200 group-hover:scale-110 ${isFeedActive ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
               <span className="pointer-events-none absolute left-full ml-2.5 px-2.5 py-1 rounded-md bg-slate-900 text-white text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-50">
                 Bảng tin & Hoạt động
               </span>
@@ -401,15 +405,15 @@ export default function LeftActionDock({
             <button
               type="button"
               onClick={handleSelectProfile}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer group relative ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer group relative hover:scale-105 active:scale-95 ${
                 isProfilePage
-                  ? 'bg-blue-50/50 text-blue-600 border border-blue-500 shadow-xs'
-                  : 'bg-transparent hover:bg-slate-50 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
+                  ? 'bg-blue-50 text-blue-600 border border-blue-500/80 shadow-xs hover:bg-blue-100/80'
+                  : 'bg-transparent hover:bg-slate-100/80 border border-transparent hover:border-slate-300 text-slate-600 hover:text-slate-900'
               }`}
               title="Hồ sơ cá nhân"
               aria-label="Hồ sơ cá nhân"
             >
-              <User className={`w-4.5 h-4.5 transition-transform group-hover:scale-105 ${isProfilePage ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
+              <User className={`w-4.5 h-4.5 transition-transform duration-200 group-hover:scale-110 ${isProfilePage ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-900'}`} />
               <span className="pointer-events-none absolute left-full ml-2.5 px-2.5 py-1 rounded-md bg-slate-900 text-white text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-50">
                 Hồ sơ cá nhân
               </span>

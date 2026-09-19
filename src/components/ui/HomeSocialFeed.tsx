@@ -1627,7 +1627,7 @@ function TournamentCard({
           <div className="ml-auto flex items-center gap-2">
             <ShareButton onShare={onShare} />
             <Link
-              href="/tournaments"
+              href={`/tournaments/${item.tournament.id}`}
               className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-slate-900 px-3 text-xs font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98]"
             >
               Xem giải
@@ -2287,7 +2287,9 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
                 key={tab.key}
                 type="button"
                 onClick={() => handleDateClick(tab.key)}
-                className={`group relative flex min-w-[72px] shrink-0 flex-col items-center justify-center rounded-lg px-2.5 pt-2 pb-2.5 text-center transition-all cursor-pointer bg-transparent focus-visible:outline-none`}
+                className={`group relative flex min-w-[72px] shrink-0 flex-col items-center justify-center rounded-lg px-2.5 pt-2 pb-2.5 text-center transition-all duration-150 cursor-pointer focus-visible:outline-none hover:bg-slate-100/70 active:scale-95 ${
+                  isSelected ? 'bg-slate-100/50' : 'bg-transparent'
+                }`}
                 aria-current={isSelected ? 'date' : undefined}
               >
                 <span className={`whitespace-nowrap text-xs transition-colors ${
@@ -2302,7 +2304,7 @@ export default function HomeSocialFeed({ categories = [], selectedCategoryId = '
                 </span>
                 {/* Visible underline indicator */}
                 {isSelected && (
-                  <span className="absolute bottom-0 inset-x-2 h-0.5 rounded-full bg-slate-900" aria-hidden="true" />
+                  <span className="absolute bottom-0 inset-x-2 h-0.5 rounded-full bg-blue-600" aria-hidden="true" />
                 )}
               </button>
             );

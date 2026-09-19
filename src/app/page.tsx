@@ -482,8 +482,8 @@ export default function HomePage() {
     const viewParam = searchParams.get('view');
     if (viewParam === 'feed') {
       setMainView('FEED');
-    } else if (viewParam === 'explore' || (!viewParam && mainView !== 'EXPLORE')) {
-      // Keep or reset
+    } else {
+      setMainView('EXPLORE');
     }
     const sportParam = searchParams.get('sport');
     if (sportParam !== null) {
@@ -1828,8 +1828,10 @@ export default function HomePage() {
 
   return (
     <div className="bg-slate-50/50 min-h-screen text-slate-900 font-sans selection:bg-accent selection:text-content-primary animate-in fade-in duration-200">
-      {/* Main Content: 2 Columns - Main Feed on the Left, Sidebar (Profile & Clubs) on the Right */}
-      <main className="max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 py-3.5 flex flex-col lg:flex-row items-start gap-4">
+      {/* Main Content: 2 Columns when in Explore, Centered single column when in Social Feed */}
+      <main className={`mx-auto px-3 sm:px-5 md:px-6 py-3.5 flex flex-col lg:flex-row items-start gap-4 ${
+        mainView === 'FEED' ? 'max-w-[960px] justify-center' : 'max-w-[1400px]'
+      }`}>
         <h1 className="sr-only">{translate('seoH1')}</h1>
 
         {/* 1. LEFT MAIN COLUMN: Khám Phá (Explore) HOẶC Bảng Tin Hoạt Động (Social Feed) */}
@@ -2134,39 +2136,41 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* 2. RIGHT COLUMN: Athlete Profile Card & My Clubs (moved from left, replacing the old right column) */}
-        <aside className="w-full lg:w-[270px] xl:w-[280px] shrink-0 flex flex-col gap-3 order-2">
-          {/* Athlete Profile Card */}
-          <AthleteProfileCard
-            user={user}
-            isAuthenticated={isAuthenticated}
-            elo={activeElo}
-            matchesPlayed={matchesPlayed}
-            winRate={winRate}
-            credibility={matchesPlayed > 0 ? 100 : 100}
-            tierName={displayTier}
-            categoryName={sportName}
-            isLoading={isLoading || (isAuthenticated && userRankings === null)}
-            onViewProfile={(e) => {
-              if (!user?.id) return;
-              const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;
-              openUserProfile(
-                {
-                  id: user.id,
-                  fullName: user.fullName || translate('user'),
-                  avatarUrl: user.avatarUrl,
-                },
-                rect,
-              );
-            }}
-          />
+        {/* 2. RIGHT COLUMN: Athlete Profile Card & My Clubs (Only shown in Explore view) */}
+        {mainView !== 'FEED' && (
+          <aside className="w-full lg:w-[270px] xl:w-[280px] shrink-0 flex flex-col gap-3 order-2">
+            {/* Athlete Profile Card */}
+            <AthleteProfileCard
+              user={user}
+              isAuthenticated={isAuthenticated}
+              elo={activeElo}
+              matchesPlayed={matchesPlayed}
+              winRate={winRate}
+              credibility={matchesPlayed > 0 ? 100 : 100}
+              tierName={displayTier}
+              categoryName={sportName}
+              isLoading={isLoading || (isAuthenticated && userRankings === null)}
+              onViewProfile={(e) => {
+                if (!user?.id) return;
+                const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect?.() || null;
+                openUserProfile(
+                  {
+                    id: user.id,
+                    fullName: user.fullName || translate('user'),
+                    avatarUrl: user.avatarUrl,
+                  },
+                  rect,
+                );
+              }}
+            />
 
-          {/* My Clubs */}
-          <SocialMyClubsCard
-            clubs={myClubs}
-            isAuthenticated={isAuthenticated}
-          />
-        </aside>
+            {/* My Clubs */}
+            <SocialMyClubsCard
+              clubs={myClubs}
+              isAuthenticated={isAuthenticated}
+            />
+          </aside>
+        )}
       </main>
 
       <ShareModal
